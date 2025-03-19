@@ -6,6 +6,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
 } from "@heroicons/react/24/outline";
+
 import { bookings } from "../page";
 
 const RevenuePage = () => {

@@ -6,19 +6,16 @@ import {
 } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Navigation } from "./Navigation";
-import { TeamsList } from "./TeamsList";
 import { UserProfile } from "./UserProfile";
 
-import type { NavigationItem } from "../shared/types";
+import CompanyLogo from "@/app/_components/common/logo";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  navigation: NavigationItem[];
-  // teams: Team[];
 }
 
-const Sidebar = ({ isOpen, onClose, navigation }: SidebarProps) => {
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   return (
     <>
       {/* Mobile sidebar */}
@@ -29,7 +26,7 @@ const Sidebar = ({ isOpen, onClose, navigation }: SidebarProps) => {
       >
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-gray-600/75 transition-opacity duration-300 ease-linear data-closed:opacity-0"
+          className="fixed inset-0 transition-opacity duration-300 ease-linear data-closed:opacity-0"
         />
 
         <div className="fixed inset-0 z-40 flex">
@@ -53,12 +50,12 @@ const Sidebar = ({ isOpen, onClose, navigation }: SidebarProps) => {
             <div className="flex shrink-0 items-center px-4">
               <img
                 alt="Your Company"
-                src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=purple&shade=500"
+                src="/logo/unique_logo-removebg-preview-2.png"
                 className="h-8 w-auto"
               />
             </div>
             <div className="mt-5 h-0 flex-1 overflow-y-auto">
-              <Navigation navigation={navigation} />
+              <Navigation />
               {/* <TeamsList teams={teams} /> */}
             </div>
           </DialogPanel>
@@ -67,18 +64,13 @@ const Sidebar = ({ isOpen, onClose, navigation }: SidebarProps) => {
       </Dialog>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-gray-100 lg:pt-5 lg:pb-4">
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-gray-200  lg:pt-5 lg:pb-6">
         <div className="flex shrink-0 items-center px-6">
-          <img
-            alt="Your Company"
-            src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=purple&shade=500"
-            className="h-8 w-auto"
-          />
+          <CompanyLogo />
         </div>
         <div className="mt-5 flex h-0 flex-1 flex-col overflow-y-auto pt-1">
+          <Navigation />
           <UserProfile />
-          <Navigation navigation={navigation} />
-          {/* <TeamsList teams={teams} /> */}
         </div>
       </div>
     </>

@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { CalendarIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import { BookingsTable } from "../_components/Bookings/BookingsTable";
-
-import { bookings } from "../page"; // Import shared booking data
+import { bookings } from "../page";
 
 const BookingsPage = () => {
   const [filterOpen, setFilterOpen] = useState(false);
