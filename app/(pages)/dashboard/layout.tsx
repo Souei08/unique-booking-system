@@ -1,16 +1,11 @@
-"use client";
-
-import { useState } from "react";
 import {
   CalendarIcon,
   UserGroupIcon,
   HomeIcon,
   CurrencyDollarIcon,
-  ClockIcon,
 } from "@heroicons/react/24/outline";
 
-import Sidebar from "./_components/Sidebar";
-import Header from "./_components/Header";
+import SidebarWrapper from "./_components/SidebarWrapper";
 
 // Booking categories/services
 export const services = [
@@ -44,21 +39,16 @@ export const services = [
   },
 ];
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   return (
     <div className="min-h-full">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      <div className="flex flex-col lg:pl-64">
-        <Header onOpenSidebar={() => setSidebarOpen(true)} />
-        {children}
-      </div>
+      <SidebarWrapper>
+        <div className="flex flex-col lg:pl-64">{children}</div>
+      </SidebarWrapper>
     </div>
   );
 }

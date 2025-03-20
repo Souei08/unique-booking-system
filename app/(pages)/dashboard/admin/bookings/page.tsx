@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CalendarIcon, FunnelIcon } from "@heroicons/react/24/outline";
-import { BookingsTable } from "../_components/Bookings/BookingsTable";
+import { BookingsTable } from "../../_components/Bookings/BookingsTable";
 import { bookings } from "../page";
 
 const BookingsPage = () => {

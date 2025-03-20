@@ -1,25 +1,34 @@
 "use client";
+
+import { useRouter } from "next/navigation";
+
 import { loginSchema, LoginFormValues } from "../validation";
 import { showSuccessToast, showErrorToast } from "@/utils/toastUtils";
+
 import AuthForm from "./authForm";
-import { signIn } from "@/lib/auth";
+
+import { signInAction } from "./actions";
 
 export default function LoginForm() {
+  const router = useRouter();
+
   const handleLogin = async (data: LoginFormValues) => {
     try {
       const { email, password } = data;
-      const { error } = await signIn(email, password);
+      const result = await signInAction(email, password);
 
-      if (error) {
-        // Alert the error message through toast
-        showErrorToast(error.message);
-        // Send the error message to the AuthForm for validation display
-        throw new Error(error.message);
-      }
+      // if (error) {
+      //   // Alert the error message through toast
+      //   showErrorToast(error.message);
+      //   // Send the error message to the AuthForm for validation display
+      //   throw new Error(error.message);
+      // }
 
-      showSuccessToast("Login successful!");
-    } catch {
-      showErrorToast("An unexpected error occurred. Please try again.");
+      console.log(result);
+
+      // router.push("/dashboard/customer");
+    } catch (error) {
+      console.error("An unexpected error occurred:", error);
     }
   };
 
