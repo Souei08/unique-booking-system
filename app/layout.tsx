@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
-import "./globals.css";
 
+// Styles
+import "./globals.css";
+import { Montserrat } from "next/font/google";
+
+// Components
 import ToastAlert from "./_components/common/ToastAlert";
 
+// Providers
+import AuthProvider from "./context/AuthContext/AuthProvider";
+import SidebarProvider from "./context/SidebarContext/SidebarProvider";
+
+// Variables
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
@@ -34,13 +42,17 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${montserrat.variable} antialiased`}>
-        <>
-          {children}
-          <ToastAlert />
-        </>
-      </body>
-    </html>
+    // <AuthProvider>
+    <SidebarProvider>
+      <html lang="en">
+        <body className={`${montserrat.className} antialiased`}>
+          <>
+            {children}
+            <ToastAlert />
+          </>
+        </body>
+      </html>
+    </SidebarProvider>
+    // </AuthProvider>
   );
 }

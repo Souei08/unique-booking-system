@@ -10,7 +10,7 @@ import { registerSchema, RegisterFormValues } from "../validation";
 
 import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 
-import { signUpWithEmail } from "@/lib/auth";
+import { signup } from "@/app/actions/auth/actions";
 
 export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
@@ -22,14 +22,7 @@ export default function RegisterForm() {
 
     setLoading(true); // Set loading to true when registration starts
     try {
-      const { data, error } = await signUpWithEmail(email, password);
-
-      if (error) {
-        // Alert the error message through toast
-        showErrorToast(error.message);
-        // Send the error message to the AuthForm for validation display
-        throw new Error(error.message);
-      }
+      const result = await signup(email, password);
 
       showSuccessToast("Registration successful!");
       router.push("/dashboard");

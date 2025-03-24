@@ -1,7 +1,8 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import { signout } from "@/app/actions/auth/actions"; // Import the signout function
 
-export const UserProfile = () => {
+export const UserProfile = ({ user }: { user: any }) => {
   return (
     <Menu
       as="div"
@@ -12,15 +13,17 @@ export const UserProfile = () => {
           <span className="flex w-full items-center justify-between">
             <span className="flex min-w-0 items-center justify-between space-x-3">
               <img
-                alt=""
-                src="https://images.unsplash.com/photo-1502685104226-ee32379fefbe?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=3&w=256&h=256&q=80"
+                alt={user.email}
+                src={user.user_metadata.avatar_url}
                 className="size-10 shrink-0 rounded-full bg-gray-300"
               />
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-sm font-medium text-strong">
-                  Jessy Schwarz
+                <span className="truncate text-small font-medium text-strong">
+                  {user.user_metadata.name}
                 </span>
-                <span className="truncate text-sm text-weak">Super Admin</span>
+                <span className="truncate text-small text-weak capitalize">
+                  {user.role}
+                </span>
               </span>
             </span>
             <ChevronUpDownIcon
@@ -38,20 +41,26 @@ export const UserProfile = () => {
         <UserMenuSection
           items={["View profile", "Settings", "Notifications"]}
         />
-        <UserMenuSection items={["Get desktop app", "Support"]} />
-        <UserMenuSection items={["Logout"]} />
+        <UserMenuSection items={["Logout"]} onLogout={signout} />
       </MenuItems>
     </Menu>
   );
 };
 
-const UserMenuSection = ({ items }: { items: string[] }) => (
+const UserMenuSection = ({
+  items,
+  onLogout,
+}: {
+  items: string[];
+  onLogout?: () => void;
+}) => (
   <div className="py-1">
     {items.map((item) => (
       <MenuItem key={item}>
         <a
           href="#"
-          className="block px-4 py-2 text-s text-weak data-focus:bg-gray-100 data-focus:text-strong data-focus:outline-hidden"
+          onClick={item === "Logout" ? onLogout : undefined}
+          className="block px-4 py-2 text-small text-weak data-focus:bg-gray-100 data-focus:text-strong data-focus:outline-hidden"
         >
           {item}
         </a>

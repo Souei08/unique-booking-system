@@ -7,7 +7,7 @@ import { showSuccessToast, showErrorToast } from "@/utils/toastUtils";
 
 import AuthForm from "./authForm";
 
-import { signInAction } from "./actions";
+import { login } from "@/app/actions/auth/actions";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function LoginForm() {
   const handleLogin = async (data: LoginFormValues) => {
     try {
       const { email, password } = data;
-      const result = await signInAction(email, password);
+      const result = await login(email, password);
 
       // if (error) {
       //   // Alert the error message through toast

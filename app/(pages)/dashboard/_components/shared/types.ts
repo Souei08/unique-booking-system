@@ -10,7 +10,6 @@ export interface NavigationItem {
       titleId?: string;
     } & RefAttributes<SVGSVGElement>
   >;
-  current: boolean;
 }
 
 export interface Service {

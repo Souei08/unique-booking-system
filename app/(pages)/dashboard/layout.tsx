@@ -5,7 +5,10 @@ import {
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 
-import SidebarWrapper from "./_components/SidebarWrapper";
+import { getUser } from "@/app/actions/auth/actions";
+
+import Sidebar from "@/app/_components/dashboard/Sidebar";
+import Header from "@/app/_components/dashboard/Header";
 
 // Booking categories/services
 export const services = [
@@ -44,11 +47,13 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const user = await getUser();
+
   return (
     <div className="min-h-full">
-      <SidebarWrapper>
-        <div className="flex flex-col lg:pl-64">{children}</div>
-      </SidebarWrapper>
+      <Header />
+      <div className="flex flex-col lg:pl-64">{children}</div>
+      <Sidebar user={user} />
     </div>
   );
 }

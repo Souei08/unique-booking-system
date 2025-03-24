@@ -38,17 +38,13 @@ module.exports = {
         64: "256px",
       },
       fontSize: {
-        xs: "12px",
-        sm: "14px",
-        base: "16px",
-        lg: "18px",
-        xl: "20px",
-        "2xl": "24px",
-        "3xl": "30px",
-        "4xl": "36px",
-        "5xl": "48px",
-        "6xl": "60px",
-        "7xl": "72px",
+        display: ["3rem", { lineHeight: "1.2" }], // 48px / 58px
+        h1: ["2.25rem", { lineHeight: "1.3" }], // 36px / 47px
+        h2: ["1.75rem", { lineHeight: "1.4" }], // 28px / 39px
+        "body-lg": ["1.125rem", { lineHeight: "1.6" }], // 18px / 29px
+        body: ["1rem", { lineHeight: "1.6" }], // 16px / 26px
+        small: ["0.875rem", { lineHeight: "1.5" }], // 14px / 21px
+        tiny: ["0.75rem", { lineHeight: "1.5" }], // 12px / 18px
       },
     },
   },
