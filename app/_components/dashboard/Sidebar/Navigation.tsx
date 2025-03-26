@@ -23,31 +23,31 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   {
     name: "Dashboard",
-    href: "/dashboard/admin",
+    href: "/dashboard",
     icon: HomeIcon,
     roles: ["admin", "staff", "customer"],
   },
   {
     name: "Bookings",
-    href: "/dashboard/admin/bookings",
+    href: "/dashboard/bookings",
     icon: CalendarIcon,
     roles: ["admin", "staff", "customer"],
   },
   {
     name: "Tours",
-    href: "/dashboard/admin/tours",
+    href: "/dashboard/tours",
     icon: GlobeAmericasIcon,
     roles: ["admin", "staff"],
   },
   {
     name: "Rentals",
-    href: "/dashboard/admin/rentals",
+    href: "/dashboard/rentals",
     icon: BuildingOfficeIcon,
     roles: ["admin", "staff"],
   },
   {
     name: "Users",
-    href: "/dashboard/admin/users",
+    href: "/dashboard/users",
     icon: UserGroupIcon,
     roles: ["admin"],
   },

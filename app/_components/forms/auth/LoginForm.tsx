@@ -17,18 +17,31 @@ export default function LoginForm() {
       const { email, password } = data;
       const result = await login(email, password);
 
-      // if (error) {
-      //   // Alert the error message through toast
-      //   showErrorToast(error.message);
-      //   // Send the error message to the AuthForm for validation display
-      //   throw new Error(error.message);
-      // }
+      if (!result.success) {
+        // Handle specific error cases
+        if (result.error?.includes("Invalid login credentials")) {
+          throw {
+            fieldErrors: {
+              email: "Invalid email or password",
+              password: "Invalid email or password",
+            },
+          };
+        }
 
-      console.log(result);
+        showErrorToast(
+          result.error ?? "An unexpected error occurred. Please try again."
+        );
+        return;
+      }
 
-      // router.push("/dashboard/customer");
-    } catch (error) {
+      showSuccessToast("Login successful!");
+      router.push("/"); // Redirect to home or dashboard
+    } catch (error: any) {
+      if (error.fieldErrors) {
+        throw error; // Re-throw field errors to be handled by AuthForm
+      }
       console.error("An unexpected error occurred:", error);
+      showErrorToast("An unexpected error occurred. Please try again.");
     }
   };
 

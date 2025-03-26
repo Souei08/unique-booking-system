@@ -18,16 +18,11 @@ export default function RegisterForm() {
   const handleRegistration = async (data: RegisterFormValues) => {
     const { email, password } = data;
 
-    console.log("Registration data:", data);
-
     setLoading(true); // Set loading to true when registration starts
     try {
-      const result = await signup(email, password);
+      await signup(email, password);
 
       showSuccessToast("Registration successful!");
-      router.push("/dashboard");
-
-      console.log("Registration successful:", data);
     } catch (error) {
       // Handle any unexpected errors
       console.error("An unexpected error occurred:", error);

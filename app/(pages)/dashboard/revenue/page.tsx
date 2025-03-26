@@ -7,7 +7,7 @@ import {
   ArrowDownIcon,
 } from "@heroicons/react/24/outline";
 
-import { bookings } from "../../_data/bookingsData";
+import { bookings } from "../_data/bookingsData";
 
 const RevenuePage = () => {
   const [timeframe, setTimeframe] = useState("week");

@@ -5,7 +5,7 @@ import { createClient } from "@/supabase/server";
 // Define protected routes & required roles
 const protectedRoutes = {
   "/dashboard/admin": ["admin"], // Only Admins can access
-  "/dashboard/users": ["staff", "admin"], // Admins & Staff can manage users
+  "/dashboard/staff": ["staff", "admin"], // Admins & Staff can manage users
   "/dashboard/customers": ["customer", "staff", "admin"], // All roles can access
   "/api/users": ["admin"], // Only Admins can manage users
   "/api/bookings": ["customer", "staff", "admin"], // Customers book, staff/admin manage
@@ -47,7 +47,20 @@ export async function middleware(request: NextRequest) {
   const userRole = userData.role; // Possible values: "customer", "staff", "admin"
   const requestPath = request.nextUrl.pathname;
 
-  // Check if the route is protected and user has the required role
+  // 🔹 Redirect users from "/dashboard" to their role-specific dashboard
+  if (requestPath === "/dashboard") {
+    if (userRole === "admin") {
+      return NextResponse.redirect(new URL("/dashboard/admin", request.url));
+    } else if (userRole === "staff") {
+      return NextResponse.redirect(new URL("/dashboard/staff", request.url));
+    } else {
+      return NextResponse.redirect(
+        new URL("/dashboard/customers", request.url)
+      );
+    }
+  }
+
+  // 🔹 Check if the route is protected and user has the required role
   for (const [route, allowedRoles] of Object.entries(protectedRoutes)) {
     if (requestPath.startsWith(route) && !allowedRoles.includes(userRole)) {
       return NextResponse.redirect(new URL("/forbidden", request.url));

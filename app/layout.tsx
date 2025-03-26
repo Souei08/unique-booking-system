@@ -42,15 +42,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthProvider>
-      <SidebarProvider>
-        <html lang="en">
-          <body className={`${montserrat.className} antialiased`}>
-            {children}
-            <ToastAlert />
-          </body>
-        </html>
-      </SidebarProvider>
-    </AuthProvider>
+    // <AuthProvider>
+    <SidebarProvider>
+      <html lang="en">
+        <body className={`${montserrat.className} antialiased`}>
+          {children}
+          <ToastAlert />
+        </body>
+      </html>
+    </SidebarProvider>
+    // </AuthProvider>
   );
 }

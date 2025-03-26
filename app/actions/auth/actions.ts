@@ -8,27 +8,23 @@ import { createClient } from "@/supabase/server";
 export async function login(email: string, password: string) {
   const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
+  const { error, data: user } = await supabase.auth.signInWithPassword({
     email,
     password,
-  };
-
-  const { error } = await supabase.auth.signInWithPassword(data);
+  });
 
   if (error) {
-    redirect("/error");
+    return { success: false, error: error.message };
   }
 
   revalidatePath("/", "layout");
-  redirect("/dashboard/customers");
+  return { success: true, user };
 }
 
 export async function loginWithGoogle() {
   const supabase = await createClient();
 
-  const url = new URL("/auth/callback", "http://localhost:3000");
+  const url = new URL("/auth/callback", process.env.NEXT_PUBLIC_URL);
   const { error, data } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -37,10 +33,9 @@ export async function loginWithGoogle() {
   });
 
   if (error) {
-    redirect("/error");
+    console.error("Error during Google login:", error);
+    return;
   }
-
-  console.log("data", data);
 
   revalidatePath("/", "layout");
   redirect(data.url);
@@ -49,21 +44,17 @@ export async function loginWithGoogle() {
 export async function signup(email: string, password: string) {
   const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
+  const { error } = await supabase.auth.signUp({
     email,
     password,
-  };
-
-  const { error } = await supabase.auth.signUp(data);
+  });
 
   if (error) {
-    redirect("/error");
+    return { success: false, error: error.message };
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  return { success: true };
 }
 
 export async function signout() {
@@ -72,7 +63,8 @@ export async function signout() {
   const { error } = await supabase.auth.signOut();
 
   if (error) {
-    redirect("/error");
+    console.error("Error during signout:", error);
+    return;
   }
 
   revalidatePath("/", "layout");

@@ -9,10 +9,10 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 
-import { RecentBookings } from "../_components/Bookings/RecentBookings";
-import { BookingsTable } from "../_components/Bookings/BookingsTable";
-import { BookingsList } from "../_components/Bookings/BookingsList";
-import { bookings } from "../_data/bookingsData";
+import { RecentBookings } from "./_components/Bookings/RecentBookings";
+import { BookingsTable } from "./_components/Bookings/BookingsTable";
+import { BookingsList } from "./_components/Bookings/BookingsList";
+import { bookings } from "./_data/bookingsData";
 
 const AdminPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
