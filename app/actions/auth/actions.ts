@@ -24,11 +24,10 @@ export async function login(email: string, password: string) {
 export async function loginWithGoogle() {
   const supabase = await createClient();
 
-  const url = new URL("/auth/callback", process.env.NEXT_PUBLIC_URL);
   const { error, data } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: url.toString(),
+      redirectTo: `${process.env.NEXT_PUBLIC_GOOGLE_REDIRECT_URI}/auth/callback`,
     },
   });
 
