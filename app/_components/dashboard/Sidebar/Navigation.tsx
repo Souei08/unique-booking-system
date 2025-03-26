@@ -1,9 +1,8 @@
 "use client";
 
-import type { NavigationItem } from "../../../(pages)/dashboard/_components/shared/types";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { getUser } from "@/app/actions/auth/actions"; // Import getUser function
 
 import {
   HomeIcon,
@@ -14,36 +13,50 @@ import {
   GlobeAmericasIcon,
 } from "@heroicons/react/24/outline";
 
-const navigation: NavigationItem[] = [
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  roles: string[]; // Allowed roles
+}
+
+// Define navigation items with role-based access
+const navigationItems: NavigationItem[] = [
   {
     name: "Dashboard",
     href: "/dashboard/admin",
     icon: HomeIcon,
+    roles: ["admin", "staff", "customer"],
   },
   {
     name: "Bookings",
     href: "/dashboard/admin/bookings",
     icon: CalendarIcon,
+    roles: ["admin", "staff", "customer"],
   },
   {
     name: "Tours",
     href: "/dashboard/admin/tours",
     icon: GlobeAmericasIcon,
+    roles: ["admin", "staff"],
   },
   {
     name: "Rentals",
     href: "/dashboard/admin/rentals",
     icon: BuildingOfficeIcon,
+    roles: ["admin", "staff"],
   },
   {
     name: "Users",
     href: "/dashboard/admin/users",
     icon: UserGroupIcon,
+    roles: ["admin"],
   },
   {
     name: "Reports & Analytics",
     href: "#",
     icon: ChartBarIcon,
+    roles: ["admin"],
   },
 ];
 
@@ -51,13 +64,23 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export const Navigation = () => {
+export const Navigation = async () => {
+  const user = await getUser(); // Fetch user and role
+  const userRole = user?.role;
+
+  if (!userRole) return null; // Hide sidebar if no user
+
+  // Filter navigation based on user role
+  const filteredNavigation = navigationItems.filter((item) =>
+    item.roles.includes(userRole)
+  );
+
   const currentPath = usePathname();
 
   return (
     <nav className="px-2 mt-5">
       <div className="space-y-1">
-        {navigation.map((item) => {
+        {filteredNavigation.map((item) => {
           const isCurrent = currentPath === item.href;
           return (
             <Link
