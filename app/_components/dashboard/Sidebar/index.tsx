@@ -60,7 +60,7 @@ const Sidebar = ({ user }: SidebarProps) => {
               />
             </div>
             <div className="mt-5 h-0 flex-1 overflow-y-auto">
-              <Navigation />
+              <Navigation user={user} />
             </div>
           </DialogPanel>
           <div aria-hidden="true" className="w-14 shrink-0" />
@@ -72,7 +72,7 @@ const Sidebar = ({ user }: SidebarProps) => {
           <CompanyLogo />
         </div>
         <div className="mt-5 flex h-0 flex-1 flex-col overflow-y-auto pt-1">
-          <Navigation />
+          <Navigation user={user} />
           <UserProfile user={user} />
         </div>
       </div>

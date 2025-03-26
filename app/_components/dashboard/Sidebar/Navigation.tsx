@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { getUser } from "@/app/actions/auth/actions"; // Import getUser function
 
 import {
   HomeIcon,
@@ -64,8 +63,7 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export const Navigation = async () => {
-  const user = await getUser(); // Fetch user and role
+export const Navigation = ({ user }: { user: any }) => {
   const userRole = user?.role;
 
   if (!userRole) return null; // Hide sidebar if no user
