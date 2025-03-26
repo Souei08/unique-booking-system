@@ -13,8 +13,8 @@ import SidebarProvider from "./context/SidebarContext/SidebarProvider";
 
 // Variables
 const montserrat = Montserrat({
-  variable: "--font-montserrat",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -36,23 +36,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    // <AuthProvider>
-    <SidebarProvider>
-      <html lang="en">
-        <body className={`${montserrat.className} antialiased`}>
-          <>
+    <AuthProvider>
+      <SidebarProvider>
+        <html lang="en">
+          <body className={`${montserrat.className} antialiased`}>
             {children}
             <ToastAlert />
-          </>
-        </body>
-      </html>
-    </SidebarProvider>
-    // </AuthProvider>
+          </body>
+        </html>
+      </SidebarProvider>
+    </AuthProvider>
   );
 }

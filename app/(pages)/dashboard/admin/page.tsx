@@ -12,68 +12,9 @@ import {
 import { RecentBookings } from "../_components/Bookings/RecentBookings";
 import { BookingsTable } from "../_components/Bookings/BookingsTable";
 import { BookingsList } from "../_components/Bookings/BookingsList";
+import { bookings } from "../_data/bookingsData";
 
-// Sample booking data
-export const bookings = [
-  {
-    id: 1,
-    title: "City Walking Tour",
-    service: "Guided Tour",
-    customer: {
-      name: "Sarah Johnson",
-      handle: "sarahj",
-      imageUrl:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-    },
-    staff: [
-      {
-        name: "Maria Garcia",
-        handle: "mariag",
-        imageUrl:
-          "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-      },
-    ],
-    duration: "120 min",
-    time: "10:00 AM",
-    date: "March 20, 2024",
-    status: "Confirmed",
-    price: "$45.00",
-    featured: true,
-    bgColorClass: "bg-green-600",
-    startTime: "2024-03-20T10:00:00",
-    endTime: "2024-03-20T12:00:00",
-  },
-  {
-    id: 2,
-    title: "Mountain Bike Rental",
-    service: "Equipment Rental",
-    customer: {
-      name: "Emily Chen",
-      handle: "emilyc",
-      imageUrl:
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-    },
-    staff: [
-      {
-        name: "John Smith",
-        handle: "johns",
-        imageUrl:
-          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-      },
-    ],
-    duration: "4 hours",
-    time: "2:30 PM",
-    date: "March 20, 2024",
-    status: "Pending",
-    price: "$35.00",
-    featured: true,
-    bgColorClass: "bg-yellow-600",
-    startTime: "2024-03-20T14:30:00",
-    endTime: "2024-03-20T18:30:00",
-  },
-];
-
-const DashboardPage = () => {
+const AdminPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const featuredBookings = bookings.filter((booking) => booking.featured);
 
@@ -184,4 +125,4 @@ const StatsCard = ({
   );
 };
 
-export default DashboardPage;
+export default AdminPage;
