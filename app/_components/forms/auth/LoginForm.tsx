@@ -35,7 +35,7 @@ export default function LoginForm() {
       }
 
       showSuccessToast("Login successful!");
-      router.push("/"); // Redirect to home or dashboard
+      router.push("/dashboard"); // Always redirect to /dashboard
     } catch (error: any) {
       if (error.fieldErrors) {
         throw error; // Re-throw field errors to be handled by AuthForm

@@ -1,7 +1,7 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { signout } from "@/app/actions/auth/actions"; // Import the signout function
-
+import Image from "next/image";
 export const UserProfile = ({ user }: { user: any }) => {
   return (
     <Menu
@@ -12,10 +12,12 @@ export const UserProfile = ({ user }: { user: any }) => {
         <MenuButton className="group w-full rounded-md bg-fill px-3.5 py-2 text-left text-sm font-medium  focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-gray-100 focus:outline-hidden">
           <span className="flex w-full items-center justify-between">
             <span className="flex min-w-0 items-center justify-between space-x-3">
-              <img
+              <Image
                 alt={user.email}
                 src={user.user_metadata.avatar_url}
                 className="size-10 shrink-0 rounded-full bg-gray-300"
+                width={40}
+                height={40}
               />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-small font-medium text-strong">

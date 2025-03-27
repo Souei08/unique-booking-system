@@ -5,6 +5,7 @@ import React, { useState } from "react";
 interface TableProps<T extends object> {
   title: string;
   description: string;
+  buttonText: string;
   data: T[];
   columns: Array<{
     header: string;
@@ -21,6 +22,7 @@ function classNames(...classes: string[]) {
 export default function Table<T extends object>({
   title,
   description,
+  buttonText,
   data,
   columns,
   isCollapsible = false, // Default to non-collapsible
@@ -51,7 +53,7 @@ export default function Table<T extends object>({
             type="button"
             className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            Add user
+            {buttonText}
           </button>
         </div>
       </div>
@@ -77,7 +79,7 @@ export default function Table<T extends object>({
                     ))}
                     <th
                       scope="col"
-                      className="relative py-3.5 pr-4 pl-3 sm:pr-6"
+                      className="relative py-3.5 pr-4 pl-3 sm:pr-6 "
                     >
                       <span className="sr-only">Edit</span>
                     </th>
@@ -104,8 +106,8 @@ export default function Table<T extends object>({
                               "px-3 py-4 text-small whitespace-nowrap ",
                               column.isHiddenOnMobile
                                 ? "hidden lg:table-cell"
-                                : "",
-                              itemIdx === 0 ? "font-medium " : ""
+                                : ""
+                              // itemIdx === 0 ? " " : ""
                             )}
                           >
                             {String(item[column.accessor] ?? "")}
@@ -114,7 +116,7 @@ export default function Table<T extends object>({
                         <td className="relative py-4 pr-4 pl-3 text-right text-base font-medium whitespace-nowrap sm:pr-6">
                           <a
                             href="#"
-                            className="text-brand hover:text-brand-dark"
+                            className="text-brand-dark hover:text-brand-light"
                           >
                             Edit<span className="sr-only">, {itemIdx}</span>
                           </a>

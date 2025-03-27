@@ -26,8 +26,13 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Allow all requests to auth routes
+  if (request.nextUrl.pathname.startsWith("/auth")) {
+    return response;
+  }
+
   // Redirect unauthorized users to login
-  if (!user && !request.nextUrl.pathname.startsWith("/auth")) {
+  if (!user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
@@ -37,30 +42,28 @@ export async function middleware(request: NextRequest) {
   const { data: userData, error } = await supabase
     .from("users")
     .select("role")
-    .eq("supabase_id", user?.id)
+    .eq("supabase_id", user.id)
     .single();
 
   if (error || !userData) {
     return NextResponse.redirect(new URL("/forbidden", request.url));
   }
 
-  const userRole = userData.role; // Possible values: "customer", "staff", "admin"
+  const userRole = userData.role;
   const requestPath = request.nextUrl.pathname;
 
-  // 🔹 Redirect users from "/dashboard" to their role-specific dashboard
-  if (requestPath === "/dashboard") {
-    if (userRole === "admin") {
-      return NextResponse.redirect(new URL("/dashboard/admin", request.url));
-    } else if (userRole === "staff") {
-      return NextResponse.redirect(new URL("/dashboard/staff", request.url));
-    } else {
+  // Handle root path redirect
+  if (requestPath === "/") {
+    if (userRole === "customer") {
       return NextResponse.redirect(
         new URL("/dashboard/customers", request.url)
       );
+    } else {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
 
-  // 🔹 Check if the route is protected and user has the required role
+  // Check if the route is protected and user has the required role
   for (const [route, allowedRoles] of Object.entries(protectedRoutes)) {
     if (requestPath.startsWith(route) && !allowedRoles.includes(userRole)) {
       return NextResponse.redirect(new URL("/forbidden", request.url));

@@ -69,6 +69,7 @@ const RentalsPage = () => {
           title="Rentals"
           description="View and manage all available rentals"
           isCollapsible={true}
+          buttonText="Add Rental"
         />
       </div>
     </main>
