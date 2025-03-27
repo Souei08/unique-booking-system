@@ -10,6 +10,7 @@ import ToastAlert from "./_components/common/ToastAlert";
 // Providers
 import AuthProvider from "./context/AuthContext/AuthProvider";
 import SidebarProvider from "./context/SidebarContext/SidebarProvider";
+import { ModalProvider } from "./context/ModalContext/ModalProvider";
 
 // Variables
 const montserrat = Montserrat({
@@ -44,12 +45,14 @@ export default function RootLayout({
   return (
     // <AuthProvider>
     <SidebarProvider>
-      <html lang="en">
-        <body className={`${montserrat.className} antialiased`}>
-          {children}
-          <ToastAlert />
-        </body>
-      </html>
+      <ModalProvider>
+        <html lang="en">
+          <body className={`${montserrat.className} antialiased`}>
+            {children}
+            <ToastAlert />
+          </body>
+        </html>
+      </ModalProvider>
     </SidebarProvider>
     // </AuthProvider>
   );

@@ -52,28 +52,28 @@ const AdminPage = () => {
             title="Today's Tours"
             value="15"
             icon={CalendarIcon}
-            trend="+4.75%"
+            // trend="+4.75%"
             trendDirection="up"
           />
           <StatsCard
             title="Total Revenue"
             value="$2,145"
             icon={CurrencyDollarIcon}
-            trend="+10.18%"
+            // trend="+10.18%"
             trendDirection="up"
           />
           <StatsCard
             title="Equipment Rentals"
             value="8"
             icon={ClockIcon}
-            trend="+3.23%"
+            // trend="+3.23%"
             trendDirection="up"
           />
           <StatsCard
             title="Active Customers"
             value="185"
             icon={UserGroupIcon}
-            trend="+5.25%"
+            // trend="+5.25%"
             trendDirection="up"
           />
         </div>
@@ -92,7 +92,7 @@ interface StatsCardProps {
   title: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
-  trend: string;
+  // trend: string;
   trendDirection: "up" | "down";
 }
 
@@ -100,7 +100,7 @@ const StatsCard = ({
   title,
   value,
   icon: Icon,
-  trend,
+  // trend,
   trendDirection,
 }: StatsCardProps) => {
   return (
@@ -118,7 +118,7 @@ const StatsCard = ({
             trendDirection === "up" ? "text-green-600" : "text-red-600"
           }`}
         >
-          {trend}
+          {/* {trend} */}
         </p>
       </dd>
     </div>

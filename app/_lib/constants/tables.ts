@@ -13,11 +13,10 @@ export const TOUR_TABLE_COLUMNS = [
     isHiddenOnMobile: false,
   },
   {
-    header: "Group Size",
-    accessor: "group_size" as keyof Tour,
+    header: "Group Size Limit",
+    accessor: "group_size_limit" as keyof Tour,
     isHiddenOnMobile: true,
   },
-  { header: "Slots", accessor: "slots" as keyof Tour, isHiddenOnMobile: true },
   { header: "Rate", accessor: "rate" as keyof Tour, isHiddenOnMobile: false },
   {
     header: "Location",

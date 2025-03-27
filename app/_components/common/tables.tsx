@@ -1,6 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import {
+  PencilIcon,
+  CalendarIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
+import IconButton from "./button";
 
 interface TableProps<T extends object> {
   title: string;
@@ -13,6 +20,8 @@ interface TableProps<T extends object> {
     isHiddenOnMobile?: boolean;
   }>;
   isCollapsible?: boolean; // New parameter to control collapsibility
+  handleEdit: (item: T) => void;
+  handleSchedule: (item: T) => void;
 }
 
 function classNames(...classes: string[]) {
@@ -26,6 +35,8 @@ export default function Table<T extends object>({
   data,
   columns,
   isCollapsible = false, // Default to non-collapsible
+  handleEdit,
+  handleSchedule,
 }: TableProps<T>) {
   const [openRows, setOpenRows] = useState<Set<number>>(new Set());
 
@@ -41,6 +52,10 @@ export default function Table<T extends object>({
     });
   };
 
+  const handleButtonClick = () => {
+    console.log("Button clicked!");
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center">
@@ -51,7 +66,8 @@ export default function Table<T extends object>({
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
           <button
             type="button"
-            className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand cursor-pointer"
+            onClick={handleButtonClick}
           >
             {buttonText}
           </button>
@@ -64,6 +80,14 @@ export default function Table<T extends object>({
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
+                    {isCollapsible && (
+                      <th
+                        scope="col"
+                        className="py-3.5 pr-3 pl-4 text-left text-body font-semibold text-strong sm:pl-6"
+                      >
+                        {/* Empty header for the collapse arrow */}
+                      </th>
+                    )}
                     {columns.map((column) => (
                       <th
                         key={column.header}
@@ -79,26 +103,45 @@ export default function Table<T extends object>({
                     ))}
                     <th
                       scope="col"
-                      className="relative py-3.5 pr-4 pl-3 sm:pr-6 "
+                      className="relative py-3.5 pr-4 pl-3 sm:pr-6 text-left text-body font-semibold text-strong"
                     >
-                      <span className="sr-only">Edit</span>
+                      Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {data.map((item, itemIdx) => (
                     <React.Fragment key={itemIdx}>
-                      <tr
-                        className={classNames(
-                          isCollapsible
-                            ? "cursor-pointer hover:bg-brand hover:text-white"
-                            : "",
-                          openRows.has(itemIdx)
-                            ? "bg-brand text-white"
-                            : "text-strong"
+                      <tr className={`text-strong`}>
+                        {isCollapsible && (
+                          <td className="px-3 py-4 text-small whitespace-nowrap ">
+                            <button
+                              type="button"
+                              className={classNames(
+                                openRows.has(itemIdx)
+                                  ? "text-brand"
+                                  : "text-strong",
+                                "cursor-pointer"
+                              )}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRow(itemIdx);
+                              }}
+                            >
+                              {openRows.has(itemIdx) ? (
+                                <ChevronDownIcon
+                                  className="h-5 w-5"
+                                  aria-hidden="true"
+                                />
+                              ) : (
+                                <ChevronRightIcon
+                                  className="h-5 w-5"
+                                  aria-hidden="true"
+                                />
+                              )}
+                            </button>
+                          </td>
                         )}
-                        onClick={() => isCollapsible && toggleRow(itemIdx)}
-                      >
                         {columns.map((column) => (
                           <td
                             key={column.header}
@@ -107,34 +150,58 @@ export default function Table<T extends object>({
                               column.isHiddenOnMobile
                                 ? "hidden lg:table-cell"
                                 : ""
-                              // itemIdx === 0 ? " " : ""
                             )}
                           >
                             {String(item[column.accessor] ?? "")}
                           </td>
                         ))}
                         <td className="relative py-4 pr-4 pl-3 text-right text-base font-medium whitespace-nowrap sm:pr-6">
-                          <a
-                            href="#"
-                            className="text-brand-dark hover:text-brand-light"
-                          >
-                            Edit<span className="sr-only">, {itemIdx}</span>
-                          </a>
+                          <IconButton
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleEdit(item);
+                            }}
+                            icon={
+                              <PencilIcon
+                                className="h-5 w-5 inline"
+                                aria-hidden="true"
+                              />
+                            }
+                            label={`Edit`}
+                          />
+                          <IconButton
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleSchedule(item);
+                            }}
+                            icon={
+                              <CalendarIcon
+                                className="h-5 w-5 inline"
+                                aria-hidden="true"
+                              />
+                            }
+                            label={`Schedule`}
+                          />
                         </td>
                       </tr>
                       {isCollapsible && openRows.has(itemIdx) && (
-                        <tr className="bg-gray-100">
+                        <tr>
                           <td
-                            colSpan={columns.length + 1}
+                            colSpan={columns.length + 2}
                             className="px-3 py-4"
                           >
-                            <div className="grid grid-cols-2 gap-4 text-small text-weak">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-small text-weak  p-4 ">
                               {Object.entries(item).map(([key, value]) => (
-                                <div key={key} className="flex">
-                                  <span className="font-semibold capitalize">
+                                <div
+                                  key={key}
+                                  className="flex flex-col md:flex-row"
+                                >
+                                  <span className="font-semibold capitalize text-strong">
                                     {key}:
                                   </span>
-                                  <span className="ml-2">{String(value)}</span>
+                                  <span className="mt-1 md:mt-0 md:ml-2">
+                                    {String(value)}
+                                  </span>
                                 </div>
                               ))}
                             </div>
