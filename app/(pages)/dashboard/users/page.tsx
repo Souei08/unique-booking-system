@@ -27,6 +27,9 @@ const CustomersPage = () => {
           columns={columns}
           title="Users"
           description="Manage your users"
+          buttonText="Add User"
+          handleEdit={() => {}}
+          handleSchedule={() => {}}
         />
       </div>
     </main>

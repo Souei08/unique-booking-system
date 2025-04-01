@@ -1,8 +1,15 @@
 "use client";
-import { useModal } from "@/app/context/ModalContext/useModal";
-import type { Tour } from "@/app/_lib/types/tours";
+
 import { useState } from "react";
+
 import CreateTourForm from "@/app/_components/forms/tours/CreateTour";
+
+import { useDrawer } from "@/app/context/DrawerContext/useDrawer";
+import { useModal } from "@/app/context/ModalContext/useModal";
+
+import type { Tour } from "@/app/_lib/types/tours";
+import ScheduleForm from "@/app/_components/forms/schedule/page";
+
 interface TourActionsProps {
   onAddTour: () => void;
   onEditTour: (tour: Tour) => void;
@@ -15,6 +22,7 @@ export function TourActions({
   onScheduleTour,
 }: TourActionsProps) {
   const { openModal } = useModal();
+  const { openDrawer } = useDrawer();
 
   const handleAddTour = () => {
     openModal(<AddTourForm onSuccess={onAddTour} />, "Add New Tour");
@@ -25,10 +33,7 @@ export function TourActions({
   };
 
   const handleScheduleTour = (tour: Tour) => {
-    openModal(
-      //   <ScheduleTourForm tour={tour} onSuccess={() => onScheduleTour(tour)} />,
-      "Schedule Tour"
-    );
+    openDrawer(<ScheduleForm />, "Schedule Tour");
   };
 
   return {

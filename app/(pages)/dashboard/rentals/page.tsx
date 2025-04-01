@@ -70,6 +70,8 @@ const RentalsPage = () => {
           description="View and manage all available rentals"
           isCollapsible={true}
           buttonText="Add Rental"
+          handleEdit={() => {}}
+          handleSchedule={() => {}}
         />
       </div>
     </main>

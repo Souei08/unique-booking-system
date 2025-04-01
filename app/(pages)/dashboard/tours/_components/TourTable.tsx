@@ -11,9 +11,11 @@ interface TourTableProps {
 
 export function TourTable({ tours, columns }: TourTableProps) {
   const router = useRouter();
-  const { handleAddTour, handleEditTour, handleScheduleTour } = TourActions({
+
+  // Use the TourActions component hooks instead of destructuring the component
+  const actions = TourActions({
     onAddTour: () => {
-      router.refresh(); // Refresh the page to get updated data
+      router.refresh();
     },
     onEditTour: () => {
       router.refresh();
@@ -31,8 +33,8 @@ export function TourTable({ tours, columns }: TourTableProps) {
       description="View and manage all available tours"
       isCollapsible={true}
       buttonText="Add Tour"
-      handleEdit={handleEditTour}
-      handleSchedule={handleScheduleTour}
+      handleEdit={actions.handleEditTour}
+      handleSchedule={actions.handleScheduleTour}
     />
   );
 }
