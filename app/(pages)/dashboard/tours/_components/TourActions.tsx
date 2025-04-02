@@ -8,7 +8,7 @@ import { useDrawer } from "@/app/context/DrawerContext/useDrawer";
 import { useModal } from "@/app/context/ModalContext/useModal";
 
 import type { Tour } from "@/app/_lib/types/tours";
-import ScheduleForm from "@/app/_components/forms/schedule/page";
+import ScheduleForm from "@/app/_components/forms/schedule/ScheduleForm";
 
 interface TourActionsProps {
   onAddTour: () => void;
@@ -33,7 +33,7 @@ export function TourActions({
   };
 
   const handleScheduleTour = (tour: Tour) => {
-    openDrawer(<ScheduleForm />, "Schedule Tour");
+    openDrawer(<ScheduleForm tourId={tour.id} />, "Schedule Tour");
   };
 
   return {

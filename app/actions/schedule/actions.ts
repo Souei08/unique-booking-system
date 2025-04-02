@@ -1,11 +1,12 @@
 "use server";
 
+import { addDays, format } from "date-fns";
 import { createClient } from "@/supabase/server";
 
 export interface Schedule {
   id?: string;
   tour_id: string;
-  date: string;
+  date: Date;
   max_slots: number;
   start_time: string;
 }
@@ -15,84 +16,110 @@ interface SuccessResponse {
   message?: string;
 }
 
-type Weekday =
-  | "Monday"
-  | "Tuesday"
-  | "Wednesday"
-  | "Thursday"
-  | "Friday"
-  | "Saturday"
-  | "Sunday";
-
-interface WeekdaySchedule {
-  day: Weekday;
-  time: string;
-}
-
-export const generateTourSchedules = async (
+export const saveRecurringSchedules = async (
   tourId: string,
-  weekdaySchedules: WeekdaySchedule[]
-): Promise<SuccessResponse> => {
+  schedules: { weekday: string; start_time: string }[]
+) => {
   const supabase = await createClient();
 
-  try {
-    const { data: tour, error: tourError } = await supabase
-      .from("tours")
-      .select("id, slots")
-      .eq("id", tourId)
-      .single();
+  // Remove existing rules first
+  const { error: deleteError } = await supabase
+    .from("tour_schedules")
+    .delete()
+    .eq("tour_id", tourId);
 
-    console.log("Tour data:", tour);
-    console.log("Tour error:", tourError);
+  if (deleteError) return { success: false, message: deleteError.message };
 
-    if (tourError || !tour) throw new Error("Tour not found");
+  // Insert new ones
+  const { error: insertError } = await supabase.from("tour_schedules").insert(
+    schedules.map((s) => ({
+      tour_id: tourId,
+      weekday: s.weekday,
+      start_time: s.start_time,
+    }))
+  );
 
-    const schedules: Schedule[] = [];
-    const today = new Date();
-    const currentYear = today.getFullYear();
+  if (insertError) return { success: false, message: insertError.message };
 
-    // Map weekday names to their corresponding numbers
-    const weekdayMap: Record<Weekday, number> = {
-      Sunday: 0,
-      Monday: 1,
-      Tuesday: 2,
-      Wednesday: 3,
-      Thursday: 4,
-      Friday: 5,
-      Saturday: 6,
-    };
-
-    // Generate schedules for the whole year
-    const totalWeeks = 52; // weeks in a year
-
-    for (let week = 1; week <= totalWeeks; week++) {
-      weekdaySchedules.forEach(({ day, time }) => {
-        const dayNumber = weekdayMap[day];
-        const tourDate = getDateFromWeek(currentYear, week, dayNumber);
-
-        // Only add future dates
-        if (new Date(tourDate) >= today) {
-          schedules.push({
-            tour_id: tour.id,
-            date: tourDate,
-            max_slots: tour.slots,
-            start_time: time,
-          });
-        }
-      });
-    }
-
-    const { error: insertError } = await supabase
-      .from("tour_schedules")
-      .insert(schedules);
-    if (insertError) throw insertError;
-
-    console.log("Schedules created");
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
+  return { success: true };
 };
+
+export const getRecurringSchedules = async (tourId: string) => {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("tour_schedules")
+    .select("weekday, start_time")
+    .eq("tour_id", tourId);
+
+  if (error) return [];
+
+  return data.map((s) => ({
+    weekday: s.weekday,
+    start_time: s.start_time,
+  }));
+};
+
+export const getAvailableTourSchedules = async (
+  tourId: string,
+  daysAhead = 365
+) => {
+  const supabase = await createClient();
+
+  const { data: rules, error } = await supabase
+    .from("tour_schedules")
+    .select("weekday, start_time")
+    .eq("tour_id", tourId);
+
+  if (error || !rules) {
+    return {
+      success: false,
+      message: error?.message || "No recurring schedules found",
+    };
+  }
+
+  const weekdayMap: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+
+  const today = new Date();
+  const futureDates: {
+    id: string;
+    tour_id: string;
+    date: string;
+    start_time: string;
+    max_slots: number;
+  }[] = [];
+
+  for (let i = 0; i <= daysAhead; i++) {
+    const date = addDays(today, i);
+    const weekday = date.getDay();
+
+    rules.forEach((rule) => {
+      if (weekdayMap[rule.weekday] === weekday) {
+        futureDates.push({
+          id: `${tourId}-${date.toISOString().split("T")[0]}-${
+            rule.start_time
+          }`,
+          tour_id: tourId,
+          date: date.toISOString().split("T")[0],
+          start_time: rule.start_time,
+          max_slots: 8,
+        });
+      }
+    });
+  }
+
+  return { success: true, schedules: futureDates };
+};
+
+// ===================================================================================
 
 export const bookTour = async (
   userId: string,
@@ -131,29 +158,4 @@ export const bookTour = async (
   } catch (error: any) {
     return { success: false, message: error.message };
   }
-};
-
-export const getAvailableTourSchedules = async (
-  tourId: string
-): Promise<{ success: boolean; schedules?: Schedule[]; message?: string }> => {
-  const supabase = await createClient();
-
-  try {
-    const { data: schedules, error } = await supabase
-      .from("tour_schedules")
-      .select("id, tour_id, date, max_slots, start_time")
-      .eq("tour_id", tourId);
-
-    if (error) throw error;
-
-    return { success: true, schedules };
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
-};
-
-const getDateFromWeek = (year: number, week: number, day: number): string => {
-  const firstJan = new Date(year, 0, 1);
-  const daysOffset = (week - 1) * 7 + (day - firstJan.getDay());
-  return new Date(year, 0, 1 + daysOffset).toISOString().split("T")[0];
 };
