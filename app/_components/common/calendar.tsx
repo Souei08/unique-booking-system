@@ -90,7 +90,6 @@ export const Calendar: React.FC<CalendarProps> = ({
   onEventClick,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"day" | "week" | "month">("month");
 
   // Get calendar data for current month
   const getDaysInMonth = (date: Date) => {
@@ -216,87 +215,49 @@ export const Calendar: React.FC<CalendarProps> = ({
       <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 xl:px-14">
         {/* Calendar Header */}
         <div className="flex items-center justify-between gap-3 mb-5">
-          <div className="flex items-center gap-4">
-            <h5 className="text-xl leading-8 font-semibold text-gray-900">
-              {formatMonth(currentDate)}
-            </h5>
-            <div className="flex items-center gap-2">
-              <button
-                className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
-                onClick={() => navigateMonth("prev")}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <path
-                    d="M10.0002 11.9999L6 7.99971L10.0025 3.99719"
-                    stroke="currentcolor"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              <button
-                className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
-                onClick={() => navigateMonth("next")}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <path
-                    d="M6.00236 3.99707L10.0025 7.99723L6 11.9998"
-                    stroke="currentcolor"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* View Controls */}
-          <div className="hidden md:flex items-center gap-px p-1 rounded-md bg-gray-100">
-            <button
-              className={`py-2.5 px-5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                view === "day"
-                  ? "bg-white text-gray-900"
-                  : "bg-gray-100 text-gray-900 hover:bg-white"
-              }`}
-              onClick={() => setView("day")}
+          <button
+            className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
+            onClick={() => navigateMonth("prev")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
             >
-              Day
-            </button>
-            <button
-              className={`py-2.5 px-5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                view === "week"
-                  ? "bg-white text-gray-900"
-                  : "bg-gray-100 text-gray-900 hover:bg-white"
-              }`}
-              onClick={() => setView("week")}
+              <path
+                d="M10.0002 11.9999L6 7.99971L10.0025 3.99719"
+                stroke="currentcolor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <h5 className="text-xl leading-8 font-semibold text-gray-900 text-center flex-grow">
+            {formatMonth(currentDate)}
+          </h5>
+          <button
+            className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
+            onClick={() => navigateMonth("next")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
             >
-              Week
-            </button>
-            <button
-              className={`py-2.5 px-5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                view === "month"
-                  ? "bg-white text-gray-900"
-                  : "bg-gray-100 text-gray-900 hover:bg-white"
-              }`}
-              onClick={() => setView("month")}
-            >
-              Month
-            </button>
-          </div>
+              <path
+                d="M6.00236 3.99707L10.0025 7.99723L6 11.9998"
+                stroke="currentcolor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
 
         {/* Calendar Grid */}

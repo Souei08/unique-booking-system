@@ -33,6 +33,7 @@ export function TourTable({ tours, columns }: TourTableProps) {
       description="View and manage all available tours"
       isCollapsible={true}
       buttonText="Add Tour"
+      handleAdd={actions.handleAddTour}
       handleEdit={actions.handleEditTour}
       handleSchedule={actions.handleScheduleTour}
     />

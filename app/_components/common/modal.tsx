@@ -27,7 +27,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4 sm:p-6 lg:p-8">
         <div
           ref={modalRef}
-          className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 max-w-full sm:max-w-lg lg:max-w-3xl w-full mx-4 transition-transform transform scale-95"
+          className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 max-w-full sm:max-w-lg lg:max-w-[70%] w-full mx-4 transition-transform transform scale-95"
         >
           {title && (
             <div className="flex justify-between items-center mb-4 border-b pb-2">

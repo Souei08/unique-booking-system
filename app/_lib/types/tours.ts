@@ -3,17 +3,15 @@ export interface Tour {
   title: string;
   description: string;
   duration: number;
-  group_size: number;
+  group_size_limit: number;
   slots: number;
-  schedule: string[];
   rate: number;
   experience_level: "beginner" | "advanced" | "all";
-  cantering_allowed: boolean;
   weight_limit: number;
-  min_age: number;
   location: string;
   includes: string[];
   booking_link: string;
+  category: string;
   created_at: string;
 }
 

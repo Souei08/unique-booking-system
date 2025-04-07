@@ -19,19 +19,19 @@ interface NavigationItem {
   roles: string[]; // Allowed roles
 }
 
-// Define navigation items with role-based access
-const navigationItems: NavigationItem[] = [
+// Define admin and staff navigation items
+const adminStaffNavigationItems: NavigationItem[] = [
   {
     name: "Dashboard",
     href: "/dashboard",
     icon: HomeIcon,
-    roles: ["admin", "staff", "customer"],
+    roles: ["admin", "staff"],
   },
   {
     name: "Bookings",
     href: "/dashboard/bookings",
     icon: CalendarIcon,
-    roles: ["admin", "staff", "customer"],
+    roles: ["admin", "staff"],
   },
   {
     name: "Tours",
@@ -59,6 +59,28 @@ const navigationItems: NavigationItem[] = [
   },
 ];
 
+// Define customer navigation items
+const customerNavigationItems: NavigationItem[] = [
+  {
+    name: "My Bookings",
+    href: "/dashboard/bookings",
+    icon: CalendarIcon,
+    roles: ["customer"],
+  },
+  {
+    name: "Available Tours",
+    href: "/dashboard/customer/tours",
+    icon: GlobeAmericasIcon,
+    roles: ["customer"],
+  },
+  {
+    name: "Available Rentals",
+    href: "/dashboard/customer/rentals",
+    icon: BuildingOfficeIcon,
+    roles: ["customer"],
+  },
+];
+
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
@@ -67,6 +89,12 @@ export const Navigation = ({ user }: { user: any }) => {
   const userRole = user?.role;
 
   if (!userRole) return null; // Hide sidebar if no user
+
+  // Combine navigation items based on user role
+  const navigationItems =
+    userRole === "customer"
+      ? customerNavigationItems
+      : adminStaffNavigationItems;
 
   // Filter navigation based on user role
   const filteredNavigation = navigationItems.filter((item) =>

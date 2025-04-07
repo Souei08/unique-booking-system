@@ -20,6 +20,7 @@ interface TableProps<T extends object> {
     isHiddenOnMobile?: boolean;
   }>;
   isCollapsible?: boolean; // New parameter to control collapsibility
+  handleAdd: () => void;
   handleEdit: (item: T) => void;
   handleSchedule: (item: T) => void;
 }
@@ -35,6 +36,7 @@ export default function Table<T extends object>({
   data,
   columns,
   isCollapsible = false, // Default to non-collapsible
+  handleAdd,
   handleEdit,
   handleSchedule,
 }: TableProps<T>) {
@@ -52,10 +54,6 @@ export default function Table<T extends object>({
     });
   };
 
-  const handleButtonClick = () => {
-    console.log("Button clicked!");
-  };
-
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center">
@@ -67,7 +65,7 @@ export default function Table<T extends object>({
           <button
             type="button"
             className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand cursor-pointer"
-            onClick={handleButtonClick}
+            onClick={handleAdd}
           >
             {buttonText}
           </button>

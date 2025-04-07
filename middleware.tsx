@@ -26,8 +26,32 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Allow all requests to auth routes
-  if (request.nextUrl.pathname.startsWith("/auth")) {
+  const path = request.nextUrl.pathname;
+
+  // Redirect authenticated users away from auth pages
+  if (path.startsWith("/auth")) {
+    if (user) {
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("role")
+        .eq("supabase_id", user.id)
+        .single();
+
+      if (!error && userData?.role) {
+        if (userData.role === "customer") {
+          return NextResponse.redirect(
+            new URL("/dashboard/customers", request.url)
+          );
+        } else {
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+      }
+
+      // fallback if error or no user role
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    // User not logged in, allow access to auth routes
     return response;
   }
 
@@ -76,6 +100,8 @@ export async function middleware(request: NextRequest) {
 // Apply middleware to API routes and protected pages
 export const config = {
   matcher: [
+    // "/",
+    "/auth/:path*",
     "/api/:path*", // Protect all API routes
     "/dashboard/:path*", // Protect dashboard pages
   ],

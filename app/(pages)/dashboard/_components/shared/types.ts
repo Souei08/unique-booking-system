@@ -1,4 +1,3 @@
-import React from "react";
 import type { ForwardRefExoticComponent, SVGProps, RefAttributes } from "react";
 
 export interface NavigationItem {
