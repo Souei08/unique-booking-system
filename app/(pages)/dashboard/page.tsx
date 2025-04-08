@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { RecentBookings } from "./_components/Bookings/RecentBookings";
-import { BookingsTable } from "./_components/Bookings/BookingsTable";
+// import { BookingsTable } from "./_components/Bookings/BookingsTable";
 import { BookingsList } from "./_components/Bookings/BookingsList";
 import { bookings } from "./_data/bookingsData";
 
@@ -81,7 +81,7 @@ const AdminPage = () => {
         {/* Bookings Content */}
         <RecentBookings bookings={featuredBookings} />
         <BookingsList bookings={bookings} className="sm:hidden" />
-        <BookingsTable bookings={bookings} className="hidden sm:block" />
+        {/* <BookingsTable bookings={bookings} className="hidden sm:block" /> */}
       </div>
     </main>
   );
