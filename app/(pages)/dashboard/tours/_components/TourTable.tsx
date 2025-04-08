@@ -35,6 +35,7 @@ export function TourTable({ tours, columns }: TourTableProps) {
       buttonText="Add Tour"
       handleEdit={actions.handleEditTour}
       handleSchedule={actions.handleScheduleTour}
+      handleAdd={actions.handleAddTour}
     />
   );
 }

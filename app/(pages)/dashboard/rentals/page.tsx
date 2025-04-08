@@ -72,6 +72,7 @@ const RentalsPage = () => {
           buttonText="Add Rental"
           handleEdit={() => {}}
           handleSchedule={() => {}}
+          handleAdd={() => {}}
         />
       </div>
     </main>

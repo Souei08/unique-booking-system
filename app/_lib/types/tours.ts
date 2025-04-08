@@ -5,16 +5,14 @@ export interface Tour {
   duration: number;
   group_size: number;
   slots: number;
-  schedule: string[];
   rate: number;
   experience_level: "beginner" | "advanced" | "all";
-  cantering_allowed: boolean;
   weight_limit: number;
-  min_age: number;
   location: string;
   includes: string[];
   booking_link: string;
   created_at: string;
+  category: string;
 }
 
 export type CreateTourDTO = Omit<Tour, "id" | "created_at">;

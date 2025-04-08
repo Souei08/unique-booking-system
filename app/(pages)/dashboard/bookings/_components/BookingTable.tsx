@@ -35,6 +35,7 @@ export function BookingTable({ bookings, columns }: BookingTableProps) {
       buttonText="Add Booking"
       handleEdit={actions.handleEditBooking}
       handleSchedule={actions.handleScheduleBooking}
+      handleAdd={actions.handleAddBooking}
     />
   );
 }

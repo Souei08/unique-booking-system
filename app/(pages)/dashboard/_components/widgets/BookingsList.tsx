@@ -1,5 +1,19 @@
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
-import type { Booking } from "../shared/types";
+
+export interface Booking {
+  id: number;
+  title: string;
+  time: string;
+  service: string;
+  duration: string;
+  startTime: string;
+  endTime: string;
+  date: string;
+  status: string;
+  price: string;
+  featured: boolean;
+  bgColorClass: string;
+}
 
 interface BookingsListProps {
   bookings: Booking[];

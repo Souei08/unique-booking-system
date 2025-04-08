@@ -30,6 +30,7 @@ const CustomersPage = () => {
           buttonText="Add User"
           handleEdit={() => {}}
           handleSchedule={() => {}}
+          handleAdd={() => {}}
         />
       </div>
     </main>

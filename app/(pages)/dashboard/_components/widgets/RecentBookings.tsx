@@ -1,6 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { EllipsisVerticalIcon, CalendarIcon } from "@heroicons/react/20/solid";
-import type { Booking } from "../shared/types";
+import type { Booking } from "./BookingsList";
 
 interface RecentBookingsProps {
   bookings: Booking[];
@@ -39,7 +39,8 @@ export const RecentBookings = ({ bookings }: RecentBookingsProps) => {
                 >
                   {booking.service}
                 </a>
-                <p className="text-gray-500">{booking.customer.name}</p>
+                {/* <p className="text-gray-500">{booking.customer.name}</p> */}
+                <p className="text-gray-500">John Doe</p>
                 <p className="text-gray-500">
                   {booking.date} • {booking.startTime} - {booking.endTime}
                 </p>

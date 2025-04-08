@@ -9,14 +9,13 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 
-import { RecentBookings } from "./_components/Bookings/RecentBookings";
+import { RecentBookings } from "./_components/widgets/RecentBookings";
 // import { BookingsTable } from "./_components/Bookings/BookingsTable";
-import { BookingsList } from "./_components/Bookings/BookingsList";
-import { bookings } from "./_data/bookingsData";
+import { BookingsList } from "./_components/widgets/BookingsList";
 
 const AdminPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const featuredBookings = bookings.filter((booking) => booking.featured);
+  // const featuredBookings = bookings.filter((booking) => booking.featured);
 
   return (
     <main className="flex-1">
@@ -79,8 +78,8 @@ const AdminPage = () => {
         </div>
 
         {/* Bookings Content */}
-        <RecentBookings bookings={featuredBookings} />
-        <BookingsList bookings={bookings} className="sm:hidden" />
+        {/* <RecentBookings bookings={featuredBookings} /> */}
+        {/* <BookingsList bookings={bookings} className="sm:hidden" /> */}
         {/* <BookingsTable bookings={bookings} className="hidden sm:block" /> */}
       </div>
     </main>
