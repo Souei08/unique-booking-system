@@ -1,11 +1,8 @@
 import React from "react";
-import { toursService } from "@/app/_services/tours/service";
+import { getAllTours } from "@/app/actions/tours/actions";
 
 const CustomerPage = async () => {
-  const tours = await toursService.findAll({
-    orderBy: "created_at",
-    ascending: false,
-  });
+  const tours = await getAllTours();
 
   // Transform tours data to match the expected booking format
   const bookings = tours.map((tour: any) => ({

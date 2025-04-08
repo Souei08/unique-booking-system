@@ -7,6 +7,7 @@ interface CalendarEvent {
   time?: string;
   color?: string;
   status?: "pending" | "completed" | "cancelled";
+  max_slots?: number;
 }
 
 interface CalendarProps {
@@ -64,18 +65,29 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
           <button
             key={event.id}
             onClick={() => onEventClick(event)}
-            className={`${event.color || "bg-blue-500"} ${
-              event.status === "completed" ? "opacity-75" : ""
-            } ${
-              event.status === "cancelled" ? "opacity-50 line-through" : ""
-            } text-white text-xs p-1 rounded truncate text-left hover:opacity-90 transition-opacity`}
-            title={`${event.title} - ${event.time} (${
-              event.status || "pending"
-            })`}
+            className="cursor-pointer p-2 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors duration-200"
+            // title={`Available Slots: ${event.max_slots}`}
           >
-            {event.time && <span className="mr-1">{event.time}</span>}
-            {event.title}
+            <span className="text-sm font-medium text-blue-700">
+              {event.max_slots} slots available
+            </span>
           </button>
+
+          // <button
+          //   key={event.id}
+          //   onClick={() => onEventClick(event)}
+          //   className={`${event.color || "bg-blue-500"} ${
+          //     event.status === "completed" ? "opacity-75" : ""
+          //   } ${
+          //     event.status === "cancelled" ? "opacity-50 line-through" : ""
+          //   } text-white text-xs p-1 rounded truncate text-left hover:opacity-90 transition-opacity`}
+          //   title={`${event.title} - ${event.time} (${
+          //     event.status || "pending"
+          //   })`}
+          // >
+          //   {event.time && <span className="mr-1">{event.time}</span>}
+          //   {event.title}
+          // </button>
         ))}
       </div>
     </div>
@@ -90,7 +102,6 @@ export const Calendar: React.FC<CalendarProps> = ({
   onEventClick,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<"day" | "week" | "month">("month");
 
   // Get calendar data for current month
   const getDaysInMonth = (date: Date) => {
@@ -103,6 +114,12 @@ export const Calendar: React.FC<CalendarProps> = ({
 
     // Get current date for comparison
     const today = new Date();
+    // Set today to midnight to compare only the date part without time
+    const todayWithoutTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
 
@@ -112,38 +129,33 @@ export const Calendar: React.FC<CalendarProps> = ({
 
     // Get days from previous month (only if current month)
     const prevMonthDays = [];
-    if (isCurrentMonthAndYear) {
-      const prevMonth = new Date(year, month - 1, 0);
-      const prevMonthLastDay = prevMonth.getDate();
-      for (let i = startingDay - 1; i >= 0; i--) {
-        prevMonthDays.push({
-          date: prevMonthLastDay - i,
-          isCurrentMonth: false,
-          isPast: true,
-        });
-      }
-    } else {
-      // Fill with empty cells for non-current months
-      for (let i = startingDay - 1; i >= 0; i--) {
-        prevMonthDays.push({
-          date: 0, // Empty cell
-          isCurrentMonth: false,
-          isPast: true,
-        });
-      }
+    // Always use empty cells for previous month days
+    for (let i = startingDay - 1; i >= 0; i--) {
+      prevMonthDays.push({
+        date: 0, // Empty cell
+        isCurrentMonth: false,
+        isPast: true,
+      });
     }
 
     // Get days from current month
     const currentMonthDays = [];
     for (let i = 1; i <= daysInMonth; i++) {
       const dayDate = new Date(year, month, i);
+      // Set dayDate to midnight to compare only the date part without time
+      const dayDateWithoutTime = new Date(
+        dayDate.getFullYear(),
+        dayDate.getMonth(),
+        dayDate.getDate()
+      );
 
       // Only show days if it's current month or future months
-      if (isCurrentMonthAndYear || dayDate > today) {
+      if (isCurrentMonthAndYear || dayDateWithoutTime >= todayWithoutTime) {
         currentMonthDays.push({
           date: i,
           isCurrentMonth: true,
-          isPast: isCurrentMonthAndYear && dayDate < today,
+          isPast:
+            isCurrentMonthAndYear && dayDateWithoutTime < todayWithoutTime,
         });
       } else {
         currentMonthDays.push({
@@ -196,19 +208,35 @@ export const Calendar: React.FC<CalendarProps> = ({
 
   // Update getEventsForDay to only return events for valid dates
   const getEventsForDay = (date: Date) => {
-    if (!date || date.getTime() === 0) return []; // Return empty array for empty cells
+    // Return empty array for invalid dates or empty cells
+    if (!date || date.getTime() === 0 || isNaN(date.getTime())) return [];
 
     const today = new Date();
-    // Only return events for current or future dates
-    if (date < today) return [];
-
-    return events.filter(
-      (event) => event.date.toDateString() === date.toDateString()
+    // Set both dates to midnight to compare only the date part without time
+    const dateWithoutTime = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
     );
-  };
+    const todayWithoutTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
 
-  const handleEventClick = (event: CalendarEvent) => {
-    // Implementation of handleEventClick
+    // Only return events for current or future dates
+    if (dateWithoutTime < todayWithoutTime) return [];
+
+    return events.filter((event) => {
+      // Also normalize event dates for comparison
+      const eventDate = new Date(event.date);
+      const eventDateWithoutTime = new Date(
+        eventDate.getFullYear(),
+        eventDate.getMonth(),
+        eventDate.getDate()
+      );
+      return eventDateWithoutTime.getTime() === dateWithoutTime.getTime();
+    });
   };
 
   return (
@@ -216,87 +244,49 @@ export const Calendar: React.FC<CalendarProps> = ({
       <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 xl:px-14">
         {/* Calendar Header */}
         <div className="flex items-center justify-between gap-3 mb-5">
-          <div className="flex items-center gap-4">
-            <h5 className="text-xl leading-8 font-semibold text-gray-900">
-              {formatMonth(currentDate)}
-            </h5>
-            <div className="flex items-center gap-2">
-              <button
-                className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
-                onClick={() => navigateMonth("prev")}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <path
-                    d="M10.0002 11.9999L6 7.99971L10.0025 3.99719"
-                    stroke="currentcolor"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-              <button
-                className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
-                onClick={() => navigateMonth("next")}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                >
-                  <path
-                    d="M6.00236 3.99707L10.0025 7.99723L6 11.9998"
-                    stroke="currentcolor"
-                    strokeWidth="1.3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* View Controls */}
-          <div className="hidden md:flex items-center gap-px p-1 rounded-md bg-gray-100">
-            <button
-              className={`py-2.5 px-5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                view === "day"
-                  ? "bg-white text-gray-900"
-                  : "bg-gray-100 text-gray-900 hover:bg-white"
-              }`}
-              onClick={() => setView("day")}
+          <button
+            className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
+            onClick={() => navigateMonth("prev")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
             >
-              Day
-            </button>
-            <button
-              className={`py-2.5 px-5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                view === "week"
-                  ? "bg-white text-gray-900"
-                  : "bg-gray-100 text-gray-900 hover:bg-white"
-              }`}
-              onClick={() => setView("week")}
+              <path
+                d="M10.0002 11.9999L6 7.99971L10.0025 3.99719"
+                stroke="currentcolor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <h5 className="text-xl leading-8 font-semibold text-gray-900 text-center flex-1">
+            {formatMonth(currentDate)}
+          </h5>
+          <button
+            className="text-gray-500 rounded transition-all duration-300 hover:bg-gray-100 hover:text-gray-900"
+            onClick={() => navigateMonth("next")}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
             >
-              Week
-            </button>
-            <button
-              className={`py-2.5 px-5 rounded-lg text-sm font-medium transition-all duration-300 ${
-                view === "month"
-                  ? "bg-white text-gray-900"
-                  : "bg-gray-100 text-gray-900 hover:bg-white"
-              }`}
-              onClick={() => setView("month")}
-            >
-              Month
-            </button>
-          </div>
+              <path
+                d="M6.00236 3.99707L10.0025 7.99723L6 11.9998"
+                stroke="currentcolor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
 
         {/* Calendar Grid */}

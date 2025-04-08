@@ -1,115 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Calendar } from "@/app/_components/common/calendar";
-import ScheduleForm from "@/app/_components/forms/schedule/ScheduleForm";
-import EventModal from "./EventModal";
+import BookingSummary from "./BookingSummary";
 import { transformSchedulesToEvents } from "@/app/_lib/utils/schedule";
 import type { CalendarEvent } from "./types";
+import { getRemainingSlots } from "@/app/actions/schedule/actions";
 
 interface CalendarClientProps {
   initialSchedules: any[];
   tourId: string;
+  rate: number;
 }
 
 export default function CalendarClient({
   initialSchedules,
   tourId,
+  rate,
 }: CalendarClientProps) {
-  const [events, setEvents] = useState<CalendarEvent[]>(
-    transformSchedulesToEvents(initialSchedules)
-  );
+  // Transform the schedules and ensure dates are properly parsed
+  const events: CalendarEvent[] = (() => {
+    // Ensure we have valid date strings before parsing
+    const schedulesWithValidDates = initialSchedules.map((schedule) => ({
+      ...schedule,
+      date:
+        typeof schedule.date === "string"
+          ? schedule.date
+          : new Date(schedule.date).toISOString().split("T")[0],
+    }));
+    return transformSchedulesToEvents(schedulesWithValidDates);
+  })();
+
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"calendar" | "form">("calendar");
+  const [remainingSlots, setRemainingSlots] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleEventClick = (event: CalendarEvent) => {
+  const handleEventClick = async (event: CalendarEvent) => {
     setSelectedEvent(event);
-    setIsModalOpen(true);
+    setIsLoading(true);
+    try {
+      // Extract date and time from the event
+      const dateStr =
+        event.date instanceof Date
+          ? event.date.toISOString().split("T")[0]
+          : event.date;
+
+      const timeStr = event.time || "";
+
+      const result = await getRemainingSlots(tourId, dateStr, timeStr);
+      if (result.success && result.remaining !== undefined) {
+        setRemainingSlots(result.remaining);
+      } else {
+        console.error("Error fetching remaining slots:", result.message);
+        setRemainingSlots(null);
+      }
+    } catch (error) {
+      console.error("Error fetching remaining slots:", error);
+      setRemainingSlots(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleStatusChange = (
-    event: CalendarEvent,
-    newStatus: CalendarEvent["status"]
-  ) => {
-    const updatedEvent = { ...event, status: newStatus };
-    handleEventEdit(updatedEvent);
-  };
+  const handleCheckout = async () => {
+    if (!selectedEvent || !remainingSlots) return;
 
-  const handleEventEdit = (updatedEvent: CalendarEvent) => {
-    setEvents((prevEvents) =>
-      prevEvents.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
-    );
-  };
-
-  const handleEventDelete = (eventId: string) => {
-    if (confirm("Are you sure you want to delete this event?")) {
-      setEvents((prevEvents) =>
-        prevEvents.filter((event) => event.id !== eventId)
-      );
-      setIsModalOpen(false);
+    try {
+      // Here you would typically redirect to a checkout page or handle the booking process
+      // For now, we'll just show an alert
+      alert("Proceeding to checkout...");
+    } catch (error) {
+      console.error("Error during checkout:", error);
+      alert("An error occurred during checkout. Please try again.");
     }
   };
 
   return (
-    <>
-      <div className="flex gap-4 mb-6 border-b">
-        <button
-          className={`pb-2 px-4 font-medium border-b-2 transition-all duration-300 ${
-            activeTab === "calendar"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-blue-600"
-          }`}
-          onClick={() => setActiveTab("calendar")}
-        >
-          Calendar View
-        </button>
-        <button
-          className={`pb-2 px-4 font-medium border-b-2 transition-all duration-300 ${
-            activeTab === "form"
-              ? "border-blue-600 text-blue-600"
-              : "border-transparent text-gray-500 hover:text-blue-600"
-          }`}
-          onClick={() => setActiveTab("form")}
-        >
-          Manage Recurring Schedule
-        </button>
-      </div>
-
-      {activeTab === "calendar" && (
+    <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex-1">
         <Calendar
           events={events}
           onEventAdd={() => {}}
-          onEventEdit={handleEventEdit}
-          onEventDelete={handleEventDelete}
+          onEventEdit={() => {}}
+          onEventDelete={() => {}}
           onEventClick={handleEventClick}
         />
-      )}
-
-      {activeTab === "form" && (
-        <ScheduleForm
-          tourId={tourId}
-          //   onSubmitSuccess={() => setActiveTab("calendar")}
+      </div>
+      <div className="lg:w-96">
+        <BookingSummary
+          selectedEvent={selectedEvent}
+          rate={rate}
+          onCheckout={handleCheckout}
+          remainingSlots={remainingSlots}
+          isLoading={isLoading}
         />
-      )}
-
-      {selectedEvent && (
-        <EventModal
-          event={selectedEvent}
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedEvent(null);
-          }}
-          onEdit={handleEventEdit}
-          onDelete={handleEventDelete}
-          onStatusChange={handleStatusChange}
-        />
-      )}
-    </>
+      </div>
+    </div>
   );
 }

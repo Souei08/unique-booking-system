@@ -12,8 +12,6 @@ export function transformSchedulesToEvents(schedules: any[]): CalendarEvent[] {
         title: `Tour Schedule`,
         date: eventDate,
         time: schedule.start_time,
-        color: "bg-blue-500",
-        status: "pending",
         max_slots: schedule.max_slots,
         tour_id: schedule.tour_id,
         description: `Available Slots: ${schedule.max_slots}`,
