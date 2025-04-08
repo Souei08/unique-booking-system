@@ -18,23 +18,24 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
 });
-
 export const metadata: Metadata = {
-  title: "Unique Tours And Rentals",
-  description: "Find and book unique tours and rental experiences",
+  title: "Wentech",
+  description: "Wentech - Your gateway to unique tours and rental experiences",
   keywords: ["tours", "rentals", "experiences", "travel", "booking"],
-  authors: [{ name: "Unique Tours And Rentals" }],
-  creator: "Unique Tours And Rentals",
-  publisher: "Unique Tours And Rentals",
+  authors: [{ name: "Wentech" }],
+  creator: "Wentech",
+  publisher: "Wentech",
   openGraph: {
-    title: "Unique Tours And Rentals",
-    description: "Find and book unique tours and rental experiences",
+    title: "Wentech",
+    description:
+      "Wentech - Your gateway to unique tours and rental experiences",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Unique Tours And Rentals",
-    description: "Find and book unique tours and rental experiences",
+    title: "Wentech",
+    description:
+      "Wentech - Your gateway to unique tours and rental experiences",
   },
 };
 

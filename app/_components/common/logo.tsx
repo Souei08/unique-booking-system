@@ -4,11 +4,11 @@ import Image from "next/image";
 const CompanyLogo = () => {
   return (
     <Image
-      alt="Your Company"
-      src="/logo/unique_logo-removebg-preview-2.png"
-      className="h-8 w-auto"
-      width={100}
-      height={100}
+      alt="Wentech"
+      src="/logo/wentech-logo-removebg-preview.png"
+      className="h-20 w-auto"
+      width={400}
+      height={400}
     />
   );
 };
