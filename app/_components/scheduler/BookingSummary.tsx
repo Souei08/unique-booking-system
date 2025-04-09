@@ -7,6 +7,7 @@ interface BookingSummaryProps {
   onCheckout: () => void;
   remainingSlots: number | null;
   isLoading: boolean;
+  showSubmitButton?: boolean;
 }
 
 export default function BookingSummary({
@@ -15,6 +16,7 @@ export default function BookingSummary({
   onCheckout,
   remainingSlots,
   isLoading,
+  showSubmitButton = false,
 }: BookingSummaryProps) {
   const [slots, setSlots] = useState(1);
 
@@ -104,7 +106,11 @@ export default function BookingSummary({
           className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
           disabled={!canBook || isLoading}
         >
-          {isLoading ? "Loading..." : "Proceed to Checkout"}
+          {isLoading
+            ? "Loading..."
+            : showSubmitButton
+            ? "Submit"
+            : "Proceed to Checkout"}
         </button>
       </div>
     </div>

@@ -65,11 +65,13 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
           <button
             key={event.id}
             onClick={() => onEventClick(event)}
-            className="cursor-pointer p-2 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors duration-200"
+            className="cursor-pointer p-2 bg-fill rounded-md hover:bg-brand  text-strong hover:text-white transition-colors duration-200 mt-2"
             // title={`Available Slots: ${event.max_slots}`}
           >
-            <span className="text-sm font-medium text-blue-700">
-              {event.max_slots} slots available
+            <span className="text-sm font-medium ">
+              {event.max_slots}
+              <br />
+              Slots
             </span>
           </button>
 

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { useState } from "react";
 
-import AuthForm from "./authForm";
+import AuthForm from "./authFormDesign";
 
 import { registerSchema, RegisterFormValues } from "../validation";
 

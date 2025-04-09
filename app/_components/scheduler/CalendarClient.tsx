@@ -1,22 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Calendar } from "@/app/_components/common/calendar";
-import BookingSummary from "./BookingSummary";
+import { useState } from "react";
+
+import { Calendar } from "@/app/_components/calendar/calendar";
+import BookingSummary from "@/app/_components/scheduler/BookingSummary";
+
 import { transformSchedulesToEvents } from "@/app/_lib/utils/schedule";
-import type { CalendarEvent } from "./types";
 import { getRemainingSlots } from "@/app/actions/schedule/actions";
+
+import type { CalendarEvent } from "./types";
+import { ScheduleData } from "./ScheduleView";
 
 interface CalendarClientProps {
   initialSchedules: any[];
   tourId: string;
   rate: number;
+  onSubmit?: (data: ScheduleData) => void;
+  showSubmitButton?: boolean;
 }
 
 export default function CalendarClient({
   initialSchedules,
   tourId,
   rate,
+  onSubmit,
+  showSubmitButton = false,
 }: CalendarClientProps) {
   // Transform the schedules and ensure dates are properly parsed
   const events: CalendarEvent[] = (() => {
@@ -68,9 +76,17 @@ export default function CalendarClient({
     if (!selectedEvent || !remainingSlots) return;
 
     try {
-      // Here you would typically redirect to a checkout page or handle the booking process
-      // For now, we'll just show an alert
-      alert("Proceeding to checkout...");
+      if (onSubmit) {
+        const scheduleData: ScheduleData = {
+          tourId,
+          rate,
+          schedules: [selectedEvent],
+        };
+        onSubmit(scheduleData);
+      } else {
+        // Default behavior if no onSubmit handler is provided
+        alert("Proceeding to checkout...");
+      }
     } catch (error) {
       console.error("Error during checkout:", error);
       alert("An error occurred during checkout. Please try again.");
@@ -95,6 +111,7 @@ export default function CalendarClient({
           onCheckout={handleCheckout}
           remainingSlots={remainingSlots}
           isLoading={isLoading}
+          showSubmitButton={showSubmitButton}
         />
       </div>
     </div>

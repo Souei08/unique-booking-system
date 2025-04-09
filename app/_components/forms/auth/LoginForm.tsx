@@ -1,12 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-import { loginSchema, LoginFormValues } from "../validation";
+import { loginSchema, LoginFormValues } from "../schemas";
 import { showSuccessToast, showErrorToast } from "@/utils/toastUtils";
-
-import AuthForm from "./authForm";
-
+import BaseForm from "../common/BaseForm";
 import { login } from "@/app/actions/auth/actions";
 
 export default function LoginForm() {
@@ -35,10 +32,10 @@ export default function LoginForm() {
       }
 
       showSuccessToast("Login successful!");
-      router.push("/dashboard"); // Always redirect to /dashboard
+      router.push("/dashboard");
     } catch (error: any) {
       if (error.fieldErrors) {
-        throw error; // Re-throw field errors to be handled by AuthForm
+        throw error; // Re-throw field errors to be handled by BaseForm
       }
       console.error("An unexpected error occurred:", error);
       showErrorToast("An unexpected error occurred. Please try again.");
@@ -46,7 +43,7 @@ export default function LoginForm() {
   };
 
   return (
-    <AuthForm<LoginFormValues>
+    <BaseForm<LoginFormValues>
       schema={loginSchema}
       onSubmit={handleLogin}
       fields={[

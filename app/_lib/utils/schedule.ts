@@ -1,4 +1,4 @@
-import type { CalendarEvent } from "@/app/(pages)/schedule/_components/types";
+import type { CalendarEvent } from "@/app/_components/scheduler/types";
 
 export function transformSchedulesToEvents(schedules: any[]): CalendarEvent[] {
   return schedules

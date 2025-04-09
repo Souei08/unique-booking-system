@@ -30,7 +30,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
           className="bg-white rounded-lg shadow-lg p-4 sm:p-6 lg:p-8 max-w-full sm:max-w-lg lg:max-w-3xl w-full mx-4 transition-transform transform scale-95"
         >
           {title && (
-            <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <div className="flex justify-between items-center mb-10  pb-2">
               <h2 className="text-xl sm:text-2xl font-bold">{title}</h2>
               <button
                 onClick={onClose}
