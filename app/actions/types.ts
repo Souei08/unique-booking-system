@@ -31,9 +31,9 @@ export interface ScheduleRule {
  */
 export interface Tour {
   id: string;
-  name: string;
+  title: string;
   description: string;
-  price: number;
+  rate: number;
   duration: number;
   image_url?: string;
   created_at?: string;

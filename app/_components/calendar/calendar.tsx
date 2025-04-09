@@ -69,7 +69,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
             // title={`Available Slots: ${event.max_slots}`}
           >
             <span className="text-sm font-medium text-blue-700">
-              {event.max_slots} slots available
+              {event.max_slots}
             </span>
           </button>
 
@@ -241,7 +241,7 @@ export const Calendar: React.FC<CalendarProps> = ({
 
   return (
     <section className="relative py-8 sm:p-8">
-      <div className="w-full max-w-7xl mx-auto px-4 lg:px-8 xl:px-14">
+      <div className="w-full">
         {/* Calendar Header */}
         <div className="flex items-center justify-between gap-3 mb-5">
           <button

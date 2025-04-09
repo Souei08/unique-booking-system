@@ -90,15 +90,28 @@ export async function getAvailableTourSchedules(
   try {
     const supabase = await createClient();
 
-    const { data: rules, error } = await supabase
+    const { data: rules, error: rulesError } = await supabase
       .from("tour_schedules")
       .select("weekday, start_time")
       .eq("tour_id", tourId);
 
-    if (error || !rules) {
+    if (rulesError || !rules) {
       return {
         success: false,
-        message: error?.message || "No recurring schedules found",
+        message: rulesError?.message || "No recurring schedules found",
+      };
+    }
+
+    const { data: tour, error: tourError } = await supabase
+      .from("tours")
+      .select("slots")
+      .eq("id", tourId)
+      .single();
+
+    if (tourError || !tour) {
+      return {
+        success: false,
+        message: tourError?.message || "Tour not found",
       };
     }
 
@@ -128,7 +141,7 @@ export async function getAvailableTourSchedules(
             tour_id: tourId,
             date: date,
             start_time: rule.start_time,
-            max_slots: 8,
+            max_slots: tour.slots,
           });
         }
       });

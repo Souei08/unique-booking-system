@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Calendar } from "@/app/_components/calendar/calendar";
-import BookingSummary from "./BookingSummary";
 import { transformSchedulesToEvents } from "@/app/_lib/utils/schedule";
-import type { CalendarEvent } from "./types";
+import type { CalendarEvent } from "../../(pages)/schedule/_components/types";
+
 import { getRemainingSlots } from "@/app/actions/schedule/actions";
 
 interface CalendarClientProps {
@@ -16,6 +16,13 @@ interface CalendarClientProps {
     remainingSlots: number | null;
   }) => void;
   showBookingSummary?: boolean;
+  children: (props: {
+    onCheckout: () => void;
+    rate: number;
+    selectedEvent: CalendarEvent | null;
+    remainingSlots: number | null;
+    isLoading: boolean;
+  }) => React.ReactNode;
 }
 
 export default function CalendarClient({
@@ -24,6 +31,7 @@ export default function CalendarClient({
   rate,
   onSelectionChange,
   showBookingSummary = true,
+  children,
 }: CalendarClientProps) {
   // Transform the schedules and ensure dates are properly parsed
   const events: CalendarEvent[] = (() => {
@@ -115,13 +123,13 @@ export default function CalendarClient({
       </div>
       {showBookingSummary && (
         <div className="lg:w-96">
-          <BookingSummary
-            selectedEvent={selectedEvent}
-            rate={rate}
-            onCheckout={handleCheckout}
-            remainingSlots={remainingSlots}
-            isLoading={isLoading}
-          />
+          {children({
+            selectedEvent,
+            rate,
+            onCheckout: handleCheckout,
+            remainingSlots,
+            isLoading,
+          })}
         </div>
       )}
     </div>

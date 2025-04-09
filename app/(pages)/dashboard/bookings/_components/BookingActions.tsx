@@ -2,6 +2,7 @@
 
 import { useDrawer } from "@/app/context/DrawerContext/useDrawer";
 import { useModal } from "@/app/context/ModalContext/useModal";
+import UpsertBookingForm from "@/app/_components/forms/booking/UpsertBookingForm";
 
 interface BookingActionsProps {
   onAddBooking: () => void;
@@ -18,7 +19,7 @@ export function BookingActions({
   const { openDrawer } = useDrawer();
 
   const handleAddBooking = () => {
-    openModal("", "Add New Booking");
+    openModal(<UpsertBookingForm onSubmit={() => {}} />, "Add New Booking");
   };
 
   const handleEditBooking = () => {
