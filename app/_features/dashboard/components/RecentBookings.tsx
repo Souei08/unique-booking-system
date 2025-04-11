@@ -1,5 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { EllipsisVerticalIcon, CalendarIcon } from "@heroicons/react/20/solid";
+
 import type { Booking } from "./BookingsList";
 
 interface RecentBookingsProps {

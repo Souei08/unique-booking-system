@@ -54,14 +54,6 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
             </div>
           )}
           <div>{children}</div>
-          <div className="flex justify-end mt-4">
-            <button
-              onClick={onClose}
-              className="text-strong hover:text-brand focus:outline-none"
-            >
-              Close
-            </button>
-          </div>
         </div>
       </div>
     </>

@@ -14,40 +14,27 @@ export async function createTourBooking(data: {
   start_time: string;
   spots: number;
   total_price: number;
+  customer_email: string;
 }): Promise<SuccessResponse> {
   const supabase = await createClient();
-  const { tourId, date, start_time, spots, total_price } = data;
+  const { tourId, date, start_time, spots, total_price, customer_email } = data;
 
   if (!tourId || !date || !start_time || !spots || !total_price) {
     return { success: false, message: "Missing fields" };
   }
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    return { success: false, message: "Unauthorized" };
-  }
-
   try {
-    // Get max slots from tour_schedules based on weekday + time
-    const scheduleDay = new Date(date).toLocaleDateString("en-US", {
-      weekday: "long",
-    });
-    const { data: scheduleRule, error: ruleError } = await supabase
-      .from("tour_schedules")
-      .select("max_slots")
-      .eq("tour_id", tourId)
-      .eq("weekday", scheduleDay)
-      .eq("start_time", start_time)
+    // Get max slots from tour table
+    const { data: tour, error: tourError } = await supabase
+      .from("tours")
+      .select("slots")
+      .eq("id", tourId)
       .single();
 
-    if (ruleError || !scheduleRule) {
+    if (tourError || !tour) {
       return {
         success: false,
-        message: "Tour schedule not found for selected day/time.",
+        message: "Tour not found.",
       };
     }
 
@@ -55,10 +42,10 @@ export async function createTourBooking(data: {
       .from("tour_bookings")
       .select("id", { count: "exact" })
       .eq("tour_id", tourId)
-      .eq("date", date)
-      .eq("start_time", start_time);
+      .eq("date", date);
+    // .eq("start_time", start_time);
 
-    if ((currentBookings || 0) + spots > scheduleRule.max_slots) {
+    if ((currentBookings || 0) + spots > tour.slots) {
       return {
         success: false,
         message: "Not enough available slots.",
@@ -68,10 +55,10 @@ export async function createTourBooking(data: {
     const { data: booking, error: bookingError } = await supabase
       .from("tour_bookings")
       .insert({
-        user_id: user.id,
+        user_email: customer_email,
         tour_id: tourId,
         date,
-        start_time,
+        // start_time,
         total_price,
         status: "pending",
       })

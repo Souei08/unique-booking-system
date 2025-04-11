@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { loginWithGoogle } from "@/app/actions/auth/actions";
+import { loginWithGoogle } from "@/app/_api/actions/auth/actions";
 
 const GoogleLoginButton = () => {
   return (

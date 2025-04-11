@@ -5,7 +5,7 @@ import { Calendar } from "@/app/_components/calendar/calendar";
 import BookingSummary from "./BookingSummary";
 import { transformSchedulesToEvents } from "@/app/_lib/utils/schedule";
 import type { CalendarEvent } from "./types";
-import { getRemainingSlots } from "@/app/actions/schedule/actions";
+import { getRemainingSlots } from "@/app/_api/actions/schedule/actions";
 
 interface CalendarClientProps {
   initialSchedules: any[];

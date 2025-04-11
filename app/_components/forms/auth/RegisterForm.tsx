@@ -10,7 +10,7 @@ import { registerSchema, RegisterFormValues } from "../validation";
 
 import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 
-import { signup } from "@/app/actions/auth/actions";
+import { signup } from "@/app/_api/actions/auth/actions";
 
 export default function RegisterForm() {
   const [loading, setLoading] = useState(false);

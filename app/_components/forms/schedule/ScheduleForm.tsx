@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   saveRecurringSchedules,
   getRecurringSchedules,
-} from "@/app/actions/schedule/actions";
+} from "@/app/_api/actions/schedule/actions";
 
 export type Weekday =
   | "Monday"

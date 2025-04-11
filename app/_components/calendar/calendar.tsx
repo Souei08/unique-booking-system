@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface CalendarEvent {
   id: string;
@@ -16,6 +16,7 @@ interface CalendarProps {
   onEventEdit?: (event: CalendarEvent) => void;
   onEventDelete?: (eventId: string) => void;
   onEventClick: (event: CalendarEvent) => void;
+  selectedDate?: Date | null;
 }
 
 interface CalendarDayProps {
@@ -24,6 +25,7 @@ interface CalendarDayProps {
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
   currentDate: Date;
+  isSelected?: boolean;
 }
 
 const CalendarDay: React.FC<CalendarDayProps> = ({
@@ -32,6 +34,7 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
   events,
   onEventClick,
   currentDate,
+  isSelected = false,
 }) => {
   if (date === 0) {
     return <div className="p-3.5 bg-gray-50 border-b border-gray-200" />;
@@ -47,12 +50,16 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
     <div
       className={`p-3.5 ${
         !isCurrentMonth ? "bg-gray-50" : ""
-      } border-b border-gray-200 flex flex-col min-h-[120px] transition-all duration-300 hover:bg-gray-100`}
+      } border-b border-gray-200 flex flex-col min-h-[120px] transition-all duration-300 hover:bg-gray-100 ${
+        isSelected ? "bg-blue-50" : ""
+      }`}
     >
       <span
         className={`text-xs font-semibold ${
-          isToday
+          isToday && !isSelected
             ? "bg-indigo-600 text-white"
+            : isSelected
+            ? "bg-blue-500 text-white"
             : isCurrentMonth
             ? "text-gray-900"
             : "text-gray-500"
@@ -64,7 +71,9 @@ const CalendarDay: React.FC<CalendarDayProps> = ({
         {events.map((event) => (
           <button
             key={event.id}
-            onClick={() => onEventClick(event)}
+            onClick={() => {
+              onEventClick(event);
+            }}
             className="cursor-pointer p-2 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors duration-200"
             // title={`Available Slots: ${event.max_slots}`}
           >
@@ -100,8 +109,18 @@ export const Calendar: React.FC<CalendarProps> = ({
   onEventEdit,
   onEventDelete,
   onEventClick,
+  selectedDate = null,
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  // If selectedDate is provided, navigate to that month
+  useEffect(() => {
+    if (selectedDate) {
+      setCurrentDate(
+        new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+      );
+    }
+  }, [selectedDate]);
 
   // Get calendar data for current month
   const getDaysInMonth = (date: Date) => {
@@ -317,6 +336,13 @@ export const Calendar: React.FC<CalendarProps> = ({
               );
               const dayEvents = getEventsForDay(dayDate);
 
+              // Check if this day is the selected date
+              const isSelected = selectedDate
+                ? dayDate.getDate() === selectedDate.getDate() &&
+                  dayDate.getMonth() === selectedDate.getMonth() &&
+                  dayDate.getFullYear() === selectedDate.getFullYear()
+                : false;
+
               return (
                 <CalendarDay
                   key={index}
@@ -325,6 +351,7 @@ export const Calendar: React.FC<CalendarProps> = ({
                   events={dayEvents}
                   onEventClick={onEventClick}
                   currentDate={currentDate}
+                  isSelected={isSelected}
                 />
               );
             })}

@@ -1,4 +1,4 @@
-import { getAllTours } from "@/app/actions/tours/actions";
+import { getAllTours } from "@/app/_api/actions/tours/actions";
 import { TOUR_TABLE_COLUMNS } from "@/app/_lib/constants/tables";
 import { TourTable } from "./_components/TourTable";
 import { Tour } from "@/app/_lib/types/tours";

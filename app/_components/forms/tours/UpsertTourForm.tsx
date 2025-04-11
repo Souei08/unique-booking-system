@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import TourForm from "./tourForm";
-import { createTour, updateTour } from "@/app/actions/tours/actions";
+import { createTour, updateTour } from "@/app/_api/actions/tours/actions";
 import { CreateTourDTO, UpdateTourDTO, Tour } from "@/app/_lib/types/tours";
 
 // Define the schema for tour creation

@@ -187,7 +187,7 @@ export async function getRemainingSlots(
       .select("id")
       .eq("tour_id", tourId)
       .eq("weekday", weekday)
-      .eq("start_time", startTime)
+      // .eq("start_time", startTime)
       .maybeSingle();
 
     if (!rule) {
@@ -195,19 +195,24 @@ export async function getRemainingSlots(
       return { success: true, remaining: defaultSlots };
     }
 
-    // Count how many bookings exist on that date and time
-    const { count, error: bookingError } = await supabase
+    // Get the sum of slots booked for this tour on this date
+    const { data: bookings, error: bookingError } = await supabase
       .from("tour_bookings")
-      .select("id", { count: "exact" })
+      .select("slots")
       .eq("tour_id", tourId)
-      .eq("date", date)
-      .eq("start_time", startTime);
+      .eq("date", date);
+    // .eq("status", "confirmed"); // Only count confirmed bookings
 
     if (bookingError) {
       return { success: false, remaining: 0, message: bookingError.message };
     }
 
-    const remaining = defaultSlots - (count || 0);
+    // Sum up all the slots booked
+    const bookedSlots = bookings.reduce(
+      (sum, booking) => sum + booking.slots,
+      0
+    );
+    const remaining = defaultSlots - bookedSlots;
 
     return {
       success: true,

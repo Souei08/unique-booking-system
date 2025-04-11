@@ -1,6 +1,6 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/20/solid";
-import { signout } from "@/app/actions/auth/actions"; // Import the signout function
+import { signout } from "@/app/_api/actions/auth/actions"; // Import the signout function
 import Image from "next/image";
 export const UserProfile = ({ user }: { user: any }) => {
   return (

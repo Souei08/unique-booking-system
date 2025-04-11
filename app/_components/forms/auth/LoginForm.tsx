@@ -7,7 +7,7 @@ import { showSuccessToast, showErrorToast } from "@/utils/toastUtils";
 
 import AuthForm from "./authForm";
 
-import { login } from "@/app/actions/auth/actions";
+import { login } from "@/app/_api/actions/auth/actions";
 
 export default function LoginForm() {
   const router = useRouter();

@@ -1,5 +1,5 @@
 import React from "react";
-import { getAllTours } from "@/app/actions/tours/actions";
+import { getAllTours } from "@/app/_api/actions/tours/actions";
 
 const CustomerPage = async () => {
   const tours = await getAllTours();

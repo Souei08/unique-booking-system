@@ -9,9 +9,9 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 
-import { RecentBookings } from "./_components/widgets/RecentBookings";
+import { RecentBookings } from "../../_features/dashboard/components/RecentBookings";
 // import { BookingsTable } from "./_components/Bookings/BookingsTable";
-import { BookingsList } from "./_components/widgets/BookingsList";
+import { BookingsList } from "../../_features/dashboard/components/BookingsList";
 
 const AdminPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);

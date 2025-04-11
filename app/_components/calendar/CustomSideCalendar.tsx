@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Calendar } from "@/app/_components/calendar/calendar";
 import { transformSchedulesToEvents } from "@/app/_lib/utils/schedule";
-import type { CalendarEvent } from "../../(pages)/schedule/_components/types";
+import type { CalendarEvent } from "../../(test)/schedule/_components/types";
 
-import { getRemainingSlots } from "@/app/actions/schedule/actions";
+import { getRemainingSlots } from "@/app/_api/actions/schedule/actions";
 
 interface CalendarClientProps {
   initialSchedules: any[];
@@ -23,6 +23,7 @@ interface CalendarClientProps {
     remainingSlots: number | null;
     isLoading: boolean;
   }) => React.ReactNode;
+  defaultSelectedDate?: Date | null;
 }
 
 export default function CalendarClient({
@@ -32,6 +33,7 @@ export default function CalendarClient({
   onSelectionChange,
   showBookingSummary = true,
   children,
+  defaultSelectedDate,
 }: CalendarClientProps) {
   // Transform the schedules and ensure dates are properly parsed
   const events: CalendarEvent[] = (() => {
@@ -51,6 +53,9 @@ export default function CalendarClient({
   );
   const [remainingSlots, setRemainingSlots] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    defaultSelectedDate || null
+  );
 
   // Create a memoized function to notify parent component when selection changes
   const notifySelectionChange = useCallback(() => {
@@ -71,11 +76,20 @@ export default function CalendarClient({
     async (event: CalendarEvent) => {
       setSelectedEvent(event);
       setIsLoading(true);
+
+      // Set the selected date when an event is clicked
+      if (event.date instanceof Date) {
+        setSelectedDate(event.date);
+      } else {
+        // If date is not a Date object, create a new Date from it
+        setSelectedDate(new Date(event.date));
+      }
+
       try {
         // Extract date and time from the event
         const dateStr =
           event.date instanceof Date
-            ? event.date.toISOString().split("T")[0]
+            ? event.date.toLocaleDateString("en-CA")
             : event.date;
 
         const timeStr = event.time || "";
@@ -119,6 +133,7 @@ export default function CalendarClient({
           onEventEdit={() => {}}
           onEventDelete={() => {}}
           onEventClick={handleEventClick}
+          selectedDate={selectedDate}
         />
       </div>
       {showBookingSummary && (

@@ -2,7 +2,8 @@
 
 import { useDrawer } from "@/app/context/DrawerContext/useDrawer";
 import { useModal } from "@/app/context/ModalContext/useModal";
-import UpsertBookingForm from "@/app/_components/forms/booking/UpsertBookingForm";
+
+import UpsertBookingForm from "@/app/_features/booking/forms/upsert-booking";
 
 interface BookingActionsProps {
   onAddBooking: () => void;

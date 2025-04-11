@@ -1,7 +1,8 @@
-import { getAllBookings } from "@/app/actions/booking/actions";
-import { BOOKING_TABLE_COLUMNS } from "@/app/_lib/constants/booking-table-const";
-import { BookingTable } from "./_components/BookingTable";
+import { getAllBookings } from "@/app/_api/actions/booking/actions";
 import { Booking } from "@/app/_lib/types/bookings-types";
+
+import { BOOKING_TABLE_COLUMNS } from "@/app/_lib/constants/booking-table-const";
+import { BookingTable } from "../../../_features/booking/components/BookingTable/BookingTable";
 
 // Add revalidation timing if needed
 export const revalidate = 3600; // Revalidate every hour
