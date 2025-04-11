@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 
-import UpsertTourForm from "@/app/_components/forms/tours/UpsertTourForm";
+import UpsertTourForm from "@/app/_features/tours/forms/upsert-tour";
 
 import { useDrawer } from "@/app/context/DrawerContext/useDrawer";
 import { useModal } from "@/app/context/ModalContext/useModal";

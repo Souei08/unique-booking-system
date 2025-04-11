@@ -5,10 +5,10 @@ import {
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 
-import { getUser } from "@/app/_api/actions/auth/actions";
+import Sidebar from "@/app/_features/dashboard/components/Sidebar";
+import Header from "@/app/_features/dashboard/components/Header";
 
-import Sidebar from "@/app/_components/dashboard/Sidebar";
-import Header from "@/app/_components/dashboard/Header";
+import { getUser } from "@/app/_api/actions/auth/actions";
 
 // Booking categories/services
 export const services = [

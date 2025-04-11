@@ -4,6 +4,8 @@ import type { Tour } from "@/app/_lib/types/tours";
 import { useRouter } from "next/navigation";
 import { TourActions } from "./TourActions";
 
+// import { TourActions } from "@/app/_features/tours/components/tour-table/TourActions";
+
 interface TourTableProps {
   tours: Tour[];
   columns: any[];

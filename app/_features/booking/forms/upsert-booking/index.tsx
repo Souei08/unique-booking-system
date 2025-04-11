@@ -3,13 +3,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
-import { getAllTours } from "@/app/_api/actions/tours/actions";
 import { getAvailableTourSchedules } from "@/app/_api/actions/schedule/actions";
 import { Tour } from "@/app/_api/actions/types";
 import { createTourBooking } from "@/app/_api/actions/booking/actions";
 import Steps from "@/app/_components/common/steps";
 import { bookingSchema, BookingFormData } from "./schema";
 import { BookingFormProps, Step } from "./types";
+
+import { getAllTours } from "@/app/_features/tours/actions/getTours";
+
 import {
   TourSelectionStep,
   CustomerDetailsStep,

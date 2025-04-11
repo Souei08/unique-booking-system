@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getAvailableTourSchedules } from "@/app/_api/actions/schedule/actions";
-import { getTourById } from "@/app/_api/actions/tours/actions";
+import { getTourById } from "@/app/_features/tours/actions/getOneTour";
+
 import CalendarClient from "./_components/CalendarClient";
 import { Tour } from "@/app/_lib/types/tours";
 

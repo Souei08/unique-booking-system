@@ -1,6 +1,8 @@
-import { getAllTours } from "@/app/_api/actions/tours/actions";
+import { getAllTours } from "@/app/_features/tours/actions/getTours";
+
+import { TourTable } from "@/app/_features/tours/components/tour-table/TourTable";
+
 import { TOUR_TABLE_COLUMNS } from "@/app/_lib/constants/tables";
-import { TourTable } from "./_components/TourTable";
 import { Tour } from "@/app/_lib/types/tours";
 
 // Add revalidation timing if needed
