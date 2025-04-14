@@ -1,4 +1,4 @@
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/supabase/client";
 import { Tour as ActionTour } from "@/app/_features/tours/types/TourTypes";
 
 /**
@@ -7,7 +7,7 @@ import { Tour as ActionTour } from "@/app/_features/tours/types/TourTypes";
  * @param data The tour data to update
  * @returns The updated tour
  */
-export async function updateTour(
+export async function updateTourClient(
   id: string,
   data: Partial<ActionTour>
 ): Promise<ActionTour> {

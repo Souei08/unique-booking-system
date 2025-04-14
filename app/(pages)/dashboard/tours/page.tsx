@@ -2,8 +2,9 @@ import { getAllTours } from "@/app/_features/tours/actions/getTours";
 
 import { TourTable } from "@/app/_features/tours/components/tour-table/TourTable";
 
-import { TOUR_TABLE_COLUMNS } from "@/app/_lib/constants/tables";
-import { Tour } from "@/app/_lib/types/tours";
+import { TOUR_TABLE_COLUMNS } from "@/app/_features/tours/components/tour-table/columns/MainColumns";
+
+import { Tour } from "@/app/_features/tours/types/TourTypes";
 
 // Add revalidation timing if needed
 export const revalidate = 3600; // Revalidate every hour

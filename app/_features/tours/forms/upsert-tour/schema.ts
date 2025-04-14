@@ -1,3 +1,5 @@
+"use client";
+
 import { z } from "zod";
 
 export const createTourSchema = z.object({
@@ -21,17 +23,25 @@ export const createTourSchema = z.object({
     .number()
     .min(1, "Group size must be at least 1")
     .max(20, "Group size cannot exceed 20"),
-  difficulty: z.enum(["easy", "medium", "difficult"], {
-    errorMap: () => ({ message: "Please select a valid difficulty level" }),
-  }),
-  location: z.string().min(3, "Location must be at least 3 characters"),
-  category: z.string().min(3, "Category must be at least 3 characters"),
-  weightLimit: z
-    .number()
-    .min(0, "Weight limit cannot be negative")
-    .max(500, "Weight limit is too high"),
+  languages: z.array(z.string()).min(1, "At least one language is required"),
+  faq: z.array(z.string()).min(1, "At least one FAQ is required"),
+  tripHighlights: z
+    .array(z.string())
+    .min(1, "At least one trip highlight is required"),
+  thingToKnow: z.string(),
+  meetingPointAddress: z
+    .string()
+    .min(3, "Meeting point address must be at least 3 characters"),
+  dropoffPointAddress: z
+    .string()
+    .min(3, "Dropoff point address must be at least 3 characters"),
+  category: z.enum(
+    ["horseback_riding", "jet_ski_tour", "safari_tour_and_snorkeling"],
+    {
+      errorMap: () => ({ message: "Please select a valid category" }),
+    }
+  ),
   includes: z.array(z.string()).min(1, "At least one inclusion is required"),
-  bookingLink: z.string().url("Must be a valid URL"),
   slots: z
     .number()
     .min(1, "Slots must be at least 1")

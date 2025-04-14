@@ -39,24 +39,24 @@ const navigationItems: NavigationItem[] = [
     icon: GlobeAmericasIcon,
     roles: ["admin", "staff"],
   },
-  {
-    name: "Rentals",
-    href: "/dashboard/rentals",
-    icon: BuildingOfficeIcon,
-    roles: ["admin", "staff"],
-  },
-  {
-    name: "Users",
-    href: "/dashboard/users",
-    icon: UserGroupIcon,
-    roles: ["admin"],
-  },
-  {
-    name: "Reports & Analytics",
-    href: "#",
-    icon: ChartBarIcon,
-    roles: ["admin"],
-  },
+  // {
+  //   name: "Rentals",
+  //   href: "/dashboard/rentals",
+  //   icon: BuildingOfficeIcon,
+  //   roles: ["admin", "staff"],
+  // },
+  // {
+  //   name: "Users",
+  //   href: "/dashboard/users",
+  //   icon: UserGroupIcon,
+  //   roles: ["admin"],
+  // },
+  // {
+  //   name: "Reports & Analytics",
+  //   href: "#",
+  //   icon: ChartBarIcon,
+  //   roles: ["admin"],
+  // },
 ];
 
 function classNames(...classes: string[]) {

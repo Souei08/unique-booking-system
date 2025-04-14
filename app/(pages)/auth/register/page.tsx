@@ -2,7 +2,7 @@ import React from "react";
 
 import CompanyLogo from "@/app/_components/common/logo";
 
-import RegisterForm from "@/app/_components/forms/auth/RegisterForm";
+import { RegisterForm } from "@/app/_features/auth/forms/auth";
 import GoogleLoginButton from "@/app/_components/common/GoogleLoginButton";
 
 const page = () => {

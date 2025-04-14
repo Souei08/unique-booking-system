@@ -1,12 +1,18 @@
 import { Path } from "react-hook-form";
 import { UpsertTourData } from "./schema";
 
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
 export interface TourFormField {
   name: Path<UpsertTourData>;
   type: string;
   placeholder: string;
   label: string;
-  colSpan?: "full" | "half";
+  colSpan?: "full" | "half" | "one-third" | "two-thirds" | "equal";
+  options?: SelectOption[];
 }
 
 export const tourFields: TourFormField[] = [
@@ -26,72 +32,94 @@ export const tourFields: TourFormField[] = [
   },
   {
     name: "category",
-    type: "text",
-    placeholder: "Enter tour category",
+    type: "select",
+    placeholder: "Select tour category",
     label: "Category",
     colSpan: "full",
-  },
-  {
-    name: "price",
-    type: "number",
-    placeholder: "Enter tour price",
-    label: "Price ($)",
-    colSpan: "half",
-  },
-  {
-    name: "duration",
-    type: "number",
-    placeholder: "Enter tour duration in hrs",
-    label: "Duration (hrs)",
-    colSpan: "half",
-  },
-  {
-    name: "maxGroupSize",
-    type: "number",
-    placeholder: "Enter maximum group size",
-    label: "Maximum Group Size",
-    colSpan: "half",
+    options: [
+      { value: "horseback_riding", label: "Horseback Riding" },
+      { value: "jet_ski_tour", label: "Jet Ski Tour" },
+      {
+        value: "safari_tour_and_snorkeling",
+        label: "Safari Tour and Snorkeling",
+      },
+    ],
   },
   {
     name: "slots",
     type: "number",
     placeholder: "Enter number of slots",
     label: "Available Slots",
-    colSpan: "half",
+    colSpan: "equal",
   },
   {
-    name: "weightLimit",
+    name: "price",
     type: "number",
-    placeholder: "Enter weight limit in kg",
-    label: "Weight Limit (kg)",
-    colSpan: "half",
+    placeholder: "Enter tour price",
+    label: "Price ($)",
+    colSpan: "equal",
   },
   {
-    name: "difficulty",
-    type: "select",
-    placeholder: "Select difficulty level",
-    label: "Difficulty Level",
-    colSpan: "half",
+    name: "duration",
+    type: "number",
+    placeholder: "Enter tour duration in hrs",
+    label: "Duration (hrs)",
+    colSpan: "equal",
   },
   {
-    name: "location",
-    type: "text",
-    placeholder: "Enter tour location",
-    label: "Location",
+    name: "maxGroupSize",
+    type: "number",
+    placeholder: "Enter maximum group size",
+    label: "Maximum Group Size",
+    colSpan: "equal",
+  },
+  {
+    name: "languages",
+    type: "array",
+    placeholder: "Enter languages spoken",
+    label: "Languages",
     colSpan: "full",
+  },
+  {
+    name: "tripHighlights",
+    type: "array",
+    placeholder: "Enter trip highlights",
+    label: "Trip Highlights",
+    colSpan: "full",
+  },
+  {
+    name: "faq",
+    type: "array",
+    placeholder: "Enter FAQs (one per line)",
+    label: "FAQ's",
+    colSpan: "full",
+  },
+  {
+    name: "thingToKnow",
+    type: "text",
+    placeholder: "Enter things to know",
+    label: "Things to Know",
+    colSpan: "full",
+  },
+  {
+    name: "meetingPointAddress",
+    type: "textarea",
+    placeholder: "Enter meeting point address",
+    label: "Meeting Point Address",
+    colSpan: "equal",
+  },
+  {
+    name: "dropoffPointAddress",
+    type: "textarea",
+    placeholder: "Enter dropoff point address",
+    label: "Dropoff Point Address",
+    colSpan: "equal",
   },
   {
     name: "includes",
     type: "array",
     placeholder: "Enter inclusions (one per line)",
     label: "Inclusions",
-    colSpan: "full",
-  },
-  {
-    name: "bookingLink",
-    type: "text",
-    placeholder: "Enter booking link URL",
-    label: "Booking Link",
     colSpan: "full",
   },
 ];

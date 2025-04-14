@@ -1,10 +1,14 @@
 "use client";
 
-import { createTour } from "@/app/_features/tours/actions/createTour";
-import { updateTour } from "@/app/_features/tours/actions/updateTour";
-import { CreateTourDTO, UpdateTourDTO, Tour } from "@/app/_lib/types/tours";
+import { createTourClient } from "@/app/_features/tours/actions/client/createTourClient";
+import { updateTourClient } from "@/app/_features/tours/actions/client/updateTourClient";
+
+import { CreateTourDTO } from "@/app/_features/tours/types/TourTypes";
+
 import { createTourSchema, UpsertTourData } from "./schema";
+
 import { tourFields } from "./types";
+
 import TourForm from "./components/TourForm";
 
 interface UpsertTourFormProps {
@@ -28,7 +32,6 @@ export default function UpsertTourForm({
         price: Number(data.price),
         duration: Number(data.duration),
         maxGroupSize: Number(data.maxGroupSize),
-        weightLimit: Number(data.weightLimit),
         slots: Number(data.slots),
       };
 
@@ -37,25 +40,25 @@ export default function UpsertTourForm({
         title: processedData.title,
         description: processedData.description,
         duration: processedData.duration,
-        group_size: processedData.maxGroupSize,
+        group_size_limit: processedData.maxGroupSize,
         slots: processedData.slots,
         rate: processedData.price,
-        experience_level: mapDifficultyToExperienceLevel(
-          processedData.difficulty
-        ),
-        weight_limit: processedData.weightLimit,
-        location: processedData.location,
+        languages: processedData.languages,
+        trip_highlights: processedData.tripHighlights,
+        things_to_know: processedData.thingToKnow,
+        faq: processedData.faq,
+        meeting_point_address: processedData.meetingPointAddress,
+        dropoff_point_address: processedData.dropoffPointAddress,
         includes: processedData.includes,
-        booking_link: processedData.bookingLink,
         category: processedData.category,
       };
 
       let result: any;
 
       if (mode === "create") {
-        result = await createTour(tourData as Tour);
+        result = await createTourClient(tourData);
       } else if (tourId) {
-        result = await updateTour(tourId, tourData as UpdateTourDTO);
+        result = await updateTourClient(tourId, tourData);
       }
 
       if (!result) {
@@ -63,24 +66,10 @@ export default function UpsertTourForm({
       }
 
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error ${mode}ing tour:`, error);
-      throw error;
-    }
-  };
-
-  // Helper function to map difficulty to experience level
-  const mapDifficultyToExperienceLevel = (
-    difficulty: "easy" | "medium" | "difficult"
-  ): "beginner" | "advanced" | "all" => {
-    switch (difficulty) {
-      case "easy":
-        return "beginner";
-      case "difficult":
-        return "advanced";
-      case "medium":
-      default:
-        return "all";
+      // You might want to show this error to the user through a toast or alert
+      throw new Error(error.message || `Failed to ${mode} tour`);
     }
   };
 
@@ -89,8 +78,9 @@ export default function UpsertTourForm({
       schema={createTourSchema}
       onSubmit={handleSubmit}
       fields={tourFields}
-      buttonText={mode === "create" ? "Create Tour" : "Update Tour"}
+      buttonText={mode === "create" ? "Create Tours" : "Update Tour"}
       initialData={initialData}
+      onSuccess={onSuccess}
     />
   );
 }

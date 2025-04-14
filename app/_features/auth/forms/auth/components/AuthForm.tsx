@@ -3,11 +3,12 @@
 import { useForm, FieldValues, Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ZodType } from "zod";
+import { AuthFormField } from "../types";
 
 interface AuthFormProps<T extends FieldValues> {
   schema: ZodType<T>;
   onSubmit: (data: T) => Promise<void>;
-  fields: { name: Path<T>; type: string; placeholder: string; label: string }[];
+  fields: AuthFormField[];
   buttonText: string;
 }
 
@@ -53,7 +54,7 @@ export default function AuthForm<T extends FieldValues>({
           </label>
           <input
             type={type}
-            {...register(name)}
+            {...register(name as Path<T>)}
             className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
               errors[name]
                 ? "outline-red-500"

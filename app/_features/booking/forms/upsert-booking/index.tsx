@@ -10,7 +10,7 @@ import Steps from "@/app/_components/common/steps";
 import { bookingSchema, BookingFormData } from "./schema";
 import { BookingFormProps, Step } from "./types";
 
-import { getAllTours } from "@/app/_features/tours/actions/getTours";
+import { getAllToursClient } from "@/app/_features/tours/actions/client/getAllToursClient";
 
 import {
   TourSelectionStep,
@@ -97,7 +97,7 @@ export default function UpsertBookingForm({ onSubmit }: BookingFormProps) {
   // Fetch all tours on component mount
   useEffect(() => {
     const fetchTours = async () => {
-      const tourGetResult = await getAllTours();
+      const tourGetResult = await getAllToursClient();
       setTours(tourGetResult);
     };
 

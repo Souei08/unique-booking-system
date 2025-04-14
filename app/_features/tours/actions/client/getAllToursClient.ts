@@ -1,12 +1,10 @@
-import { createClient } from "@/supabase/server";
-
+// getAllToursClient.ts
+import { createClient } from "@/supabase/client";
 import { Tour } from "@/app/_features/tours/types/TourTypes";
-/**
- * Get all tours
- * @returns Array of tours
- */
-export async function getAllTours(): Promise<Tour[]> {
+
+export async function getAllToursClient(): Promise<Tour[]> {
   const supabase = await createClient();
+
   const { data, error } = await supabase
     .from("tours")
     .select("*")
@@ -17,5 +15,5 @@ export async function getAllTours(): Promise<Tour[]> {
     throw new Error("Failed to fetch tours");
   }
 
-  return data;
+  return data ?? [];
 }

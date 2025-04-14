@@ -5,37 +5,22 @@ import {
   saveRecurringSchedules,
   getRecurringSchedules,
 } from "@/app/_api/actions/schedule/actions";
+import {
+  WeekdaySchedule,
+  SuccessResponse,
+  allWeekdays,
+  Weekday,
+} from "../types";
 
-export type Weekday =
-  | "Monday"
-  | "Tuesday"
-  | "Wednesday"
-  | "Thursday"
-  | "Friday"
-  | "Saturday"
-  | "Sunday";
-
-interface WeekdaySchedule {
-  weekday: Weekday;
-  start_time: string;
+interface TourScheduleFormProps {
+  tourId: string;
+  onSuccess?: () => void;
 }
 
-interface SuccessResponse {
-  success: boolean;
-  message?: string;
-}
-
-const allWeekdays: Weekday[] = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-
-const ScheduleForm: React.FC<{ tourId: string }> = ({ tourId }) => {
+export default function TourScheduleForm({
+  tourId,
+  onSuccess,
+}: TourScheduleFormProps) {
   const [schedules, setSchedules] = useState<WeekdaySchedule[]>([]);
   const [response, setResponse] = useState<SuccessResponse | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -102,8 +87,9 @@ const ScheduleForm: React.FC<{ tourId: string }> = ({ tourId }) => {
     setResponse(result);
     setIsSaving(false);
 
-    // Clear success message after 3 seconds
     if (result.success) {
+      onSuccess?.();
+      // Clear success message after 3 seconds
       setTimeout(() => setResponse(null), 3000);
     }
   };
@@ -196,6 +182,4 @@ const ScheduleForm: React.FC<{ tourId: string }> = ({ tourId }) => {
       </form>
     </div>
   );
-};
-
-export default ScheduleForm;
+}

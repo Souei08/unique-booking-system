@@ -1,6 +1,7 @@
 import React from "react";
 
-import LoginForm from "@/app/_components/forms/auth/LoginForm";
+import { LoginForm } from "@/app/_features/auth/forms/auth";
+
 import CompanyLogo from "@/app/_components/common/logo";
 import GoogleLoginButton from "@/app/_components/common/GoogleLoginButton";
 

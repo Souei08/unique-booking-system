@@ -1,10 +1,9 @@
 "use client";
 import Table from "@/app/_components/common/tables";
-import type { Tour } from "@/app/_lib/types/tours";
 import { useRouter } from "next/navigation";
 import { TourActions } from "./TourActions";
 
-// import { TourActions } from "@/app/_features/tours/components/tour-table/TourActions";
+import { Tour } from "@/app/_features/tours/types/TourTypes";
 
 interface TourTableProps {
   tours: Tour[];
@@ -31,10 +30,10 @@ export function TourTable({ tours, columns }: TourTableProps) {
     <Table<Tour>
       data={tours}
       columns={columns}
+      isCollapsible={true}
       title="Tours"
       description="View and manage all available tours"
-      isCollapsible={true}
-      buttonText="Add Tour"
+      buttonText="Create a new tour"
       handleEdit={actions.handleEditTour}
       handleSchedule={actions.handleScheduleTour}
       handleAdd={actions.handleAddTour}

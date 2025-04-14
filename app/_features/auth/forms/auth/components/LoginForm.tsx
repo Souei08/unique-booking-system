@@ -1,13 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-import { loginSchema, LoginFormValues } from "../validation";
 import { showSuccessToast, showErrorToast } from "@/utils/toastUtils";
-
-import AuthForm from "./authForm";
-
 import { login } from "@/app/_api/actions/auth/actions";
+import { loginSchema } from "../schema";
+import { LoginFormValues, loginFields } from "../types";
+import AuthForm from "./AuthForm";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -49,20 +47,7 @@ export default function LoginForm() {
     <AuthForm<LoginFormValues>
       schema={loginSchema}
       onSubmit={handleLogin}
-      fields={[
-        {
-          name: "email",
-          type: "email",
-          placeholder: "Enter your email",
-          label: "Email",
-        },
-        {
-          name: "password",
-          type: "password",
-          placeholder: "Enter your password",
-          label: "Password",
-        },
-      ]}
+      fields={loginFields}
       buttonText="Login"
     />
   );
