@@ -3,8 +3,7 @@ import { getAvailableTourSchedules } from "@/app/_api/actions/schedule/actions";
 import { getTourById } from "@/app/_features/tours/actions/getOneTour";
 
 import CalendarClient from "./_components/CalendarClient";
-import { Tour } from "@/app/_lib/types/tours";
-
+import { Tour } from "@/app/_features/tours/types/TourTypes";
 export default async function SchedulePage({
   searchParams,
 }: {

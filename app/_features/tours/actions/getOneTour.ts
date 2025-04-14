@@ -1,5 +1,5 @@
-import { Tour } from "@/app/_lib/types/tours";
 import { createClient } from "@/supabase/server";
+import { Tour } from "@/app/_features/tours/types/TourTypes";
 
 /**
  * Get a tour by ID

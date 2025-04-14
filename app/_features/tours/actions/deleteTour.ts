@@ -1,5 +1,4 @@
 import { createClient } from "@/supabase/server";
-import { Tour as ActionTour } from "@/app/_lib/types/tours";
 
 /**
  * Delete a tour
