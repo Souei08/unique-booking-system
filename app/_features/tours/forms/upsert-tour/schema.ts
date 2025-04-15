@@ -2,6 +2,21 @@
 
 import { z } from "zod";
 
+// Helper function to validate JSON strings
+const isValidJsonString = (str: string) => {
+  try {
+    const parsed = JSON.parse(str);
+    return (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "question" in parsed &&
+      "answer" in parsed
+    );
+  } catch (e) {
+    return false;
+  }
+};
+
 export const createTourSchema = z.object({
   title: z
     .string()
@@ -24,7 +39,13 @@ export const createTourSchema = z.object({
     .min(1, "Group size must be at least 1")
     .max(20, "Group size cannot exceed 20"),
   languages: z.array(z.string()).min(1, "At least one language is required"),
-  faq: z.array(z.string()).min(1, "At least one FAQ is required"),
+  faq: z
+    .array(z.string())
+    .min(1, "At least one FAQ is required")
+    .refine(
+      (items) => items.every(isValidJsonString),
+      "Each FAQ must have a question and answer"
+    ),
   tripHighlights: z
     .array(z.string())
     .min(1, "At least one trip highlight is required"),

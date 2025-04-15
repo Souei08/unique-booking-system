@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ZodType } from "zod";
 import { toast } from "react-hot-toast";
 import { useModal } from "@/app/context/ModalContext/useModal";
+import FaqInput from "./FaqInput";
 
 interface TourFormProps<T extends FieldValues> {
   schema: ZodType<T>;
@@ -58,7 +59,21 @@ export default function TourForm<T extends FieldValues>({
 
   const handleFormSubmit = async (data: T) => {
     try {
-      await onSubmit(data);
+      // Process numeric fields before submission
+      const processedData = { ...data };
+
+      // Find all numeric fields and convert them
+      fields.forEach((field) => {
+        if (field.type === "number") {
+          const fieldName = field.name as keyof T;
+          const value = data[fieldName];
+          if (value !== undefined && value !== null) {
+            processedData[fieldName] = Number(value) as any;
+          }
+        }
+      });
+
+      await onSubmit(processedData);
       toast.success("Operation completed successfully!");
       onSuccess?.();
       closeModal();
@@ -116,116 +131,129 @@ export default function TourForm<T extends FieldValues>({
                     : "col-span-2 md:col-span-1"
                 }
               >
-                <label
-                  className={`block mb-1 text-sm/6 font-medium ${
-                    errors[name] ? "text-red-500" : "text-strong"
-                  }`}
-                >
-                  {label}
-                </label>
-                {type === "textarea" ? (
-                  <textarea
-                    {...register(name)}
-                    className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
-                      errors[name]
-                        ? "outline-red-500"
-                        : "outline-gray-300 focus:outline-indigo-600"
-                    }`}
+                {type === "faq" ? (
+                  <FaqInput
+                    name={name}
+                    label={label}
                     placeholder={placeholder}
-                    rows={4}
+                    error={!!errors[name]}
+                    value={(watch(name) as string[]) || []}
+                    onChange={(value) => setValue(name, value as any)}
                   />
-                ) : type === "select" ? (
-                  <select
-                    {...register(name)}
-                    className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
-                      errors[name]
-                        ? "outline-red-500"
-                        : "outline-gray-300 focus:outline-indigo-600"
-                    }`}
-                  >
-                    <option value="">{placeholder}</option>
-                    {options?.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : type === "array" ? (
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
+                ) : (
+                  <>
+                    <label
+                      className={`block mb-1 text-sm/6 font-medium ${
+                        errors[name] ? "text-red-500" : "text-strong"
+                      }`}
+                    >
+                      {label}
+                    </label>
+                    {type === "textarea" ? (
+                      <textarea
+                        {...register(name)}
                         className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
                           errors[name]
                             ? "outline-red-500"
                             : "outline-gray-300 focus:outline-indigo-600"
                         }`}
                         placeholder={placeholder}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleArrayInput(name, e.currentTarget.value);
-                            e.currentTarget.value = "";
-                          }
-                        }}
+                        rows={4}
                       />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          const input = e.currentTarget
-                            .previousElementSibling as HTMLInputElement;
-                          handleArrayInput(name, input.value);
-                          input.value = "";
-                        }}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    ) : type === "select" ? (
+                      <select
+                        {...register(name)}
+                        className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
+                          errors[name]
+                            ? "outline-red-500"
+                            : "outline-gray-300 focus:outline-indigo-600"
+                        }`}
                       >
-                        Add
-                      </button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {(Array.isArray(watch(name)) ? watch(name) : []).map(
-                        (item, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md"
+                        <option value="">{placeholder}</option>
+                        {options?.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : type === "array" ? (
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
+                              errors[name]
+                                ? "outline-red-500"
+                                : "outline-gray-300 focus:outline-indigo-600"
+                            }`}
+                            placeholder={placeholder}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleArrayInput(name, e.currentTarget.value);
+                                e.currentTarget.value = "";
+                              }
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              const input = e.currentTarget
+                                .previousElementSibling as HTMLInputElement;
+                              handleArrayInput(name, input.value);
+                              input.value = "";
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                           >
-                            <span className="text-sm">{item}</span>
-                            <button
-                              type="button"
-                              onClick={() => removeArrayItem(name, index)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <input
-                    type={type}
-                    {...register(name, {
-                      setValueAs: (value) =>
-                        type === "number"
-                          ? value === ""
-                            ? undefined
-                            : Number(value)
-                          : value,
-                    })}
-                    className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
-                      errors[name]
-                        ? "outline-red-500"
-                        : "outline-gray-300 focus:outline-indigo-600"
-                    }`}
-                    placeholder={placeholder}
-                    step={type === "number" ? "any" : undefined}
-                    min={type === "number" ? "0" : undefined}
-                  />
+                            Add
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {(Array.isArray(watch(name)) ? watch(name) : []).map(
+                            (item, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-md"
+                              >
+                                <span className="text-sm">{item}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeArrayItem(name, index)}
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <input
+                        {...register(name, {
+                          setValueAs: (value) =>
+                            type === "number"
+                              ? value === ""
+                                ? undefined
+                                : Number(value)
+                              : value,
+                        })}
+                        type={type}
+                        className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
+                          errors[name]
+                            ? "outline-red-500"
+                            : "outline-gray-300 focus:outline-indigo-600"
+                        }`}
+                        placeholder={placeholder}
+                        step={type === "number" ? "any" : undefined}
+                        min={type === "number" ? "0" : undefined}
+                      />
+                    )}
+                  </>
                 )}
                 {errors[name] && (
-                  <p className="text-red-500 text-sm">
-                    {(errors[name] as any)?.message}
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors[name]?.message as string}
                   </p>
                 )}
               </div>
@@ -233,26 +261,22 @@ export default function TourForm<T extends FieldValues>({
           }
         )}
       </div>
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-      >
-        {isSubmitting ? "Processing..." : buttonText}
-      </button>
-
-      {/* Debug button to show validation errors */}
-      <button
-        type="button"
-        onClick={() => {
-          console.log("Form validation errors:", errors);
-          console.log("Form values:", watch());
-        }}
-        className="w-full p-2 mt-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-      >
-        Debug Form
-      </button>
+      <div className="flex justify-end gap-2 pt-4">
+        <button
+          type="button"
+          onClick={closeModal}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? "Saving..." : buttonText}
+        </button>
+      </div>
     </form>
   );
 }

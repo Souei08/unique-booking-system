@@ -6,6 +6,7 @@ export const TOUR_TABLE_COLUMNS = [
     header: "Description",
     accessor: "description" as keyof Tour,
     isHiddenOnMobile: true,
+    maxWidth: "200px",
   },
   {
     header: "Duration",

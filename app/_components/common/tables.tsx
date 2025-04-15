@@ -18,6 +18,7 @@ interface TableProps<T extends object> {
     header: string;
     accessor: keyof T;
     isHiddenOnMobile?: boolean;
+    maxWidth?: string;
   }>;
   isCollapsible?: boolean; // New parameter to control collapsibility
   handleEdit: (item: T) => void;
@@ -95,6 +96,11 @@ export default function Table<T extends object>({
                           column.isHiddenOnMobile ? "hidden lg:table-cell" : "",
                           "sm:pl-6"
                         )}
+                        style={
+                          column.maxWidth
+                            ? { maxWidth: column.maxWidth }
+                            : undefined
+                        }
                       >
                         {column.header}
                       </th>
@@ -144,11 +150,18 @@ export default function Table<T extends object>({
                           <td
                             key={column.header}
                             className={classNames(
-                              "px-3 py-4 text-small whitespace-nowrap ",
+                              "px-3 py-4 text-small whitespace-nowrap",
                               column.isHiddenOnMobile
                                 ? "hidden lg:table-cell"
-                                : ""
+                                : "",
+                              "truncate"
                             )}
+                            style={
+                              column.maxWidth
+                                ? { maxWidth: column.maxWidth }
+                                : undefined
+                            }
+                            title={String(item[column.accessor] ?? "")}
                           >
                             {String(item[column.accessor] ?? "")}
                           </td>

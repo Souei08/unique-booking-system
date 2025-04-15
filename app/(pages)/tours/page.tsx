@@ -1,7 +1,8 @@
 import React from "react";
-
 import { getAllTours } from "@/app/_features/tours/actions/getTours";
-
+import { ClockIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { StarIcon } from "@heroicons/react/20/solid";
+import Image from "next/image";
 const ToursPage = async () => {
   const tours = await getAllTours();
 
@@ -9,89 +10,125 @@ const ToursPage = async () => {
   const bookings = tours.map((tour: any) => ({
     title: tour.title,
     href: `/tours/${tour.id}`,
-    category: {
-      name: tour.category || "Adventure Tour",
-      href: "#",
-    },
+    category: tour.category || "Adventure Tour",
     description: tour.description,
-    price: `$${tour.rate}`,
-    availability: "Available",
+    price: tour.rate,
+    groupSize: tour.groupSize || "1 to 7",
     imageUrl:
       tour?.image ||
       "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
-    amenities: tour.amenities?.join(", ") || "Equipment Included",
-    details: {
-      duration: `${tour.duration} hours`,
-      includes: tour.includes || "Basic Equipment",
-      imageUrl: tour?.image || "",
-    },
+    duration: `${tour.duration} hour${tour.duration > 1 ? "s" : ""}`,
+    rating: 5, // You might want to make this dynamic based on actual ratings
   }));
 
   return (
-    <div className="relative bg-gray-50 px-6 pt-16 pb-20 lg:px-8 lg:pt-24 lg:pb-28">
-      <div className="absolute inset-0">
-        <div className="h-1/3 bg-white sm:h-2/3" />
-      </div>
-      <div className="relative mx-auto max-w-7xl">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+    <div className="bg-background min-h-screen">
+      {/* Hero Section */}
+      <div className="relative bg-strong py-14 lg:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-h1 font-bold text-white mb-3">
             Available Tours & Rentals
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-xl text-gray-500 sm:mt-4">
+          </h1>
+          <p className="text-body-lg text-white/80 mx-auto max-w-2xl">
             Discover exciting tours and quality equipment rentals for your
             adventure
           </p>
         </div>
-        <div className="mx-auto mt-12 grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-3">
+      </div>
+
+      {/* Tours Grid */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 -mt-10 pb-16">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {bookings.map((booking: any) => (
             <div
               key={booking.title}
-              className="flex flex-col overflow-hidden rounded-lg shadow-lg"
+              className="group relative flex flex-col overflow-hidden rounded-md bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md"
             >
-              <div className="shrink-0">
-                <img
+              {/* Image Container */}
+              <div className="relative aspect-[2/1] overflow-hidden">
+                <Image
                   alt={booking.title}
                   src={booking.imageUrl}
-                  className="h-48 w-full object-cover"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  width={500}
+                  height={300}
                 />
-              </div>
-              <div className="flex flex-1 flex-col justify-between bg-white p-6">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-indigo-600">
-                    <a href={booking.category.href} className="hover:underline">
-                      {booking.category.name}
-                    </a>
-                  </p>
-                  <a href={booking.href} className="mt-2 block">
-                    <p className="text-xl font-semibold text-gray-900">
-                      {booking.title}
-                    </p>
-                    <p className="mt-3 text-base text-gray-500">
-                      {booking.description}
-                    </p>
-                  </a>
+                <div className="absolute inset-0 bg-gradient-to-t from-brand/60 to-transparent" />
+                <div className="absolute top-3 left-3 rounded-sm bg-white/90 backdrop-blur-sm px-2 py-1 text-tiny font-medium text-strong">
+                  {booking.category}
                 </div>
-                <div className="mt-6">
-                  <div className="flex items-center justify-between">
-                    <p className="text-2xl font-bold text-gray-900">
-                      {booking.price}
-                      <span className="text-sm text-gray-500">/person</span>
-                    </p>
-                    <p className="text-sm font-medium text-green-600">
-                      {booking.availability}
-                    </p>
+              </div>
+
+              {/* Content */}
+              <div className="flex flex-1 flex-col p-4">
+                <h3 className="text-h3 font-bold text-strong mb-2 line-clamp-1">
+                  {booking.title}
+                </h3>
+
+                <div className="flex items-center gap-4 text-weak mb-3">
+                  <div className="flex items-center gap-1.5">
+                    <ClockIcon className="w-6 h-6" />
+                    <div className="flex flex-col">
+                      <span className="text-tiny uppercase tracking-wider">
+                        Duration
+                      </span>
+                      <span className="text-tiny font-bold">
+                        {booking.duration}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-4 flex items-center text-sm text-gray-500">
-                    <span>{booking.details.duration}</span>
-                    {/* <span className="mx-2">•</span> */}
-                    {/* <span>{booking.amenities}</span> */}
+                  <div className="flex items-center gap-1.5">
+                    <UsersIcon className="w-6 h-6" />
+                    <div className="flex flex-col">
+                      <span className="text-tiny uppercase tracking-wider">
+                        Group Size
+                      </span>
+                      <span className="text-tiny font-bold">
+                        {booking.groupSize}
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-4">
+                </div>
+
+                <p className="text-body text-weak mb-5 line-clamp-2">
+                  {booking.description}
+                </p>
+
+                <div className="mt-auto space-y-3">
+                  <div className="flex items-center justify-between pb-3 border-b border-stroke-weak">
+                    <div className="flex flex-col">
+                      <span className="text-tiny uppercase tracking-wider text-weak mb-0.5">
+                        Rating
+                      </span>
+                      <div className="flex gap-0.5 text-brand">
+                        {[...Array(booking.rating)].map((_, i) => (
+                          <StarIcon key={i} className="w-4 h-4" />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-tiny uppercase tracking-wider text-weak mb-0.5">
+                        from
+                      </div>
+                      <div className="text-h3 font-bold text-strong">
+                        ${booking.price}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
                     <a
                       href={booking.href}
-                      className="block w-full rounded-md bg-indigo-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500"
+                      className="flex items-center justify-center rounded-sm bg-brand px-3 py-2 text-small font-semibold text-white tracking-wide transition-colors hover:bg-strong"
                     >
-                      Book Now
+                      BOOK NOW
+                    </a>
+                    <a
+                      href={`${booking.href}/details`}
+                      className="flex items-center justify-center rounded-sm border border-stroke-weak px-3 py-2 text-small font-semibold text-weak tracking-wide transition-colors hover:border-stroke-strong hover:text-strong"
+                    >
+                      LEARN MORE
                     </a>
                   </div>
                 </div>

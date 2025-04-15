@@ -89,8 +89,8 @@ export const tourFields: TourFormField[] = [
   },
   {
     name: "faq",
-    type: "array",
-    placeholder: "Enter FAQs (one per line)",
+    type: "faq",
+    placeholder: "Enter FAQs with questions and answers",
     label: "FAQ's",
     colSpan: "full",
   },
