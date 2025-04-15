@@ -5,15 +5,7 @@ import { LoginForm } from "@/app/_features/auth/forms/auth";
 import CompanyLogo from "@/app/_components/common/logo";
 import GoogleLoginButton from "@/app/_components/common/GoogleLoginButton";
 
-import { createClient } from "@/supabase/server";
-
 const page = async () => {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   return (
     <div className="flex h-screen flex-1">
       <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 border-r border-stroke-weak shadow-sm">

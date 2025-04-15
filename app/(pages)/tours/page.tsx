@@ -1,65 +1,31 @@
 import React from "react";
 
-const Booking = () => {
-  const bookings = [
-    {
-      title: "Mountain Bike Adventure",
-      href: "/booking/2",
-      category: { name: "Equipment Rental", href: "#" },
-      description:
-        "High-quality mountain bike rental with optional guided trails. Perfect for exploring scenic mountain paths and experiencing thrilling downhill rides.",
-      price: "$35",
-      availability: "Bikes Available",
-      imageUrl:
-        "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
-      amenities: "Helmet, Lock, Repair Kit",
-      details: {
-        duration: "24 hours",
-        bikeType: "Mountain",
-        includes: "Safety Gear",
-        imageUrl:
-          "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
-      },
+import { getAllTours } from "@/app/_features/tours/actions/getTours";
+
+const ToursPage = async () => {
+  const tours = await getAllTours();
+
+  // Transform tours data to match the expected booking format
+  const bookings = tours.map((tour: any) => ({
+    title: tour.title,
+    href: `/tours/${tour.id}`,
+    category: {
+      name: tour.category || "Adventure Tour",
+      href: "#",
     },
-    {
-      title: "Kayaking Experience",
-      href: "/booking/3",
-      category: { name: "Water Sports", href: "#" },
-      description:
-        "Explore serene lakes and rivers with our premium kayaks. Perfect for beginners and experienced paddlers alike. Includes basic training for newcomers.",
-      price: "$45",
-      availability: "Limited Spots",
-      imageUrl:
-        "https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
-      amenities: "Life Jacket, Paddle, Dry Bag",
-      details: {
-        duration: "4 hours",
-        kayakType: "Single/Double",
-        includes: "Basic Training",
-        imageUrl:
-          "https://images.unsplash.com/photo-1559523161-0fc0d8b38a7a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
-      },
+    description: tour.description,
+    price: `$${tour.rate}`,
+    availability: "Available",
+    imageUrl:
+      tour?.image ||
+      "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
+    amenities: tour.amenities?.join(", ") || "Equipment Included",
+    details: {
+      duration: `${tour.duration} hours`,
+      includes: tour.includes || "Basic Equipment",
+      imageUrl: tour?.image || "",
     },
-    {
-      title: "Rock Climbing Tour",
-      href: "/booking/4",
-      category: { name: "Guided Adventure", href: "#" },
-      description:
-        "Professional guided rock climbing experience for all skill levels. Learn essential techniques while conquering natural rock formations safely.",
-      price: "$75",
-      availability: "Booking Fast",
-      imageUrl:
-        "https://images.unsplash.com/photo-1522163182402-834f871fd851?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
-      amenities: "All Gear Provided, Expert Guide",
-      details: {
-        duration: "6 hours",
-        difficulty: "Beginner to Advanced",
-        includes: "Equipment & Training",
-        imageUrl:
-          "https://images.unsplash.com/photo-1522163182402-834f871fd851?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
-      },
-    },
-  ];
+  }));
 
   return (
     <div className="relative bg-gray-50 px-6 pt-16 pb-20 lg:px-8 lg:pt-24 lg:pb-28">
@@ -77,7 +43,7 @@ const Booking = () => {
           </p>
         </div>
         <div className="mx-auto mt-12 grid max-w-lg gap-5 lg:max-w-none lg:grid-cols-3">
-          {bookings.map((booking) => (
+          {bookings.map((booking: any) => (
             <div
               key={booking.title}
               className="flex flex-col overflow-hidden rounded-lg shadow-lg"
@@ -117,8 +83,8 @@ const Booking = () => {
                   </div>
                   <div className="mt-4 flex items-center text-sm text-gray-500">
                     <span>{booking.details.duration}</span>
-                    <span className="mx-2">•</span>
-                    <span>{booking.amenities}</span>
+                    {/* <span className="mx-2">•</span> */}
+                    {/* <span>{booking.amenities}</span> */}
                   </div>
                   <div className="mt-4">
                     <a
@@ -138,4 +104,4 @@ const Booking = () => {
   );
 };
 
-export default Booking;
+export default ToursPage;

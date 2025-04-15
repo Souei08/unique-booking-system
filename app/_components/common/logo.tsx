@@ -6,9 +6,12 @@ const CompanyLogo = () => {
     <Image
       alt="Wentech"
       src="/logo/wentech-logo-removebg-preview.png"
-      className="h-20 w-auto"
+      className="h-[40px] w-[200px] object-cover"
       width={400}
-      height={400}
+      height={200}
+      style={{
+        objectPosition: "-0px",
+      }}
     />
   );
 };
