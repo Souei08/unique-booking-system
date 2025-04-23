@@ -32,7 +32,7 @@ export function BookingTable({ bookings, columns }: BookingTableProps) {
       title="Bookings"
       description="View and manage all available bookings"
       isCollapsible={true}
-      buttonText="Add Booking"
+      buttonText="Create New Booking"
       handleEdit={actions.handleEditBooking}
       handleSchedule={actions.handleScheduleBooking}
       handleAdd={actions.handleAddBooking}
