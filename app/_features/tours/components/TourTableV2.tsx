@@ -1,0 +1,189 @@
+"use client";
+
+import { ColumnDef } from "@tanstack/react-table";
+import { Tour } from "@/app/_features/tours/types/TourTypes";
+import { format } from "date-fns";
+import { Eye, MoreHorizontal, Pencil, Trash2, Calendar } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { TableV2 } from "@/app/_components/common/TableV2";
+import { redirect, useRouter } from "next/navigation";
+import TourSchedule from "../forms/tour-schedule";
+import UpsertTourV2 from "../forms/upsert-tour-v2/UpsertTourV2";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState } from "react";
+
+interface TourTableV2Props {
+  tours: Tour[];
+  onView?: (tour: Tour) => void;
+}
+
+export function TourTableV2({ tours, onView }: TourTableV2Props) {
+  const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
+  const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
+
+  const columns: ColumnDef<Tour>[] = [
+    {
+      accessorKey: "title",
+      header: "Tour",
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+    },
+    {
+      accessorKey: "duration",
+      header: "Duration (hrs)",
+    },
+    {
+      accessorKey: "group_size_limit",
+      header: "Group Size Limit",
+    },
+    {
+      accessorKey: "slots",
+      header: "Available Slots",
+    },
+    {
+      accessorKey: "rate",
+      header: "Price",
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("rate"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+        return formatted;
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => {
+        return format(new Date(row.getValue("created_at")), "MMM dd, yyyy");
+      },
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        const tour = row.original;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  redirect(`/tours/${tour.id}`);
+                }}
+                className="cursor-pointer"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                View Tour
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setIsTourDialogOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit Tour
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTourId(tour.id);
+                  setIsScheduleDialogOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Update Schedule
+              </DropdownMenuItem>
+
+              {/* <DropdownMenuSeparator /> */}
+              {/* <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setIsTourDialogOpen(true);
+                }}
+                className="cursor-pointer text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem> */}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  return (
+    <>
+      <TableV2
+        columns={columns}
+        data={tours}
+        filterColumn="title"
+        filterPlaceholder="Filter by tour title..."
+      />
+
+      {/* Tour Form Dialog */}
+      <Dialog open={isTourDialogOpen} onOpenChange={setIsTourDialogOpen}>
+        <DialogContent
+          className="max-w-7xl w-[1500px] max-h-[95vh] overflow-y-auto"
+          style={{
+            maxWidth: "1000px",
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>
+              {selectedTour ? "Edit Tour" : "Create New Tour"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <UpsertTourV2
+            initialData={selectedTour || undefined}
+            onSuccess={() => setIsTourDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Dialog */}
+      <Dialog
+        open={isScheduleDialogOpen}
+        onOpenChange={setIsScheduleDialogOpen}
+      >
+        <DialogContent className="max-w-[90vw] w-[1200px] max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Update Schedule</DialogTitle>
+          </DialogHeader>
+          {selectedTourId && <TourSchedule tourId={selectedTourId} />}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
