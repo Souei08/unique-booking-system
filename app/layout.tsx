@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 // Styles
 import "./globals.css";
-import { Montserrat } from "next/font/google";
+import { Montserrat, Inter } from "next/font/google";
+import { Toaster } from "sonner";
 
 // Components
 import ToastAlert from "./_components/common/ToastAlert";
@@ -18,6 +19,9 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
 });
+
+const inter = Inter({ subsets: ["latin"] });
+
 export const metadata: Metadata = {
   title: "Wentech",
   description: "Wentech - Your gateway to unique tours and rental experiences",
@@ -45,7 +49,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // <AuthProvider>
     <SidebarProvider>
       <ModalProvider>
         <DrawerProvider>
@@ -53,11 +56,11 @@ export default function RootLayout({
             <body className={`${montserrat.className} antialiased`}>
               {children}
               <ToastAlert />
+              <Toaster richColors position="top-right" />
             </body>
           </html>
         </DrawerProvider>
       </ModalProvider>
     </SidebarProvider>
-    // </AuthProvider>
   );
 }

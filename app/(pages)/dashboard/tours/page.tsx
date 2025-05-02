@@ -1,9 +1,6 @@
+import ContentLayout from "@/app/_features/dashboard/components/ContentLayout";
 import { getAllTours } from "@/app/_features/tours/actions/getTours";
-
-import { TourTable } from "@/app/_features/tours/components/tour-table/TourTable";
-
-import { TOUR_TABLE_COLUMNS } from "@/app/_features/tours/components/tour-table/columns/MainColumns";
-
+import { TourTableV2 } from "@/app/_features/tours/components/TourTableV2";
 import { Tour } from "@/app/_features/tours/types/TourTypes";
 
 // Add revalidation timing if needed
@@ -14,13 +11,13 @@ export default async function ToursPage() {
   const tours = await getAllTours();
 
   return (
-    <main className="flex-1">
-      <div className="px-4 sm:px-6 lg:px-8 py-10">
-        <TourTable
-          tours={tours as unknown as Tour[]}
-          columns={TOUR_TABLE_COLUMNS as any}
-        />
-      </div>
-    </main>
+    <ContentLayout
+      title="List of Tours"
+      description="View and manage all current tours."
+      buttonText={"Create a new tour"}
+      navigation={{ type: "dialog" }}
+    >
+      <TourTableV2 tours={tours as unknown as Tour[]} />
+    </ContentLayout>
   );
 }

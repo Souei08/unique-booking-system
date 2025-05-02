@@ -24,6 +24,45 @@ export default function UpsertTourForm({
   tourId,
   onSuccess,
 }: UpsertTourFormProps) {
+  // Format initial data to ensure FAQ is in the correct format
+  const formattedInitialData = initialData
+    ? {
+        ...initialData,
+        faq: Array.isArray(initialData.faq)
+          ? initialData.faq.map((item) => {
+              if (typeof item === "string") {
+                try {
+                  // If it's already a valid JSON string, return it as is
+                  const parsed = JSON.parse(item);
+                  if (parsed.question && parsed.answer) {
+                    return item;
+                  }
+                } catch (e) {
+                  // If not valid JSON, try to split by colon
+                  const parts = item.split(":");
+                  if (parts.length >= 2) {
+                    return JSON.stringify({
+                      question: parts[0].trim(),
+                      answer: parts.slice(1).join(":").trim(),
+                    });
+                  }
+                }
+              }
+              // If item is an object with question and answer, stringify it
+              if (
+                typeof item === "object" &&
+                item !== null &&
+                "question" in item &&
+                "answer" in item
+              ) {
+                return JSON.stringify(item);
+              }
+              return item;
+            })
+          : [],
+      }
+    : undefined;
+
   const handleSubmit = async (data: UpsertTourData) => {
     try {
       // Convert string values to numbers for numeric fields
@@ -79,7 +118,7 @@ export default function UpsertTourForm({
       onSubmit={handleSubmit}
       fields={tourFields}
       buttonText={mode === "create" ? "Create Tours" : "Update Tour"}
-      initialData={initialData}
+      initialData={formattedInitialData}
       onSuccess={onSuccess}
     />
   );

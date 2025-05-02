@@ -42,9 +42,6 @@ export const TourSelectionStep: React.FC<TourSelectionStepProps> = ({
               <span className="text-brand font-semibold">
                 ${tour.rate.toFixed(2)}
               </span>
-              <span className="text-sm text-gray-500">
-                {tour.slots} slots available
-              </span>
             </div>
           </div>
         ))}

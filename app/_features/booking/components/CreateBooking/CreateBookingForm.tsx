@@ -4,14 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Tour } from "@/app/_features/tours/types/TourTypes";
 import { DateValue } from "@internationalized/date";
 import { getAllToursClient } from "@/app/_features/tours/actions/client/getAllToursClient";
-import {
-  CreditCardIcon,
-  UserIcon,
-  CalendarIcon,
-  ShoppingBagIcon,
-  GiftIcon,
-  ClipboardDocumentCheckIcon,
-} from "@heroicons/react/24/outline";
+
 import { StepIndicator } from "./StepIndicator";
 import { TourSelectionStep } from "./steps/TourSelectionStep";
 import { DateSelectionStep } from "./steps/DateSelectionStep";
@@ -21,6 +14,7 @@ import { OverviewStep } from "./steps/OverviewStep";
 import { PriceSummary } from "./PriceSummary";
 import { AdditionalOptionsStep } from "./steps/AdditionalOptionsStep";
 import { createTourBooking } from "@/app/_features/booking/actions/CreateTourBooking";
+import { updateTourBooking } from "@/app/_features/booking/actions/UpdateTourBooking";
 
 // Mock data for additional options
 const additionalOptions = [
@@ -50,23 +44,44 @@ const additionalOptions = [
   },
 ];
 
-export const CreateBookingForm = () => {
+interface CreateBookingFormProps {
+  defaultValues?: {
+    tourId: string;
+    date: string;
+    start_time: string;
+    spots: number;
+    total_price: number;
+    customer_email: string;
+    first_name: string;
+    last_name: string;
+    phone_number: string;
+  };
+  isUpdate?: boolean;
+  bookingId?: string;
+}
+
+export const CreateBookingForm = ({
+  defaultValues,
+  isUpdate = false,
+  bookingId,
+}: CreateBookingFormProps) => {
   // State for multi-step form
   const [currentStep, setCurrentStep] = useState(1);
   const [tours, setTours] = useState<Tour[]>([]);
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
   const [selectedDate, setSelectedDate] = useState<DateValue | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
+  const [selectedSlots, setSelectedSlots] = useState<number>(1);
   const [paymentMethod, setPaymentMethod] = useState<"onArrival" | "stripe">(
     "onArrival"
   );
 
   // Customer details
   const [customerDetails, setCustomerDetails] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
+    firstName: defaultValues?.first_name || "",
+    lastName: defaultValues?.last_name || "",
+    email: defaultValues?.customer_email || "",
+    phone: defaultValues?.phone_number || "",
   });
 
   // Add validation state
@@ -77,19 +92,66 @@ export const CreateBookingForm = () => {
     phone: "",
   });
 
-  // Fetch tours on component mount
+  // Fetch tours on component mount and set default tour if provided
   useEffect(() => {
     const fetchTours = async () => {
       try {
         const fetchedTours = await getAllToursClient();
         setTours(fetchedTours);
+
+        // Set default tour if provided
+        if (defaultValues?.tourId && fetchedTours.length > 0) {
+          const defaultTour = fetchedTours.find(
+            (tour) => tour.id === defaultValues.tourId
+          );
+          if (defaultTour) {
+            setSelectedTour(defaultTour);
+          }
+        }
+
+        // Set default date if provided
+        if (defaultValues?.date) {
+          // Parse the date string to DateValue
+          const [year, month, day] = defaultValues.date.split("-").map(Number);
+          if (year && month && day) {
+            // Create a DateValue object (assuming you're using @internationalized/date)
+            // This might need adjustment based on your actual DateValue implementation
+            const defaultDate = { year, month, day };
+            setSelectedDate(defaultDate as DateValue);
+          }
+        }
       } catch (error) {
         console.error("Error fetching tours:", error);
       }
     };
 
     fetchTours();
-  }, []);
+  }, [defaultValues]);
+
+  // Add effect to handle default values when they change
+  useEffect(() => {
+    if (defaultValues?.tourId && tours.length > 0) {
+      const defaultTour = tours.find(
+        (tour) => tour.id === defaultValues.tourId
+      );
+      if (defaultTour) {
+        setSelectedTour(defaultTour);
+      }
+    }
+
+    if (defaultValues?.date) {
+      const [year, month, day] = defaultValues.date.split("-").map(Number);
+      if (year && month && day) {
+        const defaultDate = { year, month, day };
+        setSelectedDate(defaultDate as DateValue);
+      }
+    }
+
+    // Set default slots if provided
+    if (defaultValues?.spots) {
+      setSelectedSlots(defaultValues.spots);
+    }
+  }, [defaultValues, tours]);
 
   // Calculate total price
   const calculateTotalPrice = () => {
@@ -176,44 +238,49 @@ export const CreateBookingForm = () => {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would implement the actual booking submission logic
-    console.log({
-      tour: selectedTour,
-      date: selectedDate,
-      customerDetails,
-      selectedOptions,
-      paymentMethod,
-      totalPrice: calculateTotalPrice(),
-      selectedDate: selectedDate?.toString(),
-    });
 
     try {
-      const bookingResponse = await createTourBooking({
-        tourId: selectedTour?.id || "",
-        date: selectedDate?.toString() || "",
-        first_name: customerDetails.firstName || "",
-        last_name: customerDetails.lastName || "",
-        customer_email: customerDetails.email || "",
-        phone_number: customerDetails.phone || "",
-        total_price: calculateTotalPrice(),
-        spots: 2,
-        start_time: "9:00 AM",
-      });
+      if (isUpdate && bookingId) {
+        const bookingResponse = await updateTourBooking({
+          bookingId,
+          tourId: selectedTour?.id || "",
+          date: selectedDate?.toString() || "",
+          first_name: customerDetails.firstName || "",
+          last_name: customerDetails.lastName || "",
+          customer_email: customerDetails.email || "",
+          phone_number: customerDetails.phone || "",
+          total_price: calculateTotalPrice(),
+          spots: 2,
+          start_time: "9:00 AM",
+        });
 
-      console.log(bookingResponse);
-
-      if (bookingResponse.success) {
-        alert("Booking submitted successfully!");
+        if (bookingResponse.success) {
+          alert("Booking updated successfully!");
+        } else {
+          alert(bookingResponse.message);
+        }
       } else {
-        alert(bookingResponse.message);
+        const bookingResponse = await createTourBooking({
+          tourId: selectedTour?.id || "",
+          date: selectedDate?.toString() || "",
+          first_name: customerDetails.firstName || "",
+          last_name: customerDetails.lastName || "",
+          customer_email: customerDetails.email || "",
+          phone_number: customerDetails.phone || "",
+          total_price: calculateTotalPrice(),
+          spots: 2,
+          start_time: "9:00 AM",
+        });
+
+        if (bookingResponse.success) {
+          alert("Booking submitted successfully!");
+        } else {
+          alert(bookingResponse.message);
+        }
       }
     } catch (error) {
-      console.error("Error creating booking:", error);
+      console.error("Error handling booking:", error);
     }
-
-    // console.log(bookingResponse);
-    // // For now, just show an alert
-    // alert("Booking submitted successfully!");
   };
 
   // Navigation functions
@@ -256,6 +323,8 @@ export const CreateBookingForm = () => {
             selectedTour={selectedTour}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
+            selectedSlots={selectedSlots}
+            setSelectedSlots={setSelectedSlots}
           />
         );
 
@@ -350,7 +419,7 @@ export const CreateBookingForm = () => {
             onClick={handleSubmit}
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
-            Complete Booking
+            {isUpdate ? "Update Booking" : "Complete Booking"}
           </button>
         )}
       </div>

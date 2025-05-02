@@ -11,7 +11,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   onClick,
   icon,
   label,
-  className = "text-strong  hover:bg-brand hover:text-white hover:border-brand border-strong",
+  className = "text-strong hover:bg-brand hover:text-white hover:border-brand border-strong",
 }) => {
   return (
     <button

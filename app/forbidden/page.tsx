@@ -15,7 +15,7 @@ export default function ForbiddenPage() {
         </p>
         <div className="mt-10">
           <Link
-            href="/dashboard/customers"
+            href="/"
             className="rounded-md bg-brand px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-brand/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Go to Dashboard

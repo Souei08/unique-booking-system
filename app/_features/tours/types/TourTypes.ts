@@ -1,3 +1,8 @@
+export interface FAQ {
+  question: string;
+  answer: string;
+}
+
 export interface Tour {
   id: string;
   title: string;
@@ -13,9 +18,13 @@ export interface Tour {
   trip_highlights: string[];
   things_to_know: string;
   includes: string[];
-  faq: string[];
+  faq: string[]; // Array of JSON strings containing FAQ objects
+  images: string; // Array of tour images with metadata
   created_at: string;
 }
 
-export type CreateTourDTO = Omit<Tour, "id" | "created_at">;
+export type CreateTourDTO = Omit<Tour, "id" | "created_at" | "images"> & {
+  faq?: string[]; // Make faq optional
+};
+
 export type UpdateTourDTO = Partial<CreateTourDTO>;

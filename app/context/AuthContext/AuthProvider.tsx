@@ -26,14 +26,11 @@ export default async function AuthProvider({
   //   data: { user },
   // } = await supabase.auth.getUser();
 
-  // let role = "guest"; // Default role
   // if (user) {
   //   const { data } = await supabase
   //     .from("users")
   //     .select("role")
-  //     .eq("id", user.id)
-  //     .single();
-  //   role = data?.role || "guest";
+  //     .eq("id", user.id);
   // }
 
   return (

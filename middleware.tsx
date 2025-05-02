@@ -4,9 +4,7 @@ import { createClient } from "@/supabase/server";
 
 // Define protected routes & required roles
 const protectedRoutes = {
-  "/dashboard/admin": ["admin"], // Only Admins can access
-  "/dashboard/staff": ["staff", "admin"], // Admins & Staff can manage users
-  "/dashboard/customers": ["customer", "staff", "admin"], // All roles can access
+  "/dashboard": ["admin", "staff"], // Only Admins can access
   "/api/users": ["admin"], // Only Admins can manage users
   "/api/bookings": ["customer", "staff", "admin"], // Customers book, staff/admin manage
   "/api/reviews": ["customer", "admin"], // Customers review, Admins moderate
@@ -55,11 +53,9 @@ export async function middleware(request: NextRequest) {
   // Handle root path redirect
   if (requestPath === "/") {
     if (userRole === "customer") {
-      return NextResponse.redirect(
-        new URL("/dashboard/customers", request.url)
-      );
+      return NextResponse.redirect(new URL("/", request.url));
     } else {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/dashboard/tours", request.url));
     }
   }
 

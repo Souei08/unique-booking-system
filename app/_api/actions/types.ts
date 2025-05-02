@@ -45,13 +45,17 @@ export interface Tour {
  */
 export interface Booking {
   id: string;
-  user_id: string;
   tour_id: string;
-  schedule_id: string;
-  total_price: number;
-  status: "pending" | "confirmed" | "cancelled";
-  created_at?: string;
-  updated_at?: string;
+  total_price: string;
+  status: string;
+  created_at: string;
+  user_email: string;
+  date: string;
+  slots: string;
+  first_name: string;
+  last_name: string;
+  phone_number: string;
+  spots: string;
 }
 
 /**

@@ -31,16 +31,73 @@ export default function FaqInput<T extends FieldValues>({
   // Ensure value is always an array
   const ensureArray = (val: any): string[] => {
     if (Array.isArray(val)) {
-      return val;
+      return val.map((item) => {
+        if (typeof item === "string") {
+          try {
+            // If it's already a valid JSON string, return it as is
+            const parsed = JSON.parse(item);
+            if (parsed.question && parsed.answer) {
+              return item;
+            }
+          } catch (e) {
+            // If not valid JSON, try to convert to proper format
+            const parts = item.split(":");
+            if (parts.length >= 2) {
+              return JSON.stringify({
+                question: parts[0].trim(),
+                answer: parts.slice(1).join(":").trim(),
+              });
+            }
+          }
+        }
+        // If item is an object with question and answer, stringify it
+        if (
+          typeof item === "object" &&
+          item !== null &&
+          "question" in item &&
+          "answer" in item
+        ) {
+          return JSON.stringify(item);
+        }
+        return item;
+      });
     } else if (typeof val === "string") {
       try {
         // Try to parse as JSON if it's a string
         const parsed = JSON.parse(val);
-        return Array.isArray(parsed) ? parsed : [val];
+        if (Array.isArray(parsed)) {
+          return parsed.map((item) => {
+            if (
+              typeof item === "object" &&
+              item !== null &&
+              "question" in item &&
+              "answer" in item
+            ) {
+              return JSON.stringify(item);
+            }
+            return item;
+          });
+        } else if (
+          typeof parsed === "object" &&
+          parsed !== null &&
+          "question" in parsed &&
+          "answer" in parsed
+        ) {
+          return [JSON.stringify(parsed)];
+        }
       } catch (e) {
-        // If not valid JSON, treat as a single item
-        return [val];
+        // If not valid JSON, try to split by colon
+        const parts = val.split(":");
+        if (parts.length >= 2) {
+          return [
+            JSON.stringify({
+              question: parts[0].trim(),
+              answer: parts.slice(1).join(":").trim(),
+            }),
+          ];
+        }
       }
+      return [val];
     } else if (val === null || val === undefined) {
       return [];
     } else {

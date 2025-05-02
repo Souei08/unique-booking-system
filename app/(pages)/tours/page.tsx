@@ -3,6 +3,8 @@ import { getAllTours } from "@/app/_features/tours/actions/getTours";
 import { ClockIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
+import CustomerHeader from "@/app/_features/customer/CustomerHeader";
+
 const ToursPage = async () => {
   const tours = await getAllTours();
 
@@ -23,6 +25,7 @@ const ToursPage = async () => {
 
   return (
     <div className="bg-background min-h-screen">
+      <CustomerHeader />
       {/* Hero Section */}
       <div className="relative bg-strong py-14 lg:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/pattern.png')] opacity-10" />

@@ -1,8 +1,7 @@
 import { getAllBookings } from "@/app/_api/actions/booking/actions";
-import { Booking } from "@/app/_lib/types/bookings-types";
+import { BookingTableV2 } from "@/app/_features/booking/components/BookingTableV2";
 
-import { BOOKING_TABLE_COLUMNS } from "@/app/_lib/constants/booking-table-const";
-import { BookingTable } from "../../../_features/booking/components/BookingTable/BookingTable";
+import ContentLayout from "@/app/_features/dashboard/components/ContentLayout";
 
 // Add revalidation timing if needed
 export const revalidate = 3600; // Revalidate every hour
@@ -11,14 +10,25 @@ export default async function BookingsPage() {
   // This runs on the server
   const bookings = await getAllBookings();
 
+  const updatedBookings = bookings.map((booking) => ({
+    id: booking.id,
+    customer: `${booking.first_name} ${booking.last_name}`,
+    tour_id: booking.tour_id,
+    date: booking.date,
+    status: booking.status,
+    spots: booking.slots,
+    total_price: booking.total_price,
+    created_at: booking.created_at,
+  }));
+
   return (
-    <main className="flex-1">
-      <div className="px-4 sm:px-6 lg:px-8 py-10">
-        <BookingTable
-          bookings={bookings as unknown as Booking[]}
-          columns={BOOKING_TABLE_COLUMNS as any}
-        />
-      </div>
-    </main>
+    <ContentLayout
+      title="List of Bookings"
+      description="View and manage all current bookings for tours.q"
+      buttonText={"Create a new booking"}
+      navigation={{ type: "route", path: "/dashboard/bookings/create" }}
+    >
+      <BookingTableV2 bookings={updatedBookings as any} />
+    </ContentLayout>
   );
 }
