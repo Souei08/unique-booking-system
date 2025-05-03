@@ -6,31 +6,42 @@ export async function deleteRemovedImages(
 ) {
   const supabase = await createClient();
 
-  // Only consider images with a real Supabase URL
-  const removed = oldImages.filter(
-    (oldImg) =>
-      !newImages.some((newImg) => newImg.url === oldImg.url) &&
-      oldImg.url.startsWith("https://") // or your Supabase storage base URL
-  );
-
-  // Extract the file path from the public URL
-  const pathsToDelete = removed.map((img) => {
-    // Example: https://xyz.supabase.co/storage/v1/object/public/tour-images/folder/file.jpg
-    // You want: folder/file.jpg
-    const url = new URL(img.url);
-    const parts = url.pathname.split("/");
-    // Find the index of the bucket name, then get the rest as the path
-    const bucketIndex = parts.findIndex((p) => p === "tour-images");
-    return parts.slice(bucketIndex + 1).join("/");
+  const removed = oldImages.filter((oldImg) => {
+    const oldUrl = oldImg.url;
+    return (
+      !newImages.some((newImg) => newImg.url === oldUrl) &&
+      oldUrl.startsWith("https://")
+    );
   });
 
+  const pathsToDelete = removed
+    .map((img) => {
+      try {
+        const url = new URL(img.url);
+        const parts = url.pathname.split("/");
+        const bucketIndex = parts.findIndex((p) => p === "tour-images");
+
+        if (bucketIndex === -1) return null;
+
+        return parts.slice(bucketIndex + 1).join("/");
+      } catch (e) {
+        console.warn("Invalid URL format:", img.url);
+        return null;
+      }
+    })
+    .filter(Boolean) as string[];
+
   if (pathsToDelete.length > 0) {
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from("tour-images")
       .remove(pathsToDelete);
 
     if (error) {
       console.error("Error deleting images from bucket:", error);
+    } else {
+      console.log("Deleted from Supabase:", pathsToDelete);
     }
+  } else {
+    console.log("No images to delete.");
   }
 }

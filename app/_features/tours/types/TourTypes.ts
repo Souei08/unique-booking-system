@@ -3,6 +3,13 @@ export interface FAQ {
   answer: string;
 }
 
+export interface TourLocalImage {
+  file?: File;
+  url: string;
+  isFeature: boolean;
+  uploaded?: boolean;
+}
+
 export interface Tour {
   id: string;
   title: string;

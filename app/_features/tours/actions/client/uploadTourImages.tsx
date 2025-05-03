@@ -1,15 +1,10 @@
 import { createClient } from "@/supabase/client";
-
-type ImageItem = {
-  file?: File;
-  url?: string;
-  isFeature?: boolean;
-};
+import { TourLocalImage } from "../../types/TourTypes";
 
 export async function uploadImagesToSupabase(
-  images: ImageItem[],
+  images: TourLocalImage[],
   tourId: string
-) {
+): Promise<{ url: string; isFeature: boolean }[]> {
   const supabase = await createClient();
   const uploaded: { url: string; isFeature: boolean }[] = [];
 
@@ -17,7 +12,8 @@ export async function uploadImagesToSupabase(
     if (img.file) {
       const ext = img.file.name.split(".").pop();
       const fileName = `${tourId}/${Date.now()}-${Math.random()}.${ext}`;
-      const { data, error } = await supabase.storage
+
+      const { error } = await supabase.storage
         .from("tour-images")
         .upload(fileName, img.file);
 
@@ -33,10 +29,11 @@ export async function uploadImagesToSupabase(
       });
     } else {
       uploaded.push({
-        url: img.url || "",
+        url: img.url, // use preview as fallback for Supabase URL
         isFeature: img.isFeature || false,
       });
     }
   }
+
   return uploaded;
 }

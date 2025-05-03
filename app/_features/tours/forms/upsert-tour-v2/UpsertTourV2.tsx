@@ -22,15 +22,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Tour, CreateTourDTO } from "../../types/TourTypes";
+import { Tour, CreateTourDTO, TourLocalImage } from "../../types/TourTypes";
 
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-// import { ImageUploadInput } from "./ImageUploadInput";
+import { ImageUploadInput } from "./ImageUploadInput";
 
 import { updateTourClient } from "../../actions/client/updateTourClient";
 import { createTourClient } from "../../actions/client/createTourClient";
+import { uploadImagesToSupabase } from "../../actions/client/uploadTourImages";
+import { deleteRemovedImages } from "../../actions/client/deleteTourImages";
+import { createClient } from "@/supabase/client";
 
 const tourFormSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -71,24 +74,21 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
   onSuccess,
 }) => {
   const router = useRouter();
-  // const [imageFiles, setImageFiles] = useState<File[]>([]);
-  // const [featuredImageIndex, setFeaturedImageIndex] = useState<number>(0);
-  // const [currentImages, setCurrentImages] = useState<
-  //   { url: string; isFeature: boolean }[]
-  // >([]);
+  const [currentImages, setCurrentImages] = useState<TourLocalImage[]>(
+    initialData?.images
+      ? JSON.parse(initialData.images).map((img: any) => ({
+          url: img.url,
+          isFeature: img.isFeatured ?? false,
+        }))
+      : []
+  );
 
-  // Parse initial images if they exist
-  // const initialImages = initialData?.images
-  //   ? JSON.parse(initialData.images).map((img: any) => ({
-  //       url: img.url,
-  //       isFeature: img.isFeatured,
-  //     }))
-  //   : [];
-
-  // Initialize currentImages with initialImages
-  // useEffect(() => {
-  //   setCurrentImages(initialImages);
-  // }, [initialImages]);
+  const originalImages = initialData?.images
+    ? JSON.parse(initialData.images).map((img: any) => ({
+        url: img.url,
+        isFeature: img.isFeature ?? false,
+      }))
+    : [];
 
   const form = useForm<TourFormValues>({
     resolver: zodResolver(tourFormSchema),
@@ -119,91 +119,132 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
     },
   });
 
-  // const handleImagesChange = (
-  //   images: { url: string; isFeature: boolean }[]
-  // ) => {
-  //   // Get the featured image URL
-  //   const featuredImage = images.find((img) => img.isFeature)?.url;
-  //   if (featuredImage) {
-  //     setFeaturedImageIndex(images.findIndex((img) => img.isFeature));
-  //   }
+  const handleImagesChange = (images: TourLocalImage[]) => {
+    setCurrentImages(images);
+  };
 
-  //   // Get the actual File objects for new images
-  //   const newImageFiles = images
-  //     .filter((img) => img.url.startsWith("blob:"))
-  //     .map((img) => {
-  //       const matchingNewImage = imageFiles.find(
-  //         (file) => URL.createObjectURL(file) === img.url
-  //       );
-  //       return matchingNewImage || null;
-  //     })
-  //     .filter((file): file is File => file !== null);
+  const handleSubmit = async (formData: TourFormValues) => {
+    const oldImages = currentImages;
+    let uploaded: { url: string; isFeature: boolean }[] = [];
+    let tourId: string | undefined = undefined;
 
-  //   setImageFiles(newImageFiles);
-  //   setCurrentImages(images);
-  // };
-
-  const handleSubmit = async (data: TourFormValues) => {
     try {
-      // Validate required arrays are not empty
-      if (!data.languages || data.languages.length === 0) {
-        toast.error("At least one language is required");
-        return;
-      }
-      if (!data.trip_highlights || data.trip_highlights.length === 0) {
-        toast.error("At least one trip highlight is required");
-        return;
-      }
-      if (!data.includes || data.includes.length === 0) {
-        toast.error("At least one inclusion is required");
-        return;
-      }
-      if (!data.faq || data.faq.length === 0) {
-        toast.error("At least one FAQ is required");
-        return;
-      }
-
-      // Filter out empty strings from arrays and stringify FAQ objects
+      // Clean form data
       const cleanedData: CreateTourDTO = {
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        duration: data.duration,
-        group_size_limit: data.group_size_limit,
-        rate: data.rate,
-        slots: data.slots,
-        meeting_point_address: data.meeting_point_address,
-        dropoff_point_address: data.dropoff_point_address,
-        languages: data.languages.filter(Boolean),
-        trip_highlights: data.trip_highlights.filter(Boolean),
-        things_to_know: data.things_to_know,
-        includes: data.includes.filter(Boolean),
-        faq: data.faq
-          .filter(
-            (faq) => faq.question.trim() !== "" && faq.answer.trim() !== ""
-          )
-          .map((faq) => JSON.stringify(faq)),
-        // images: JSON.stringify(currentImages),
+        ...formData,
+        languages: formData.languages.filter(Boolean),
+        trip_highlights: formData.trip_highlights.filter(Boolean),
+        includes: formData.includes.filter(Boolean),
+        faq: formData.faq
+          .filter((f) => f.question && f.answer)
+          .map((f) => JSON.stringify(f)),
       };
 
+      // Step 1: Create or update tour
       if (initialData?.id) {
-        // Handle update
         await updateTourClient(initialData.id, cleanedData);
-        toast.success("Tour updated successfully");
+        tourId = initialData.id;
       } else {
-        await createTourClient(cleanedData);
-        toast.success("Tour created successfully");
+        const created = await createTourClient(cleanedData);
+        tourId = created.id;
       }
 
+      if (!tourId) throw new Error("Tour ID is undefined");
+
+      // Step 2: Upload new images
+      uploaded = await uploadImagesToSupabase(currentImages, tourId);
+
+      // Step 3: Update the tour with image metadata (stringified)
+      await updateTourClient(tourId, {
+        ...cleanedData,
+        images: JSON.stringify(uploaded), // ✅ store as string in text column
+      });
+
+      // Step 4: Delete removed images from storage
+      await deleteRemovedImages(originalImages, uploaded);
+
+      toast.success("Tour saved successfully");
       router.refresh();
       onSuccess?.();
     } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to submit form"
-      );
+      console.error("Tour save failed:", error);
+      toast.error("Something went wrong while saving the tour.");
+
+      // 🔁 Rollback uploaded images if save failed
+      if (uploaded.length > 0) {
+        const supabase = await createClient();
+        const pathsToDelete = uploaded.map((img) => {
+          const url = new URL(img.url);
+          const parts = url.pathname.split("/");
+          const bucketIndex = parts.findIndex((p) => p === "tour-images");
+          return parts.slice(bucketIndex + 1).join("/");
+        });
+
+        if (pathsToDelete.length > 0) {
+          const { error: rollbackError } = await supabase.storage
+            .from("tour-images")
+            .remove(pathsToDelete);
+
+          if (rollbackError) {
+            console.warn("Rollback failed:", rollbackError);
+          } else {
+            console.info("Rolled back uploaded images successfully.");
+          }
+        }
+      }
     }
   };
+
+  // const handleSubmit = async (data: TourFormValues) => {
+  //   try {
+  //     // Validate required arrays are not empty
+  //     if (!data.languages || data.languages.length === 0) {
+  //       toast.error("At least one language is required");
+  //       return;
+  //     }
+  //     if (!data.trip_highlights || data.trip_highlights.length === 0) {
+  //       toast.error("At least one trip highlight is required");
+  //       return;
+  //     }
+  //     if (!data.includes || data.includes.length === 0) {
+  //       toast.error("At least one inclusion is required");
+  //       return;
+  //     }
+  //     if (!data.faq || data.faq.length === 0) {
+  //       toast.error("At least one FAQ is required");
+  //       return;
+  //     }
+
+  //     // Filter out empty strings from arrays and stringify FAQ objects
+  //     const cleanedData: CreateTourDTO = {
+  //       ...data,
+  //       languages: data.languages.filter(Boolean),
+  //       trip_highlights: data.trip_highlights.filter(Boolean),
+  //       includes: data.includes.filter(Boolean),
+  //       faq: data.faq
+  //         .filter((f) => f.question && f.answer)
+  //         .map((f) => JSON.stringify(f)),
+  //       // images: "[]", // Temporarily empty
+  //     };
+
+  //     if (initialData?.id) {
+  //       // Handle update
+  //       await updateTourClient(initialData.id, cleanedData);
+  //       toast.success("Tour updated successfully");
+  //     } else {
+  //       await createTourClient(cleanedData);
+  //       toast.success("Tour created successfully");
+  //     }
+
+  //     router.refresh();
+  //     onSuccess?.();
+  //   } catch (error) {
+  //     console.error("Error submitting form:", error);
+  //     toast.error(
+  //       error instanceof Error ? error.message : "Failed to submit form"
+  //     );
+  //   }
+  // };
 
   const addItem = (field: keyof TourFormValues) => {
     const currentValue = form.getValues(field) as any[];
@@ -681,16 +722,15 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
           />
 
           {/* Image Upload Section */}
-          {/* <div className="space-y-4">
-            <FormLabel>Tour Images</FormLabel>
+          <div className="space-y-4">
             <ImageUploadInput
-              value={initialImages}
+              value={currentImages}
               onChange={handleImagesChange}
               label="Upload Tour Images"
               multiple={true}
               maxFiles={10}
             />
-          </div> */}
+          </div>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={form.formState.isSubmitting}>
