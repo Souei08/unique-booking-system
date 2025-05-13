@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { X, Star, StarOff } from "lucide-react";
-import { TourLocalImage } from "../../types/TourTypes";
+import { TourLocalImage } from "@/app/_features/tours/tour-types";
 
 interface Props {
   value?: TourLocalImage[];

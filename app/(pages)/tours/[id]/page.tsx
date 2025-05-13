@@ -1,4 +1,4 @@
-import { getTourById } from "@/app/_features/tours/actions/getOneTour";
+import { getTourById } from "@/app/_features/tours/api/getOneTour";
 import TourDetailsClient from "@/app/_features/tours/components/TourDetailsClient";
 import { notFound } from "next/navigation";
 

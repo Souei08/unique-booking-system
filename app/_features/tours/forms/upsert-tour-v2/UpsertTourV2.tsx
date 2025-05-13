@@ -21,18 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { Tour, CreateTourDTO, TourLocalImage } from "../../types/TourTypes";
+import {
+  Tour,
+  CreateTourDTO,
+  TourLocalImage,
+} from "@/app/_features/tours/tour-types";
 
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ImageUploadInput } from "./ImageUploadInput";
 
-import { updateTourClient } from "../../actions/client/updateTourClient";
-import { createTourClient } from "../../actions/client/createTourClient";
-import { uploadImagesToSupabase } from "../../actions/client/uploadTourImages";
-import { deleteRemovedImages } from "../../actions/client/deleteTourImages";
+import { updateTourClient } from "../../api/client/updateTourClient";
+import { createTourClient } from "../../api/client/createTourClient";
+import { uploadImagesToSupabase } from "../../api/client/uploadTourImages";
+import { deleteRemovedImages } from "../../api/client/deleteTourImages";
 import { createClient } from "@/supabase/client";
 
 const tourFormSchema = z.object({

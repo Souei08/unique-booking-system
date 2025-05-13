@@ -1,5 +1,5 @@
 import React from "react";
-import { getAllTours } from "@/app/_features/tours/actions/getTours";
+import { getAllTours } from "@/app/_features/tours/api/getTours";
 import { ClockIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";

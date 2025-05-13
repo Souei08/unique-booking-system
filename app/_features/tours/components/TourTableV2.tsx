@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Tour } from "@/app/_features/tours/types/TourTypes";
+import { Tour } from "@/app/_features/tours/tour-types";
 import { format } from "date-fns";
 import { Eye, MoreHorizontal, Pencil, Trash2, Calendar } from "lucide-react";
 import {
@@ -15,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { TableV2 } from "@/app/_components/common/TableV2";
 import { redirect, useRouter } from "next/navigation";
-import TourSchedule from "../forms/tour-schedule";
 import UpsertTourV2 from "../forms/upsert-tour-v2/UpsertTourV2";
 import {
   Dialog,
@@ -24,7 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-
+import { TourScheduleV2 } from "../forms/tour-schedule-v2/TourScheduleV2";
 interface TourTableV2Props {
   tours: Tour[];
   onView?: (tour: Tour) => void;
@@ -115,7 +114,7 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
 
               <DropdownMenuItem
                 onClick={() => {
-                  setSelectedTourId(tour.id);
+                  setSelectedTour(tour);
                   setIsScheduleDialogOpen(true);
                 }}
                 className="cursor-pointer"
@@ -153,12 +152,7 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
 
       {/* Tour Form Dialog */}
       <Dialog open={isTourDialogOpen} onOpenChange={setIsTourDialogOpen}>
-        <DialogContent
-          className="max-w-7xl w-[1500px] max-h-[95vh] overflow-y-auto"
-          style={{
-            maxWidth: "1000px",
-          }}
-        >
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>
               {selectedTour ? "Edit Tour" : "Create New Tour"}
@@ -177,11 +171,11 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
         open={isScheduleDialogOpen}
         onOpenChange={setIsScheduleDialogOpen}
       >
-        <DialogContent className="max-w-[90vw] w-[1200px] max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Update Schedule</DialogTitle>
           </DialogHeader>
-          {selectedTourId && <TourSchedule tourId={selectedTourId} />}
+          {selectedTour && <TourScheduleV2 selectedTour={selectedTour} />}
         </DialogContent>
       </Dialog>
     </>

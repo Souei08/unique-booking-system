@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { StarIcon } from "@heroicons/react/20/solid";
-import { Tour } from "@/app/_features/tours/types/TourTypes";
+import { Tour } from "@/app/_features/tours/tour-types";
 import CustomerHeader from "@/app/_features/customer/CustomerHeader";
 
 // Mock reviews data

@@ -1,7 +1,7 @@
-import ContentLayout from "@/app/_features/dashboard/components/ContentLayout";
-import { getAllTours } from "@/app/_features/tours/actions/getTours";
+import ContentLayout from "@/app/(pages)/dashboard/ContentLayout";
+import { getAllTours } from "@/app/_features/tours/api/getTours";
 import { TourTableV2 } from "@/app/_features/tours/components/TourTableV2";
-import { Tour } from "@/app/_features/tours/types/TourTypes";
+import { Tour } from "@/app/_features/tours/tour-types";
 
 // Add revalidation timing if needed
 export const revalidate = 3600; // Revalidate every hour
@@ -13,9 +13,11 @@ export default async function ToursPage() {
   return (
     <ContentLayout
       title="List of Tours"
+      buttonText="Create Tour"
       description="View and manage all current tours."
-      buttonText={"Create a new tour"}
-      navigation={{ type: "dialog" }}
+      modalTitle="Create a new tour"
+      modalDescription="Create a new tour to add to the list."
+      modalRoute="tours"
     >
       <TourTableV2 tours={tours as unknown as Tour[]} />
     </ContentLayout>

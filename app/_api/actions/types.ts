@@ -55,7 +55,6 @@ export interface Booking {
   first_name: string;
   last_name: string;
   phone_number: string;
-  spots: string;
 }
 
 /**

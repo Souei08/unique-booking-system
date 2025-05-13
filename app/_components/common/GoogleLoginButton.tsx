@@ -9,7 +9,7 @@ const GoogleLoginButton = () => {
     <div className="mt-6">
       <a
         onClick={loginWithGoogle}
-        className="flex w-full items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-strong ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50 focus-visible:ring-transparent"
+        className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-strong ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50 focus-visible:ring-transparent"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
           <path

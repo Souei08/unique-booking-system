@@ -53,7 +53,7 @@ export function CalendarCell({
       >
         <div
           className={cn(
-            "w-full h-full rounded-full flex items-center justify-center",
+            "w-full h-full flex items-center justify-center",
             "text-xs sm:text-sm",
             "transition-all duration-200 ease-in-out",
             finalIsDisabled && "text-gray-400 cursor-not-allowed",
@@ -68,7 +68,7 @@ export function CalendarCell({
         >
           {formattedDate}
           {isDateToday && !isSelected && (
-            <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-brand rounded-full" />
+            <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-brand" />
           )}
         </div>
       </div>

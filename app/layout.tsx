@@ -2,25 +2,17 @@ import type { Metadata } from "next";
 
 // Styles
 import "./globals.css";
-import { Montserrat, Inter } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { Toaster } from "sonner";
 
-// Components
-import ToastAlert from "./_components/common/ToastAlert";
-
 // Providers
-import AuthProvider from "./context/AuthContext/AuthProvider";
 import SidebarProvider from "./context/SidebarContext/SidebarProvider";
-import { ModalProvider } from "./context/ModalContext/ModalProvider";
-import { DrawerProvider } from "./context/DrawerContext/DrawerProvider";
 
 // Variables
 const montserrat = Montserrat({
   subsets: ["latin"],
   display: "swap",
 });
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Wentech",
@@ -50,17 +42,12 @@ export default function RootLayout({
 }) {
   return (
     <SidebarProvider>
-      <ModalProvider>
-        <DrawerProvider>
-          <html lang="en">
-            <body className={`${montserrat.className} antialiased`}>
-              {children}
-              <ToastAlert />
-              <Toaster richColors position="top-right" />
-            </body>
-          </html>
-        </DrawerProvider>
-      </ModalProvider>
+      <html lang="en">
+        <body className={`${montserrat.className} antialiased`}>
+          {children}
+          <Toaster richColors position="top-center" />
+        </body>
+      </html>
     </SidebarProvider>
   );
 }

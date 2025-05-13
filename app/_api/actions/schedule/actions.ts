@@ -62,14 +62,14 @@ export async function getRecurringSchedules(tourId: string) {
 
     const { data, error } = await supabase
       .from("tour_schedules")
-      .select("weekday, start_time")
+      .select("weekday, available_time")
       .eq("tour_id", tourId);
 
     if (error) return [];
 
     return data.map((s) => ({
       weekday: s.weekday,
-      start_time: s.start_time,
+      available_time: s.available_time,
     }));
   } catch (error: any) {
     console.error("Error getting recurring schedules:", error);

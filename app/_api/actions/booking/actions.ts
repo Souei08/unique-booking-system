@@ -12,14 +12,14 @@ export async function createTourBooking(data: {
   tourId: string;
   date: string;
   start_time: string;
-  spots: number;
+  slots: number;
   total_price: number;
   customer_email: string;
 }): Promise<SuccessResponse> {
   const supabase = await createClient();
-  const { tourId, date, start_time, spots, total_price, customer_email } = data;
+  const { tourId, date, start_time, slots, total_price, customer_email } = data;
 
-  if (!tourId || !date || !start_time || !spots || !total_price) {
+  if (!tourId || !date || !start_time || !slots || !total_price) {
     return { success: false, message: "Missing fields" };
   }
 
@@ -45,7 +45,7 @@ export async function createTourBooking(data: {
       .eq("date", date);
     // .eq("start_time", start_time);
 
-    if ((currentBookings || 0) + spots > tour.slots) {
+    if ((currentBookings || 0) + slots > tour.slots) {
       return {
         success: false,
         message: "Not enough available slots.",
