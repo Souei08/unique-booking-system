@@ -1,11 +1,10 @@
-import { SuccessResponse } from "@/app/_api/actions/types";
 import { createClient } from "@/supabase/client";
 import { WeekdaySchedule } from "@/app/_features/booking/types/tour-schedule-types";
 
 export async function saveTourSchedule(
   tourId: string,
   schedules: WeekdaySchedule[]
-): Promise<SuccessResponse> {
+) {
   try {
     const supabase = await createClient();
 

@@ -31,7 +31,7 @@ export function CalendarCell({
 
   const isOutsideMonth = !isSameMonth(currentMonth, date);
 
-  const isDateToday = isToday(date, getLocalTimeZone());
+  // const isDateToday = isToday(date, getLocalTimeZone());
 
   return (
     <td
@@ -62,14 +62,14 @@ export function CalendarCell({
             !isSelected &&
               !finalIsDisabled &&
               "hover:bg-gray-100 text-gray-700 bg-fill",
-            isOutsideMonth && "text-gray-300 bg-gray-100",
-            isDateToday && !isSelected && "font-semibold text-brand"
+            isOutsideMonth && "text-gray-300 bg-gray-100"
+            // isDateToday && !isSelected && "font-semibold text-brand"
           )}
         >
           {formattedDate}
-          {isDateToday && !isSelected && (
+          {/* {isDateToday && !isSelected && (
             <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-brand" />
-          )}
+          )} */}
         </div>
       </div>
     </td>

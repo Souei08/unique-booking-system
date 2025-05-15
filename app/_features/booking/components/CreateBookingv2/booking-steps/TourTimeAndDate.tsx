@@ -345,14 +345,20 @@ const TourTimeAndDate = ({
             <CardTitle className="text-xl font-semibold">Select Date</CardTitle>
           </CardHeader>
           <CardContent>
-            <RenderCalendar
-              daysofWeek={
-                availableWeekdays.length > 0
-                  ? availableWeekdays
-                  : allWeekdays.map((day) => ({ day, isActive: true }))
-              }
-              setSelectedDate={setSelectedDate}
-            />
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <RenderCalendar
+                daysofWeek={
+                  availableWeekdays.length > 0
+                    ? availableWeekdays
+                    : allWeekdays.map((day) => ({ day, isActive: true }))
+                }
+                setSelectedDate={setSelectedDate}
+              />
+            )}
           </CardContent>
         </Card>
 
@@ -364,7 +370,9 @@ const TourTimeAndDate = ({
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-4">Loading available times...</div>
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
             ) : availableTimes.length > 0 ? (
               <RadioGroup
                 value={selectedTime}

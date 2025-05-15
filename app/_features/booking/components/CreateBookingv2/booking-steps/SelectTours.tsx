@@ -12,19 +12,31 @@ const SelectTours = ({
   handleNext: () => void;
 }) => {
   const [tours, setTours] = useState<Tour[]>();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTours = async () => {
+      setLoading(true);
       try {
         const fetchedTours = await getAllToursClient();
         setTours(fetchedTours);
       } catch (error) {
         console.error("Error fetching tours:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchTours();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

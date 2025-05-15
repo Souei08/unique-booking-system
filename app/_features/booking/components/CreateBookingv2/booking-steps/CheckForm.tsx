@@ -104,11 +104,11 @@ const CheckForm = ({
   };
 
   const calculateTotal = () => {
-    let total = selectedTour.rate;
+    let total = selectedTour.rate * numberOfPeople;
     selectedOptions.forEach((optionId) => {
       const option = additionalOptions.find((opt) => opt.id === optionId);
       if (option) {
-        total += option.price;
+        total += option.price * numberOfPeople;
       }
     });
     return total;
@@ -150,12 +150,13 @@ const CheckForm = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Tour Image */}
           <div className="lg:col-span-1">
-            <div className="h-full bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 shadow-sm">
+            <div className="h-full">
               <div className="relative h-full">
                 <img
                   src={featuredImage?.url}
                   alt={selectedTour.title}
                   className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -172,7 +173,7 @@ const CheckForm = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Date & Time */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 shadow-sm">
+              <div>
                 <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
                   <svg
                     className="h-5 w-5 text-blue-600 mr-2"
@@ -190,7 +191,7 @@ const CheckForm = ({
                   Date & Time
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex items-center bg-white rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm text-gray-500">Selected Date</p>
                       <p className="text-lg font-semibold text-gray-900">
@@ -198,7 +199,7 @@ const CheckForm = ({
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center bg-white rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm text-gray-500">Time</p>
                       <p className="text-lg font-semibold text-gray-900">
@@ -206,7 +207,7 @@ const CheckForm = ({
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center bg-white rounded-lg p-3 shadow-sm">
+                  <div className="flex items-center bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                     <div className="flex-1">
                       <p className="text-sm text-gray-500">Number of People</p>
                       <p className="text-lg font-semibold text-gray-900">
@@ -218,7 +219,7 @@ const CheckForm = ({
               </div>
 
               {/* Tour Details */}
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-sm">
+              <div>
                 <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center">
                   <svg
                     className="h-5 w-5 text-purple-600 mr-2"
@@ -236,7 +237,7 @@ const CheckForm = ({
                   Tour Details
                 </h3>
                 <div className="space-y-3">
-                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <svg
@@ -259,7 +260,7 @@ const CheckForm = ({
                       </span>
                     </div>
                   </div>
-                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <svg
@@ -283,7 +284,7 @@ const CheckForm = ({
                     </div>
                   </div>
                   {selectedTour.group_size_limit && (
-                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <svg
@@ -553,8 +554,19 @@ const CheckForm = ({
         </h2>
         <div className="space-y-4">
           <div className="flex justify-between">
-            <span className="text-gray-600">Tour Price</span>
-            <span className="font-medium">${selectedTour.rate}</span>
+            <div>
+              <span className="text-gray-600">Tour Price</span>
+              <p className="text-sm text-gray-500">
+                ${selectedTour.rate} × {numberOfPeople} people
+              </p>
+            </div>
+            <span className="font-medium">
+              ${selectedTour.rate * numberOfPeople}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600">Number of People</span>
+            <span className="font-medium">{numberOfPeople} people</span>
           </div>
           {selectedOptions.length > 0 && (
             <>
@@ -567,7 +579,7 @@ const CheckForm = ({
                   return option ? (
                     <div
                       key={option.id}
-                      className="flex justify-between text-sm text-gray-600"
+                      className="flex justify-between text-sm text-gray-600 mb-2"
                     >
                       <span>{option.name}</span>
                       <span>${option.price}</span>
