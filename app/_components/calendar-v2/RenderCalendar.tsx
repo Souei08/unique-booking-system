@@ -36,11 +36,11 @@ export function RenderCalendar({ daysofWeek, setSelectedDate }: iAppProps) {
   const handleChangeDate = (date: DateValue) => {
     setDate(date as CalendarDate);
     setSelectedDate(date);
-    const url = new URL(window.location.href);
+    // const url = new URL(window.location.href);
 
-    url.searchParams.set("date", date.toString());
+    // url.searchParams.set("date", date.toString());
 
-    router.push(url.toString());
+    // router.push(url.toString());
   };
 
   const isDateUnavailable = (date: DateValue) => {
