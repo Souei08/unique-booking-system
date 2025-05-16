@@ -39,6 +39,12 @@ const navigationItems: NavigationItem[] = [
     icon: GlobeAmericasIcon,
     roles: ["admin", "staff"],
   },
+  {
+    name: "Users",
+    href: "/dashboard/users",
+    icon: UserGroupIcon,
+    roles: ["admin"],
+  },
   // {
   //   name: "Rentals",
   //   href: "/dashboard/rentals",

@@ -41,22 +41,6 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
       header: "Tour",
     },
     {
-      accessorKey: "category",
-      header: "Category",
-    },
-    {
-      accessorKey: "duration",
-      header: "Duration (hrs)",
-    },
-    {
-      accessorKey: "group_size_limit",
-      header: "Group Size Limit",
-    },
-    {
-      accessorKey: "slots",
-      header: "Available Slots",
-    },
-    {
       accessorKey: "rate",
       header: "Price",
       cell: ({ row }) => {
@@ -68,6 +52,35 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
         return formatted;
       },
     },
+    {
+      accessorKey: "category",
+      header: "Category",
+    },
+    {
+      accessorKey: "duration",
+      header: "Duration",
+      cell: ({ row }) => {
+        const duration = Number(row.getValue("duration"));
+        return `${duration} ${duration === 1 ? "hour" : "hours"}`;
+      },
+    },
+    {
+      accessorKey: "group_size_limit",
+      header: "Max Group Size",
+      cell: ({ row }) => {
+        const limit = Number(row.getValue("group_size_limit"));
+        return `${limit} ${limit === 1 ? "person" : "people"}`;
+      },
+    },
+    {
+      accessorKey: "slots",
+      header: "Available Slots",
+      cell: ({ row }) => {
+        const slots = Number(row.getValue("slots"));
+        return slots > 0 ? `${slots} available` : "Fully booked";
+      },
+    },
+
     {
       accessorKey: "created_at",
       header: "Created At",
