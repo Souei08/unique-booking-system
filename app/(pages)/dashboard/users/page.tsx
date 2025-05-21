@@ -1,14 +1,8 @@
 import { UsersTable } from "@/app/_features/users/components/UsersTable";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import { getAllUsers } from "@/app/_features/users/api/getAllUsers";
 import { CreateUserDialog } from "@/app/_features/users/components/CreateUserDialog";
+import ContentLayout from "../ContentLayout";
 
 interface User {
   id: string;
@@ -34,13 +28,23 @@ export default async function UsersPage() {
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Users</h1>
-        <CreateUserDialog />
-      </div>
-
+    <ContentLayout
+      title="List of Users"
+      buttonText="Create User"
+      description="View and manage all current users."
+      modalTitle="Create a new user"
+      modalDescription="Create a new user to add to the list."
+      modalRoute="users"
+    >
       <UsersTable users={users as User[]} />
-    </div>
+    </ContentLayout>
+    // <div className="container mx-auto py-6">
+    //   <div className="flex justify-between items-center mb-6">
+    //     <h1 className="text-2xl font-bold">Users</h1>
+    //     <CreateUserDialog />
+    //   </div>
+
+    //   <UsersTable users={users as User[]} />
+    // </div>
   );
 }

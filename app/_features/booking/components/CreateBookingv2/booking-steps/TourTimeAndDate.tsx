@@ -25,7 +25,9 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { getTourSchedule } from "@/app/_features/tours/api/tour-schedule/client/getTourSchedule";
+import { getRemainingSlots } from "@/app/_features/booking/api/getRemainingSlots";
 import { RenderCalendar } from "@/app/_components/calendar-v2/RenderCalendar";
+import { getFullyBookedDatesFromList } from "../../../api/getFullyBookedDatesFromList";
 
 export type Weekday =
   | "Monday"
@@ -51,6 +53,11 @@ interface TourSchedule {
   available_time: string;
 }
 
+interface TimeSlot {
+  start_time: string;
+  remainingSlots: number;
+}
+
 const TourTimeAndDate = ({
   selectedTour,
   handleNext,
@@ -72,11 +79,18 @@ const TourTimeAndDate = ({
 }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState(false);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(
+    null
+  );
 
   const [tourSchedules, setTourSchedules] = useState<TourSchedule[]>([]);
   const [availableWeekdays, setAvailableWeekdays] = useState<
     { day: string; isActive: boolean }[]
   >([]);
+
+  const [availableTimes, setAvailableTimes] = useState<TimeSlot[]>([]);
+  const [fullyBookedDates, setFullyBookedDates] = useState<string[]>([]);
 
   // Parse images from string to array
   const tourImages = JSON.parse(selectedTour.images) as { url: string }[];
@@ -111,23 +125,126 @@ const TourTimeAndDate = ({
   }, [selectedTour.id]);
 
   // Get available times for selected date
-  const getAvailableTimesForDate = () => {
+  const getAvailableTimesForDate = async () => {
     if (!selectedDate) return [];
-    const weekday = format(
-      selectedDate.toDate(getLocalTimeZone()),
-      "EEEE"
-    ).toLowerCase();
+    setLoadingTimeSlots(true);
 
-    // Filter schedules and ensure we're comparing lowercase weekdays
-    return tourSchedules.filter(
-      (schedule) => schedule.weekday.toLowerCase() === weekday
-    );
+    try {
+      const weekday = format(
+        selectedDate.toDate(getLocalTimeZone()),
+        "EEEE"
+      ).toLowerCase();
+
+      // Filter schedules and ensure we're comparing lowercase weekdays
+      const times = tourSchedules
+        .filter((schedule) => schedule.weekday.toLowerCase() === weekday)
+        .flatMap((schedule) => JSON.parse(schedule.available_time));
+
+      // Get remaining slots for each time
+      const timesWithSlots = await Promise.all(
+        times.map(async (time: { start_time: string }) => {
+          const remainingSlots = await getRemainingSlots(
+            selectedTour.id,
+            selectedDate.toString(),
+            time.start_time
+          );
+          return {
+            start_time: time.start_time,
+            remainingSlots,
+          };
+        })
+      );
+
+      setAvailableTimes(timesWithSlots);
+
+      // Reset selected time if current selection has no slots
+      if (selectedTime) {
+        const currentTimeSlot = timesWithSlots.find(
+          (slot) => slot.start_time === selectedTime
+        );
+        if (!currentTimeSlot || currentTimeSlot.remainingSlots === 0) {
+          setSelectedTime("");
+          setSelectedTimeSlot(null);
+        } else {
+          setSelectedTimeSlot(currentTimeSlot);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching available times:", error);
+    } finally {
+      setLoadingTimeSlots(false);
+    }
   };
 
-  const availableTimes = getAvailableTimesForDate();
+  // Update available times when date changes
+  useEffect(() => {
+    if (selectedDate) {
+      getAvailableTimesForDate();
+    }
+  }, [selectedDate]);
+
+  // Handle time selection
+  const handleTimeSelection = (time: string) => {
+    setSelectedTime(time);
+    const timeSlot = availableTimes.find((slot) => slot.start_time === time);
+    setSelectedTimeSlot(timeSlot || null);
+
+    // Reset number of people if it exceeds available slots
+    if (timeSlot && numberOfPeople > timeSlot.remainingSlots) {
+      setNumberOfPeople(timeSlot.remainingSlots);
+    }
+  };
 
   const handleClickBooking = () => {
     handleNext();
+  };
+
+  function getAvailableDatesByWeekday(
+    month: string,
+    year: string,
+    activeDaysOfWeek: { day: string; isActive: boolean }[]
+  ): string[] {
+    const activeWeekdays = activeDaysOfWeek
+      .filter((d) => d.isActive)
+      .map((d) => d.day.toLowerCase());
+
+    const monthNum = new Date(`${month} 1, ${year}`).getMonth(); // 0-indexed
+    const yearNum = parseInt(year);
+
+    const dates: string[] = [];
+    const date = new Date(yearNum, monthNum, 1);
+
+    while (date.getMonth() === monthNum) {
+      const dayName = date
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toLowerCase();
+
+      if (activeWeekdays.includes(dayName)) {
+        const localDate = new Date(
+          date.getTime() - date.getTimezoneOffset() * 60000
+        );
+        const formatted = localDate.toISOString().split("T")[0]; // 'YYYY-MM-DD'
+        dates.push(formatted);
+      }
+
+      date.setDate(date.getDate() + 1);
+    }
+
+    return dates;
+  }
+
+  const handleMonthChange = async (month: string, year: string) => {
+    const availableDates = getAvailableDatesByWeekday(
+      month,
+      year,
+      availableWeekdays
+    );
+
+    const fullyBookedDates = await getFullyBookedDatesFromList(
+      selectedTour.id,
+      availableDates
+    );
+    setFullyBookedDates(fullyBookedDates);
   };
 
   return (
@@ -357,6 +474,8 @@ const TourTimeAndDate = ({
                     : allWeekdays.map((day) => ({ day, isActive: true }))
                 }
                 setSelectedDate={setSelectedDate}
+                onMonthChange={handleMonthChange}
+                disabledDates={fullyBookedDates}
               />
             )}
           </CardContent>
@@ -369,54 +488,58 @@ const TourTimeAndDate = ({
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {loadingTimeSlots ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : availableTimes.length > 0 ? (
               <RadioGroup
                 value={selectedTime}
-                onValueChange={setSelectedTime}
+                onValueChange={handleTimeSelection}
                 className="grid gap-3"
               >
-                {availableTimes.map((schedule, scheduleIndex) => (
-                  <React.Fragment key={scheduleIndex}>
-                    {JSON.parse(schedule.available_time).map(
-                      (time: { start_time: string }, timeIndex: number) => {
-                        // Parse the time string and format it
-                        const timeDate = new Date(
-                          `${selectedDate.toString()}T${time.start_time}`
-                        );
-                        const formattedTime = format(timeDate, "h:mm a");
+                {availableTimes.map((timeSlot, index) => {
+                  // Parse the time string and format it
+                  const timeDate = new Date(
+                    `${selectedDate.toString()}T${timeSlot.start_time}`
+                  );
+                  const formattedTime = format(timeDate, "h:mm a");
 
-                        return (
-                          <div
-                            key={`${scheduleIndex}-${timeIndex}`}
-                            className={cn(
-                              "flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent cursor-pointer",
-                              selectedTime === time.start_time &&
-                                "border-primary bg-accent"
-                            )}
-                          >
-                            <RadioGroupItem
-                              value={time.start_time}
-                              id={`time-${scheduleIndex}-${timeIndex}`}
-                              className="border-primary"
-                            />
-                            <Label
-                              htmlFor={`time-${scheduleIndex}-${timeIndex}`}
-                              className="flex w-full cursor-pointer items-center justify-between"
-                            >
-                              <span className="font-medium">
-                                {formattedTime}
-                              </span>
-                            </Label>
-                          </div>
-                        );
-                      }
-                    )}
-                  </React.Fragment>
-                ))}
+                  return (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent cursor-pointer",
+                        selectedTime === timeSlot.start_time &&
+                          "border-primary bg-accent",
+                        timeSlot.remainingSlots === 0 &&
+                          "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <RadioGroupItem
+                        value={timeSlot.start_time}
+                        id={`time-${index}`}
+                        className="border-primary"
+                        disabled={timeSlot.remainingSlots === 0}
+                      />
+                      <Label
+                        htmlFor={`time-${index}`}
+                        className="flex w-full cursor-pointer items-center justify-between"
+                      >
+                        <span className="font-medium">{formattedTime}</span>
+                        <Badge
+                          variant={
+                            timeSlot.remainingSlots > 0
+                              ? "default"
+                              : "destructive"
+                          }
+                        >
+                          {timeSlot.remainingSlots} slots left
+                        </Badge>
+                      </Label>
+                    </div>
+                  );
+                })}
               </RadioGroup>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
@@ -437,18 +560,28 @@ const TourTimeAndDate = ({
               <Input
                 type="number"
                 min={1}
-                max={selectedTour.group_size_limit}
+                max={
+                  selectedTimeSlot
+                    ? selectedTimeSlot.remainingSlots
+                    : selectedTour.group_size_limit
+                }
                 value={numberOfPeople}
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
-                  if (value >= 1 && value <= selectedTour.group_size_limit) {
+                  const maxValue = selectedTimeSlot
+                    ? selectedTimeSlot.remainingSlots
+                    : selectedTour.group_size_limit;
+
+                  if (value >= 1 && value <= maxValue) {
                     setNumberOfPeople(value);
                   }
                 }}
                 className="w-full"
               />
               <p className="text-sm text-muted-foreground">
-                Maximum {selectedTour.group_size_limit} people per booking
+                {selectedTimeSlot
+                  ? `${selectedTimeSlot.remainingSlots} slots available for this time`
+                  : `Maximum ${selectedTour.group_size_limit} people per booking`}
               </p>
             </div>
           </CardContent>

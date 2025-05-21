@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Eye, MoreHorizontal, Pencil, Trash2, User } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { TableV2 } from "@/app/_components/common/TableV2";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +40,6 @@ interface UsersTableProps {
 export function UsersTable({ users, onView }: UsersTableProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-  const router = useRouter();
 
   const columns: ColumnDef<User>[] = [
     {
@@ -72,31 +70,6 @@ export function UsersTable({ users, onView }: UsersTableProps) {
       accessorKey: "role",
       header: "Role",
     },
-    // {
-    //   accessorKey: "status",
-    //   header: "Status",
-    //   cell: ({ row }) => {
-    //     const status = row.getValue("status") as string;
-    //     return (
-    //       <span
-    //         className={`capitalize ${
-    //           status === "active" ? "text-green-600" : "text-red-600"
-    //         }`}
-    //       >
-    //         {status}
-    //       </span>
-    //     );
-    //   },
-    // },
-    // {
-    //   accessorKey: "last_login",
-    //   header: "Last Login",
-    //   cell: ({ row }) => {
-    //     const date = row.getValue("last_login");
-    //     if (!date) return "Never";
-    //     return format(new Date(date as string), "MMM dd, yyyy HH:mm");
-    //   },
-    // },
     {
       accessorKey: "created_at",
       header: "Created At",
@@ -120,16 +93,6 @@ export function UsersTable({ users, onView }: UsersTableProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  router.push(`/users/${user.id}`);
-                }}
-                className="cursor-pointer"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View User
-              </DropdownMenuItem>
-
               <DropdownMenuItem
                 onClick={() => {
                   setSelectedUser(user);
@@ -177,10 +140,6 @@ export function UsersTable({ users, onView }: UsersTableProps) {
           </DialogHeader>
 
           {/* Add your user form component here */}
-          {/* <UserForm
-            initialData={selectedUser || undefined}
-            onSuccess={() => setIsUserDialogOpen(false)}
-          /> */}
         </DialogContent>
       </Dialog>
     </>

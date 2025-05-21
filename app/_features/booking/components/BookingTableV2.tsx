@@ -22,6 +22,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TableV2 } from "@/app/_components/common/TableV2";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import UpdateBooking from "./UpdateBooking";
 
 interface BookingTableV2Props {
   bookings: BookingTable[];
@@ -40,9 +48,15 @@ export function BookingTableV2({
   onSendEmail,
   onUpdateStatus,
 }: BookingTableV2Props) {
+  const [isUpdateBookingDialogOpen, setIsUpdateBookingDialogOpen] =
+    useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<BookingTable | null>(
+    null
+  );
+
   const columns: ColumnDef<BookingTable>[] = [
     {
-      accessorKey: "customer",
+      accessorKey: "full_name",
       header: "Customer Name",
     },
     {
@@ -50,30 +64,28 @@ export function BookingTableV2({
       header: "Tour",
     },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: "booking_status",
+      header: "Booking Status",
       cell: ({ row }) => {
-        const status = row.getValue("status") as string;
+        const bookingStatus = row.getValue("booking_status") as string;
+
         const getStatusColor = (status: string) => {
-          switch (status.toLowerCase()) {
-            case "confirmed":
-              return "bg-green-500";
-            case "pending":
-              return "bg-yellow-500";
-            case "cancelled":
-              return "bg-red-500";
-            default:
-              return "bg-gray-500";
-          }
+          const statusColors: { [key: string]: string } = {
+            pending: "bg-yellow-500",
+            confirmed: "bg-green-500",
+            checked_in: "bg-blue-500",
+            cancelled: "bg-red-500",
+          };
+          return statusColors[status.toLowerCase()] || "bg-gray-500";
         };
 
         return (
           <Badge
             className={`${getStatusColor(
-              status
+              bookingStatus
             )} text-white uppercase font-bold`}
           >
-            {status}
+            {bookingStatus}
           </Badge>
         );
       },
@@ -134,31 +146,31 @@ export function BookingTableV2({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onView?.(booking)}
-                className="cursor-pointer"
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View
-              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => onSendEmail?.(booking)}
-                className="cursor-pointer"
+                className={`cursor-pointer ${
+                  !onSendEmail ? "text-gray-400" : ""
+                }`}
+                disabled={!onSendEmail}
               >
                 <Mail className="mr-2 h-4 w-4" />
                 Send Email
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onUpdateStatus?.(booking)}
-                className="cursor-pointer"
+                onClick={() => {}}
+                className="cursor-pointer text-gray-400"
+                disabled={true}
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Update Status
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => onEdit?.(booking)}
+                onClick={() => {
+                  setSelectedBooking(booking);
+                  setIsUpdateBookingDialogOpen(true);
+                }}
                 className="cursor-pointer"
               >
                 <Pencil className="mr-2 h-4 w-4" />
@@ -172,11 +184,35 @@ export function BookingTableV2({
   ];
 
   return (
-    <TableV2
-      columns={columns}
-      data={bookings}
-      filterColumn="customer"
-      filterPlaceholder="Filter by customer name..."
-    />
+    <>
+      <TableV2
+        columns={columns}
+        data={bookings}
+        filterColumn="full_name"
+        filterPlaceholder="Filter by customer name..."
+      />
+
+      <Dialog
+        open={isUpdateBookingDialogOpen}
+        onOpenChange={setIsUpdateBookingDialogOpen}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Update Booking</DialogTitle>
+          </DialogHeader>
+          {selectedBooking && (
+            <UpdateBooking
+              bookingId={selectedBooking.booking_id}
+              manageToken={selectedBooking.manage_token}
+              onClose={() => setIsUpdateBookingDialogOpen(false)}
+              onUpdate={async (updatedBooking) => {
+                // await onUpdateStatus?.(updatedBooking);
+                // setIsUpdateBookingDialogOpen(false);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

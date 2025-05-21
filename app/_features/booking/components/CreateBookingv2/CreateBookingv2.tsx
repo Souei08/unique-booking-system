@@ -22,7 +22,7 @@ import {
 } from "@/app/_features/booking/types/booking-types";
 
 // Api
-import { createTourBooking } from "../../api/CreateTourBooking";
+import { createTourBookingv2 } from "../../api/CreateTourBookingv2";
 
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
@@ -95,7 +95,7 @@ const CreateBookingv2 = ({ onClose }: { onClose: () => void }) => {
     };
 
     try {
-      const response = await createTourBooking(bookingData);
+      const response = await createTourBookingv2(bookingData);
       toast.success("Booking Successful!", {
         description: "Your tour has been booked successfully.",
       });

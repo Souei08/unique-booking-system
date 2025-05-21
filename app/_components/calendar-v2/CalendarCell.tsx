@@ -56,13 +56,13 @@ export function CalendarCell({
             "w-full h-full flex items-center justify-center",
             "text-xs sm:text-sm",
             "transition-all duration-200 ease-in-out",
-            finalIsDisabled && "text-gray-400 cursor-not-allowed",
+            finalIsDisabled && "text-weak cursor-not-allowed",
             isFocusVisible && "ring-2 ring-brand ring-offset-2",
             isSelected && "bg-brand text-white font-medium",
             !isSelected &&
               !finalIsDisabled &&
-              "hover:bg-gray-100 text-gray-700 bg-fill",
-            isOutsideMonth && "text-gray-300 bg-gray-100"
+              "hover:bg-fill text-strong bg-fill",
+            isOutsideMonth && "text-weak bg-fill"
             // isDateToday && !isSelected && "font-semibold text-brand"
           )}
         >

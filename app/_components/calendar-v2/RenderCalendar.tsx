@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Calendar } from "./calendar-v2";
 import { useState, useEffect } from "react";
 import {
@@ -14,16 +14,31 @@ import {
 interface iAppProps {
   daysofWeek: { day: string; isActive: boolean }[];
   setSelectedDate: (date: DateValue) => void;
+  onMonthChange: (month: string, year: string) => void;
+  disabledDates?: string[];
 }
 
-export function RenderCalendar({ daysofWeek, setSelectedDate }: iAppProps) {
-  const router = useRouter();
+export function RenderCalendar({
+  daysofWeek,
+  setSelectedDate,
+  onMonthChange,
+  disabledDates = [],
+}: iAppProps) {
   const searchParams = useSearchParams();
 
-  const [date, setDate] = useState<CalendarDate>(() => {
+  const [date, setDate] = useState<CalendarDate | null>(() => {
     const dateParam = searchParams.get("date");
-    return dateParam ? parseDate(dateParam) : today(getLocalTimeZone());
+    return dateParam ? parseDate(dateParam) : null;
   });
+
+  const handleMonthChange = (visibleDate: DateValue) => {
+    const currentDate = visibleDate.toDate("America/Grand_Turk");
+    const currentMonth = currentDate.toLocaleString("default", {
+      month: "long",
+    });
+    const currentYear = currentDate.getFullYear();
+    onMonthChange(currentMonth, currentYear.toString());
+  };
 
   useEffect(() => {
     const dateParam = searchParams.get("date");
@@ -36,18 +51,18 @@ export function RenderCalendar({ daysofWeek, setSelectedDate }: iAppProps) {
   const handleChangeDate = (date: DateValue) => {
     setDate(date as CalendarDate);
     setSelectedDate(date);
-    // const url = new URL(window.location.href);
-
-    // url.searchParams.set("date", date.toString());
-
-    // router.push(url.toString());
   };
 
   const isDateUnavailable = (date: DateValue) => {
     const dayOfWeek = date.toDate(getLocalTimeZone()).getDay();
     // Adjust the index to match the daysofWeek array
     const adjustedIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    return !daysofWeek[adjustedIndex].isActive;
+
+    // Check if the date is in the disabledDates array
+    const dateString = date.toString();
+    const isDisabled = disabledDates.includes(dateString);
+
+    return !daysofWeek[adjustedIndex].isActive || isDisabled;
   };
 
   return (
@@ -57,6 +72,7 @@ export function RenderCalendar({ daysofWeek, setSelectedDate }: iAppProps) {
       value={date}
       onChange={handleChangeDate}
       isDateUnavailable={isDateUnavailable}
+      onVisibleDateChange={handleMonthChange}
     />
   );
 }

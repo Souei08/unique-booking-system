@@ -35,20 +35,20 @@ export function CalendarGrid({
     <div className="w-full">
       <table {...gridProps} cellPadding="0" className="w-full table-fixed">
         <thead {...headerProps}>
-          <tr className="border-b border-gray-200">
+          <tr className="border-b border-stroke-weak">
             {weekDays.map((day, index) => (
               <th
                 key={index}
-                className="py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-600 uppercase tracking-wide"
+                className="py-2 sm:py-3 text-xs sm:text-sm font-semibold text-strong uppercase tracking-wide"
               >
                 {day}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-stroke-weak">
           {Array.from({ length: weeksInMonth }, (_, weekIndex) => (
-            <tr key={weekIndex} className="hover:bg-gray-50 transition-colors">
+            <tr key={weekIndex}>
               {state
                 .getDatesInWeek(weekIndex, startDate)
                 .map((date, i) =>

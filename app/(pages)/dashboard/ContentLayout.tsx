@@ -20,7 +20,7 @@ interface ContentLayoutProps {
 
   modalTitle: string;
   modalDescription?: string;
-  modalRoute: "booking" | "tours";
+  modalRoute: "booking" | "tours" | "users" | "products";
 }
 
 const ContentLayout = ({
@@ -34,9 +34,17 @@ const ContentLayout = ({
   modalRoute,
 }: ContentLayoutProps) => {
   const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
+  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
 
   const handleButtonClick = () => {
-    setIsTourDialogOpen(true);
+    if (modalRoute === "users") {
+      setIsUserDialogOpen(true);
+    } else if (modalRoute === "products") {
+      setIsProductDialogOpen(true);
+    } else {
+      setIsTourDialogOpen(true);
+    }
   };
 
   return (
@@ -47,6 +55,7 @@ const ContentLayout = ({
             <h1 className="text-h2 font-bold text-strong">{title}</h1>
             <p className="mt-2 text-lg text-weak">{description}</p>
           </div>
+
           <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
             <button
               type="button"
@@ -75,6 +84,22 @@ const ContentLayout = ({
           {modalRoute === "booking" && (
             <CreateBookingv2 onClose={() => setIsTourDialogOpen(false)} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="mb-5">
+            <DialogTitle>{modalTitle}</DialogTitle>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="mb-5">
+            <DialogTitle>{modalTitle}</DialogTitle>
+          </DialogHeader>
         </DialogContent>
       </Dialog>
     </main>

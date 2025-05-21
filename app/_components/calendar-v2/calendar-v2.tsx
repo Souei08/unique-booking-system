@@ -3,10 +3,12 @@ import { CalendarProps, DateValue, useCalendar, useLocale } from "react-aria";
 import { useCalendarState } from "react-stately";
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarGrid } from "./CalendarGrid";
+import { useEffect, useRef } from "react";
 
 export function Calendar(
   props: CalendarProps<DateValue> & {
     isDateUnavailable?: (date: DateValue) => boolean;
+    onVisibleDateChange?: (date: DateValue) => void;
   }
 ) {
   const { locale } = useLocale();
@@ -21,6 +23,22 @@ export function Calendar(
     props,
     state
   );
+
+  const prevMonthRef = useRef<number | null>(null);
+
+  // Call onVisibleDateChange only when the month changes
+  useEffect(() => {
+    const currentMonth = state.visibleRange.start
+      .toDate("America/Grand_Turk")
+      .getMonth();
+
+    if (prevMonthRef.current !== currentMonth) {
+      props.onVisibleDateChange?.(state.visibleRange.start);
+    }
+
+    prevMonthRef.current = currentMonth;
+  }, [state.visibleRange.start, props.onVisibleDateChange]);
+
   return (
     <div {...calendarProps} className="w-full">
       <CalendarHeader

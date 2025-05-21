@@ -33,15 +33,15 @@ export function CalendarHeader({
         <h2>{calendarProps["aria-label"]}</h2>
       </VisuallyHidden>
 
-      <h2 aria-hidden className="text-lg font-semibold text-gray-900">
-        {monthName} <span className="text-gray-500 font-medium">{year}</span>
+      <h2 aria-hidden className="text-lg font-semibold text-strong">
+        {monthName} <span className="text-weak font-medium">{year}</span>
       </h2>
       <div className="flex items-center gap-1">
         <CalendarButton {...prevButtonProps}>
-          <ChevronLeftIcon className="w-5 h-5 text-gray-600 hover:text-gray-900" />
+          <ChevronLeftIcon className="w-5 h-5 text-weak hover:text-brand" />
         </CalendarButton>
         <CalendarButton {...nextButtonProps}>
-          <ChevronRightIcon className="w-5 h-5 text-gray-600 hover:text-gray-900" />
+          <ChevronRightIcon className="w-5 h-5 text-weak hover:text-brand" />
         </CalendarButton>
       </div>
     </div>

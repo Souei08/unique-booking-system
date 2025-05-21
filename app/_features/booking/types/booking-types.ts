@@ -1,19 +1,33 @@
 export interface BookingTable {
   id: string;
+  full_name: string;
+  booking_id: string;
   tour_id: string;
   user_id: string;
   slots: number;
   total_price: number;
-  created_at: string;
+  booking_created_at: string;
   booking_date: string;
   selected_time: string;
-  status: string;
   first_name: string;
   last_name: string;
   email: string;
   phone_number: string;
   manage_token: string;
   tour_title: string;
+  payment_method?: string;
+  transaction_id?: string;
+  additional_products?: AdditionalProduct[];
+  booking_status: string;
+  payment_status: string;
+}
+
+export interface AdditionalProduct {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  total: number;
 }
 
 export interface CustomerInformation {
