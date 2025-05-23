@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 // Components
@@ -11,6 +13,7 @@ import { ChevronLeft } from "lucide-react";
 import SelectTours from "./booking-steps/SelectTours";
 import TourTimeAndDate from "./booking-steps/TourTimeAndDate";
 import CheckForm from "./booking-steps/CheckForm";
+import BookingSuccess from "./booking-steps/BookingSuccess";
 
 // Types
 import { DateValue } from "@internationalized/date";
@@ -27,11 +30,20 @@ import { createTourBookingv2 } from "../../api/CreateTourBookingv2";
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
 
-const CreateBookingv2 = ({ onClose }: { onClose: () => void }) => {
+const CreateBookingv2 = ({
+  onClose,
+  customerSelectedTour,
+}: {
+  onClose: () => void;
+  customerSelectedTour?: Tour;
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isBookingComplete, setIsBookingComplete] = useState(false);
 
   // Step 1
-  const [selectedTour, setSelectedTour] = useState<Tour>();
+  const [selectedTour, setSelectedTour] = useState<Tour>(
+    customerSelectedTour || ({} as Tour)
+  );
 
   // Step 2
   const [selectedDate, setSelectedDate] = useState<DateValue>();
@@ -49,16 +61,22 @@ const CreateBookingv2 = ({ onClose }: { onClose: () => void }) => {
 
   const [paymentInformation, setPaymentInformation] =
     useState<PaymentInformation>({
-      payment_method: "",
+      payment_method: "card",
       payment_id: "",
       total_price: 0,
     });
+
+  useEffect(() => {
+    if (selectedTour && selectedTour.id) {
+      setCurrentStep(2);
+    }
+  }, [selectedTour]);
 
   const handleBack = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      setSelectedTour(undefined);
+      setSelectedTour({} as Tour);
     }
   };
 
@@ -88,18 +106,12 @@ const CreateBookingv2 = ({ onClose }: { onClose: () => void }) => {
       slots: numberOfPeople,
       total_price: paymentInformation.total_price,
       payment_method: paymentInformation.payment_method,
-      payment_id:
-        paymentInformation.payment_method === "cash"
-          ? crypto.randomUUID()
-          : paymentInformation.payment_id,
+      payment_id: paymentInformation.payment_id,
     };
 
     try {
       const response = await createTourBookingv2(bookingData);
-      toast.success("Booking Successful!", {
-        description: "Your tour has been booked successfully.",
-      });
-      onClose();
+      setIsBookingComplete(true);
     } catch (error) {
       console.error(error);
       toast.error("Booking Failed", {
@@ -109,6 +121,18 @@ const CreateBookingv2 = ({ onClose }: { onClose: () => void }) => {
       throw error;
     }
   };
+
+  if (isBookingComplete) {
+    return (
+      <BookingSuccess
+        selectedTour={selectedTour!}
+        selectedDate={selectedDate!}
+        selectedTime={selectedTime}
+        customerEmail={customerInformation.email}
+        onClose={onClose}
+      />
+    );
+  }
 
   const renderStep = () => {
     switch (currentStep) {
@@ -152,19 +176,52 @@ const CreateBookingv2 = ({ onClose }: { onClose: () => void }) => {
   };
 
   return (
-    <div className="space-y-6">
-      {currentStep > 1 && (
-        <Button
-          variant="ghost"
-          onClick={handleBack}
-          className="flex items-center gap-2"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back
-        </Button>
-      )}
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+        {/* Progress Bar */}
+        <div className="mb-8 sm:mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm sm:text-base">
+                {currentStep}
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-strong">
+                {currentStep === 1 && "Select Tour"}
+                {currentStep === 2 && "Choose Date & Time"}
+                {currentStep === 3 && "Complete Booking"}
+              </h2>
+            </div>
+            {currentStep > 1 && (
+              <Button
+                variant="ghost"
+                onClick={handleBack}
+                className="flex items-center gap-2 text-muted-foreground hover:text-strong transition-colors w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <ChevronLeft className="w-5 h-5" />
+                Back
+              </Button>
+            )}
+          </div>
+          <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              className="absolute top-0 left-0 h-full bg-primary transition-all duration-300 ease-in-out"
+              style={{ width: `${((currentStep - 1) / 2) * 100}%` }}
+            />
+          </div>
+        </div>
 
-      {renderStep()}
+        {/* Main Content */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-2xl sm:rounded-3xl" />
+          <div className="relative p-4 sm:p-6">{renderStep()}</div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 sm:mt-12 text-center text-xs sm:text-sm text-muted-foreground">
+          <p>Need help? Contact our support team at support@example.com</p>
+          <p className="mt-2">Secure booking powered by Stripe</p>
+        </div>
+      </div>
     </div>
   );
 };

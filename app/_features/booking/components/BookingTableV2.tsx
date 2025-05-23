@@ -56,6 +56,10 @@ export function BookingTableV2({
 
   const columns: ColumnDef<BookingTable>[] = [
     {
+      accessorKey: "booking_id",
+      header: "Booking ID",
+    },
+    {
       accessorKey: "full_name",
       header: "Customer Name",
     },

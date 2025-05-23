@@ -31,24 +31,23 @@ export function CalendarGrid({
   // Get the number of weeks in the month so we can render the proper number of rows.
   const weeksInMonth = getWeeksInMonth(startDate, locale);
   return (
-    // <div className="w-full bg-white p-2 sm:p-4">
     <div className="w-full">
       <table {...gridProps} cellPadding="0" className="w-full table-fixed">
         <thead {...headerProps}>
-          <tr className="border-b border-stroke-weak">
+          <tr>
             {weekDays.map((day, index) => (
               <th
                 key={index}
-                className="py-2 sm:py-3 text-xs sm:text-sm font-semibold text-strong uppercase tracking-wide"
+                className="py-3 text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
                 {day}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-stroke-weak">
+        <tbody>
           {Array.from({ length: weeksInMonth }, (_, weekIndex) => (
-            <tr key={weekIndex}>
+            <tr key={weekIndex} className="border-t border-gray-100">
               {state
                 .getDatesInWeek(weekIndex, startDate)
                 .map((date, i) =>
@@ -61,7 +60,7 @@ export function CalendarGrid({
                       isUnavailable={isDateUnavailable?.(date)}
                     />
                   ) : (
-                    <td key={i} className="p-1 sm:p-2" />
+                    <td key={i} className="p-2" />
                   )
                 )}
             </tr>

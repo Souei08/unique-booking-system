@@ -46,6 +46,20 @@ module.exports = {
         small: ["0.875rem", { lineHeight: "1.5" }], // 14px / 21px
         tiny: ["0.75rem", { lineHeight: "1.5" }], // 12px / 18px
       },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
     },
   },
   plugins: [],

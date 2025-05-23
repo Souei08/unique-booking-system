@@ -6,6 +6,17 @@ import { getOneBooking } from "../api/getOneBooking";
 import { updateBookingStatus } from "../api/UpdateBookingStatus";
 import { rescheduleBooking } from "../api/RescheduleBooking";
 import RescheduleBookingModal from "./RescheduleBookingModal";
+import {
+  CalendarDays,
+  Clock,
+  Users,
+  CreditCard,
+  Package,
+  Printer,
+  RefreshCw,
+  UserCog,
+  XCircle,
+} from "lucide-react";
 
 // Format date to be more readable
 const formatDate = (dateString: string | undefined) => {
@@ -146,37 +157,37 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
   }
 
   return (
-    <div>
+    <div className="w-full">
       {/* Header */}
-      <div className="flex flex-col border-b px-6 py-5">
-        <div className="flex flex-wrap justify-between items-center gap-4">
-          <div className="space-y-1.5">
-            <h1 className="text-h1 font-semibold text-strong">
+      <div className="bg-white rounded-t-xl border-b px-4 sm:px-8 py-4 sm:py-6">
+        <div className="flex flex-wrap justify-between items-start gap-4 sm:gap-6">
+          <div className="space-y-2">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
               {booking?.full_name}
             </h1>
-            <div className="flex flex-col gap-0.5">
-              <div className="flex items-center gap-2 text-small text-weak">
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
                 <span>{booking?.phone_number || "N/A"}</span>
-                <span>•</span>
-                <span>{booking?.email}</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="block sm:inline">{booking?.email}</span>
               </div>
-              <p className="text-small text-weak">Booking ID: {bookingId}</p>
+              <p className="text-sm text-gray-500">Booking ID: {bookingId}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span
-              className={`px-3 py-1 rounded-full text-tiny font-bold uppercase ${
+              className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
                 booking?.booking_status === "pending"
-                  ? "bg-amber-500 text-white"
+                  ? "bg-amber-100 text-amber-700"
                   : booking?.booking_status === "confirmed"
-                  ? "bg-emerald-500 text-white"
+                  ? "bg-emerald-100 text-emerald-700"
                   : booking?.booking_status === "checked_in"
-                  ? "bg-brand text-white"
+                  ? "bg-blue-100 text-blue-700"
                   : booking?.booking_status === "cancelled"
-                  ? "bg-red-500 text-white"
+                  ? "bg-red-100 text-red-700"
                   : booking?.booking_status === "rescheduled"
-                  ? "bg-purple-500 text-white"
-                  : "bg-weak text-white"
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-gray-100 text-gray-700"
               }`}
             >
               {booking?.booking_status}
@@ -186,73 +197,77 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="p-6 space-y-6">
-        {/* Tour Information */}
-        <div className="bg-background rounded-lg border border-stroke-weak">
-          <div className="px-6 py-4 border-b border-stroke-weak">
-            <h2 className="text-h2 font-medium text-strong">Tour Details</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="space-y-4">
+      <div className="p-4 sm:p-8 space-y-6 sm:space-y-8 bg-gray-50">
+        {/* Tour and Payment Information Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+          {/* Tour Information */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Tour Details
+              </h2>
+            </div>
+            <div className="p-4 sm:p-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Tour Package
                   </p>
-                  <p className="text-body font-medium text-strong">
+                  <p className="text-base font-medium text-gray-900">
                     {booking?.tour_title}
                   </p>
                 </div>
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Number of Guests
                   </p>
-                  <p className="text-body font-medium text-strong">
+                  <div className="flex items-center gap-2 text-base font-medium text-gray-900">
+                    <Users className="w-5 h-5 text-gray-400" />
                     {booking?.slots}{" "}
                     {booking?.slots && booking.slots > 1 ? "People" : "Person"}
-                  </p>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-4">
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Booking Date
                   </p>
-                  <p className="text-body font-medium text-strong">
+                  <div className="flex items-center gap-2 text-base font-medium text-gray-900">
+                    <CalendarDays className="w-5 h-5 text-gray-400" />
                     {formatDate(booking?.booking_date)}
-                  </p>
+                  </div>
                 </div>
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Selected Time
                   </p>
-                  <p className="text-body font-medium text-strong">
+                  <div className="flex items-center gap-2 text-base font-medium text-gray-900">
+                    <Clock className="w-5 h-5 text-gray-400" />
                     {formatTime(booking?.selected_time)}
-                  </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Payment Information */}
-        <div className="bg-background rounded-lg border border-stroke-weak">
-          <div className="px-6 py-4 border-b border-stroke-weak">
-            <h2 className="text-h2 font-medium text-strong">Payment Details</h2>
-          </div>
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="space-y-4">
+          {/* Payment Information */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Payment Details
+              </h2>
+            </div>
+            <div className="p-4 sm:p-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Payment Status
                   </p>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-3 py-1 rounded-full text-tiny font-bold uppercase ${
+                      className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide ${
                         booking?.payment_status === "paid"
-                          ? "bg-emerald-500 text-white"
-                          : "bg-amber-500 text-white"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-amber-100 text-amber-700"
                       }`}
                     >
                       {booking?.payment_status || "paid"}
@@ -260,28 +275,27 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                   </div>
                 </div>
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Payment Method
                   </p>
-                  <p className="text-body font-medium text-strong">
+                  <div className="flex items-center gap-2 text-base font-medium text-gray-900">
+                    <CreditCard className="w-5 h-5 text-gray-400" />
                     {booking?.payment_method || "Credit Card"}
-                  </p>
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-4">
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Payment Amount
                   </p>
-                  <p className="text-h2 font-semibold text-strong">
+                  <p className="text-xl sm:text-2xl font-semibold text-gray-900">
                     {formatPrice(booking?.total_price)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-small font-medium text-weak mb-1">
+                  <p className="text-sm font-medium text-gray-500 mb-1 sm:mb-2">
                     Transaction ID
                   </p>
-                  <p className="text-body font-medium text-strong">
+                  <p className="text-base font-medium text-gray-900 break-all">
                     {booking?.transaction_id || "N/A"}
                   </p>
                 </div>
@@ -291,39 +305,41 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         </div>
 
         {/* Additional Products */}
-        <div className="bg-background rounded-lg border border-stroke-weak">
-          <div className="px-6 py-4 border-b border-stroke-weak">
-            <h2 className="text-h2 font-medium text-strong">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">
               Additional Products
             </h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {booking?.additional_products &&
             booking.additional_products.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {booking.additional_products.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center justify-between py-2.5 border-b border-stroke-weak last:border-0"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-gray-200 last:border-0 gap-2 sm:gap-4"
                   >
                     <div className="flex-1">
-                      <p className="font-medium text-strong">{product.name}</p>
-                      <p className="text-small text-weak">
+                      <p className="font-medium text-gray-900">
+                        {product.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
                         {product.quantity} × {formatPrice(product.price)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-strong">
+                      <p className="font-medium text-gray-900">
                         {formatPrice(product.total)}
                       </p>
                     </div>
                   </div>
                 ))}
-                <div className="flex items-center justify-between pt-3 border-t border-stroke-weak">
-                  <p className="font-medium text-strong">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-gray-200 gap-2">
+                  <p className="font-medium text-gray-900">
                     Total Additional Products
                   </p>
-                  <p className="font-semibold text-strong">
+                  <p className="font-semibold text-gray-900">
                     {formatPrice(
                       booking.additional_products.reduce(
                         (sum, product) => sum + product.total,
@@ -334,21 +350,24 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="text-center py-4">
-                <p className="text-weak">No additional products purchased</p>
+              <div className="text-center py-6">
+                <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500">
+                  No additional products purchased
+                </p>
               </div>
             )}
           </div>
         </div>
 
         {/* Actions */}
-        <div className="space-y-4">
-          <h2 className="text-h2 font-medium text-strong">Actions</h2>
-          <div className="space-y-3">
+        <div className="space-y-4 sm:space-y-6">
+          <h2 className="text-lg font-semibold text-gray-900">Actions</h2>
+          <div className="space-y-4">
             {/* Primary Actions */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
-                className="flex-1 min-w-[160px] h-11 bg-brand hover:bg-strong text-white"
+                className="w-full sm:flex-1 min-w-[180px] h-11 bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={handleCheckIn}
                 disabled={isLoading || booking?.booking_status === "Checked In"}
               >
@@ -356,42 +375,47 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 min-w-[160px] h-11 border-stroke-weak hover:bg-fill"
+                className="w-full sm:flex-1 min-w-[180px] h-11 border-gray-300 hover:bg-gray-50"
                 onClick={() => setIsRescheduleModalOpen(true)}
                 disabled={isLoading || booking?.booking_status === "cancelled"}
               >
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Reschedule
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 min-w-[160px] h-11 border-stroke-weak hover:bg-fill"
+                className="w-full sm:flex-1 min-w-[180px] h-11 border-gray-300 hover:bg-gray-50"
                 disabled
               >
+                <UserCog className="w-4 h-4 mr-2" />
                 Update Customer Info
               </Button>
             </div>
 
             {/* Secondary Actions */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 variant="outline"
-                className="flex-1 min-w-[160px] h-11 text-red-500 border-red-200 hover:bg-red-50"
+                className="w-full sm:flex-1 min-w-[180px] h-11 text-red-600 border-red-200 hover:bg-red-50"
                 disabled
               >
+                <XCircle className="w-4 h-4 mr-2" />
                 Cancel booking
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 min-w-[160px] h-11 border-stroke-weak hover:bg-fill"
+                className="w-full sm:flex-1 min-w-[180px] h-11 border-gray-300 hover:bg-gray-50"
                 disabled
               >
+                <RefreshCw className="w-4 h-4 mr-2" />
                 Refund
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 min-w-[160px] h-11 border-stroke-weak hover:bg-fill"
+                className="w-full sm:flex-1 min-w-[180px] h-11 border-gray-300 hover:bg-gray-50"
                 disabled
               >
+                <Printer className="w-4 h-4 mr-2" />
                 Print
               </Button>
             </div>

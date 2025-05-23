@@ -30,14 +30,13 @@ export function CalendarCell({
   const { focusProps, isFocusVisible } = useFocusRing();
 
   const isOutsideMonth = !isSameMonth(currentMonth, date);
-
-  // const isDateToday = isToday(date, getLocalTimeZone());
+  const isDateToday = isToday(date, getLocalTimeZone());
 
   return (
     <td
       {...cellProps}
       className={cn(
-        "p-1 sm:p-2 text-center align-middle",
+        "p-2 text-center align-middle",
         isFocusVisible ? "z-10" : "z-0"
       )}
     >
@@ -53,23 +52,20 @@ export function CalendarCell({
       >
         <div
           className={cn(
-            "w-full h-full flex items-center justify-center",
-            "text-xs sm:text-sm",
+            "w-full h-full flex items-center justify-center p-4 rounded-md",
+            "text-sm font-medium",
             "transition-all duration-200 ease-in-out",
-            finalIsDisabled && "text-weak cursor-not-allowed",
+            finalIsDisabled && "text-gray-300 cursor-not-allowed",
             isFocusVisible && "ring-2 ring-brand ring-offset-2",
-            isSelected && "bg-brand text-white font-medium",
+            isSelected && "bg-brand text-white",
             !isSelected &&
               !finalIsDisabled &&
-              "hover:bg-fill text-strong bg-fill",
-            isOutsideMonth && "text-weak bg-fill"
-            // isDateToday && !isSelected && "font-semibold text-brand"
+              "hover:bg-gray-100 text-gray-700 bg-fill",
+            isOutsideMonth && "text-gray-300"
+            // isDateToday && !isSelected && "text-brand font-semibold"
           )}
         >
           {formattedDate}
-          {/* {isDateToday && !isSelected && (
-            <div className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 sm:w-1.5 h-1 sm:h-1.5 bg-brand" />
-          )} */}
         </div>
       </div>
     </td>

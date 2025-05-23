@@ -40,18 +40,24 @@ export function Calendar(
   }, [state.visibleRange.start, props.onVisibleDateChange]);
 
   return (
-    <div {...calendarProps} className="w-full">
-      <CalendarHeader
-        state={state}
-        calendarProps={calendarProps}
-        prevButtonProps={prevButtonProps}
-        nextButtonProps={nextButtonProps}
-      />
-      <div className="flex">
-        <CalendarGrid
+    <div
+      {...calendarProps}
+      // className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-4 border border-gray-100"
+      className="w-full max-w-md mx-auto bg-white "
+    >
+      <div className="space-y-4">
+        <CalendarHeader
           state={state}
-          isDateUnavailable={props.isDateUnavailable}
+          calendarProps={calendarProps}
+          prevButtonProps={prevButtonProps}
+          nextButtonProps={nextButtonProps}
         />
+        <div className="flex justify-center">
+          <CalendarGrid
+            state={state}
+            isDateUnavailable={props.isDateUnavailable}
+          />
+        </div>
       </div>
     </div>
   );

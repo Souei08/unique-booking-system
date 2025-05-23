@@ -28,6 +28,18 @@ import { getTourSchedule } from "@/app/_features/tours/api/tour-schedule/client/
 import { getRemainingSlots } from "@/app/_features/booking/api/getRemainingSlots";
 import { RenderCalendar } from "@/app/_components/calendar-v2/RenderCalendar";
 import { getFullyBookedDatesFromList } from "../../../api/getFullyBookedDatesFromList";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export type Weekday =
   | "Monday"
@@ -248,223 +260,19 @@ const TourTimeAndDate = ({
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {/* Left side - Tour Details */}
-      <div className="md:col-span-2">
-        {/* Tour Images */}
-        <div className="mb-6">
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg">
-            <Image
-              src={tourImages[selectedImage].url}
-              alt={selectedTour.title}
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
-          {tourImages.length > 1 && (
-            <div className="mt-4 grid grid-cols-4 gap-2">
-              {tourImages.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={cn(
-                    "relative aspect-[16/9] overflow-hidden rounded-lg",
-                    selectedImage === index && "ring-2 ring-primary"
-                  )}
-                >
-                  <Image
-                    src={image.url}
-                    alt={`${selectedTour.title} - Image ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="lg:col-span-2  lg:pr-8">
-          <h1 className="text-2xl font-bold tracking-tight text-strong sm:text-3xl">
-            {selectedTour.title}
-          </h1>
-          <div className="mt-2 flex items-center">
-            <span className="text-small text-strong">
-              {selectedTour.category
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (char) => char.toUpperCase())}{" "}
-              • {selectedTour.duration} Hours
-            </span>
-          </div>
-        </div>
-
-        {/* Options */}
-        <div className="mt-4 lg:row-span-3 lg:mt-0">
-          <h2 className="sr-only">Tour information</h2>
-          <p
-            className="text-h2
-            font-bold tracking-tight text-strong"
-          >
-            ${selectedTour.rate}
-          </p>
-
-          <div className="mt-6">
-            <div className="flex items-center">
-              <span className="text-small text-strong">Group size:</span>
-              <span className="ml-2 text-small font-medium text-strong">
-                Max {selectedTour.group_size_limit} people
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex items-center">
-              <span className="text-small text-strong">Languages:</span>
-              <div className="ml-2 flex flex-wrap gap-1">
-                {selectedTour.languages.map((language) => (
-                  <span
-                    key={language}
-                    className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800"
-                  >
-                    {language}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <div className="flex flex-col">
-              <span className="text-body font-medium text-strong mb-2">
-                Meeting point:
-              </span>
-              <span className="text-small text-strong">
-                {selectedTour.meeting_point_address}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-2">
-            <div className="flex flex-col">
-              <span className="text-body font-medium text-strong mb-2">
-                Drop-off point:
-              </span>
-              <span className="text-small text-strong">
-                {selectedTour.dropoff_point_address}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="py-10 lg:col-span-2 lg:col-start-1  lg:pt-6 lg:pr-8 lg:pb-16">
-          {/* Description and details */}
-          <div>
-            <h3 className="text-body-lg font-bold text-strong">Description</h3>
-
-            <div className="mt-4 space-y-6">
-              <p className="text-base text-strong">
-                {selectedTour.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-10">
-            <h3 className="text-body-lg font-bold text-strong">
-              Trip Highlights
-            </h3>
-
-            <div className="mt-4">
-              <ul role="list" className="list-disc space-y-2 pl-4 text-small">
-                {selectedTour.trip_highlights.map((highlight) => (
-                  <li key={highlight} className="text-weak">
-                    {highlight}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-10">
-            <h3 className="text-body-lg font-bold text-strong">
-              What's Included
-            </h3>
-
-            <div className="mt-4">
-              <ul role="list" className="list-disc space-y-2 pl-4 text-small">
-                {selectedTour.includes.map((item) => (
-                  <li key={item} className="text-weak">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <section aria-labelledby="things-to-know-heading" className="mt-10">
-            <h2
-              id="things-to-know-heading"
-              className="text-body-lg font-bold text-strong"
-            >
-              Things to Know
-            </h2>
-
-            <div className="mt-4 space-y-6">
-              <p className="text-small text-weak">
-                {selectedTour.things_to_know}
-              </p>
-            </div>
-          </section>
-
-          <section aria-labelledby="faq-heading" className="mt-10">
-            <h2 id="faq-heading" className="text-body-lg font-bold text-strong">
-              Frequently Asked Questions
-            </h2>
-
-            <div className="mt-4 space-y-6">
-              <dl className="space-y-4">
-                {typeof selectedTour.faq === "string"
-                  ? JSON.parse(selectedTour.faq).map(
-                      (question: string, index: number) => (
-                        <div
-                          key={index}
-                          className="border-b border-gray-200 pb-4"
-                        >
-                          <dt className="text-body font-medium text-strong mb-2">
-                            {JSON.parse(question).question}
-                          </dt>
-                          <dd className="mt-1 text-smallall text-weak">
-                            {JSON.parse(question).answer}
-                          </dd>
-                        </div>
-                      )
-                    )
-                  : selectedTour.faq.map((question: string, index: number) => (
-                      <div
-                        key={index}
-                        className="border-b border-gray-200 pb-4"
-                      >
-                        <dt className="text-small font-medium text-strong">
-                          {question}
-                        </dt>
-                      </div>
-                    ))}
-              </dl>
-            </div>
-          </section>
-        </div>
-      </div>
-
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-12 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
       {/* Right side - Calendar and Available Times */}
-      <div className="space-y-6  md:top-6 md:self-start">
-        <Card className="shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-xl font-semibold">Select Date</CardTitle>
+      <div className="space-y-4 sm:space-y-8 md:sticky md:top-8 md:self-start order-first md:order-last">
+        <Card className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-xl sm:text-2xl font-bold">
+              Select Date
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="flex items-center justify-center py-6 sm:py-10">
+                <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-primary"></div>
               </div>
             ) : (
               <RenderCalendar
@@ -481,25 +289,24 @@ const TourTimeAndDate = ({
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">
+        <Card className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-xl sm:text-2xl font-bold">
               Available Times
             </CardTitle>
           </CardHeader>
           <CardContent>
             {loadingTimeSlots ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="flex items-center justify-center py-6 sm:py-10">
+                <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-b-2 border-primary"></div>
               </div>
             ) : availableTimes.length > 0 ? (
               <RadioGroup
                 value={selectedTime}
                 onValueChange={handleTimeSelection}
-                className="grid gap-3"
+                className="grid gap-3 sm:gap-4"
               >
                 {availableTimes.map((timeSlot, index) => {
-                  // Parse the time string and format it
                   const timeDate = new Date(
                     `${selectedDate.toString()}T${timeSlot.start_time}`
                   );
@@ -509,9 +316,10 @@ const TourTimeAndDate = ({
                     <div
                       key={index}
                       className={cn(
-                        "flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent cursor-pointer",
-                        selectedTime === timeSlot.start_time &&
-                          "border-primary bg-accent",
+                        "flex items-center space-x-3 sm:space-x-4 rounded-xl sm:rounded-2xl border p-3 sm:p-5 transition-all duration-300",
+                        selectedTime === timeSlot.start_time
+                          ? "border-primary bg-primary/5"
+                          : "hover:bg-accent/50",
                         timeSlot.remainingSlots === 0 &&
                           "opacity-50 cursor-not-allowed"
                       )}
@@ -526,13 +334,16 @@ const TourTimeAndDate = ({
                         htmlFor={`time-${index}`}
                         className="flex w-full cursor-pointer items-center justify-between"
                       >
-                        <span className="font-medium">{formattedTime}</span>
+                        <span className="text-base sm:text-lg font-medium">
+                          {formattedTime}
+                        </span>
                         <Badge
                           variant={
                             timeSlot.remainingSlots > 0
                               ? "default"
                               : "destructive"
                           }
+                          className="ml-2 text-xs sm:text-sm"
                         >
                           {timeSlot.remainingSlots} slots left
                         </Badge>
@@ -542,43 +353,98 @@ const TourTimeAndDate = ({
                 })}
               </RadioGroup>
             ) : (
-              <div className="text-center py-4 text-muted-foreground">
+              <div className="text-center py-6 sm:py-10 text-base sm:text-lg text-muted-foreground">
                 No available times for this date
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">
+        <Card className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg">
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="text-xl sm:text-2xl font-bold">
               Number of People
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Input
-                type="number"
-                min={1}
-                max={
-                  selectedTimeSlot
-                    ? selectedTimeSlot.remainingSlots
-                    : selectedTour.group_size_limit
-                }
-                value={numberOfPeople}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  const maxValue = selectedTimeSlot
-                    ? selectedTimeSlot.remainingSlots
-                    : selectedTour.group_size_limit;
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (numberOfPeople > 1) {
+                      setNumberOfPeople(numberOfPeople - 1);
+                    }
+                  }}
+                  className="flex h-10 sm:h-12 w-10 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl border bg-background text-xl sm:text-2xl font-semibold text-strong transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={numberOfPeople <= 1}
+                >
+                  -
+                </button>
+                <div className="flex-1">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={
+                      selectedTimeSlot
+                        ? selectedTimeSlot.remainingSlots
+                        : selectedTour.group_size_limit
+                    }
+                    value={numberOfPeople || ""}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value === "" ? "" : parseInt(e.target.value);
 
-                  if (value >= 1 && value <= maxValue) {
-                    setNumberOfPeople(value);
+                      if (value === "") {
+                        setNumberOfPeople(0);
+                        return;
+                      }
+
+                      const maxValue = selectedTimeSlot
+                        ? selectedTimeSlot.remainingSlots
+                        : selectedTour.group_size_limit;
+
+                      if (!isNaN(value)) {
+                        if (value >= 1 && value <= maxValue) {
+                          setNumberOfPeople(value);
+                        } else if (value > maxValue) {
+                          setNumberOfPeople(maxValue);
+                        } else if (value < 1) {
+                          setNumberOfPeople(1);
+                        }
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (isNaN(value) || value < 1) {
+                        setNumberOfPeople(1);
+                      }
+                    }}
+                    className="h-10 sm:h-12 text-center text-base sm:text-lg"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const maxValue = selectedTimeSlot
+                      ? selectedTimeSlot.remainingSlots
+                      : selectedTour.group_size_limit;
+                    if (numberOfPeople < maxValue) {
+                      setNumberOfPeople(numberOfPeople + 1);
+                    }
+                  }}
+                  className="flex h-10 sm:h-12 w-10 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl border bg-background text-xl sm:text-2xl font-semibold text-strong transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={
+                    numberOfPeople >=
+                    (selectedTimeSlot
+                      ? selectedTimeSlot.remainingSlots
+                      : selectedTour.group_size_limit)
                   }
-                }}
-                className="w-full"
-              />
-              <p className="text-sm text-muted-foreground">
+                >
+                  +
+                </button>
+              </div>
+              <p className="text-sm sm:text-base text-muted-foreground">
                 {selectedTimeSlot
                   ? `${selectedTimeSlot.remainingSlots} slots available for this time`
                   : `Maximum ${selectedTour.group_size_limit} people per booking`}
@@ -587,11 +453,11 @@ const TourTimeAndDate = ({
           </CardContent>
         </Card>
 
-        <Card className="border-none shadow-lg">
-          <CardContent className="pt-6">
+        <Card className="border-none shadow-xl">
+          <CardContent className="pt-4 sm:pt-6">
             <button
               type="button"
-              className="w-full rounded-md bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl sm:rounded-2xl bg-primary px-6 sm:px-8 py-4 sm:py-5 text-base sm:text-lg font-semibold text-primary-foreground hover:bg-primary/90 focus:ring-4 focus:ring-primary focus:ring-offset-4 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
               disabled={!selectedTime || !numberOfPeople}
               onClick={handleClickBooking}
             >
@@ -599,6 +465,295 @@ const TourTimeAndDate = ({
             </button>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Left side - Tour Details */}
+      <div className="md:col-span-2 space-y-6 sm:space-y-12 order-last md:order-first">
+        {/* Price and Key Info */}
+        <div className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-10 shadow-xl">
+          {/* Tour Images */}
+          <div className="space-y-4 sm:space-y-6 mb-6 sm:mb-10">
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl">
+              <Image
+                src={tourImages[selectedImage].url}
+                alt={selectedTour.title}
+                fill
+                className="object-cover transition-transform duration-700 hover:scale-105"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            </div>
+            {tourImages.length > 1 && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+                {tourImages.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={cn(
+                      "group relative aspect-[16/9] overflow-hidden rounded-xl sm:rounded-2xl transition-all duration-300",
+                      selectedImage === index
+                        ? "ring-2 sm:ring-3 ring-primary ring-offset-2 sm:ring-offset-4"
+                        : "hover:opacity-90"
+                    )}
+                  >
+                    <Image
+                      src={image.url}
+                      alt={`${selectedTour.title} - Image ${index + 1}`}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Title and Category */}
+          <div className="mb-6 sm:mb-10">
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-strong sm:text-5xl">
+              {selectedTour.title}
+            </h1>
+            <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-2 sm:gap-4">
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-primary">
+                {selectedTour.category
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (char) => char.toUpperCase())}
+              </span>
+              <span className="inline-flex items-center rounded-full bg-secondary/10 px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-secondary-foreground">
+                <Clock className="mr-1.5 sm:mr-2 h-3.5 sm:h-4 w-3.5 sm:w-4" />
+                {selectedTour.duration} Hours
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 sm:gap-0">
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-strong">
+                ${selectedTour.rate}
+              </h2>
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                per person
+              </span>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Total Price
+              </p>
+              <p className="text-xl sm:text-2xl font-bold text-strong">
+                ${selectedTour.rate * numberOfPeople}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 sm:mt-10 grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
+            <div>
+              <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Group Size
+              </h3>
+              <p className="mt-1 sm:mt-2 text-base sm:text-lg font-semibold text-strong">
+                Max {selectedTour.group_size_limit} people
+              </p>
+            </div>
+            <div>
+              <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Languages
+              </h3>
+              <div className="mt-1 sm:mt-2 flex flex-wrap gap-1.5 sm:gap-2">
+                {selectedTour.languages.map((language) => (
+                  <span
+                    key={language}
+                    className="inline-flex items-center rounded-full bg-secondary/10 px-2.5 sm:px-4 py-1 sm:py-1.5 text-xs sm:text-sm font-medium text-secondary-foreground"
+                  >
+                    {language}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 sm:mt-10 space-y-6 sm:space-y-8">
+            <div className="flex items-start space-x-3 sm:space-x-5">
+              <div className="rounded-full bg-primary/10 p-2 sm:p-3">
+                <svg
+                  className="h-4 w-4 sm:h-6 sm:w-6 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Meeting Point
+                </h3>
+                <p className="mt-0.5 sm:mt-1 text-base sm:text-lg font-medium text-strong">
+                  {selectedTour.meeting_point_address}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 sm:space-x-5">
+              <div className="rounded-full bg-primary/10 p-2 sm:p-3">
+                <svg
+                  className="h-4 w-4 sm:h-6 sm:w-6 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Drop-off Point
+                </h3>
+                <p className="mt-0.5 sm:mt-1 text-base sm:text-lg font-medium text-strong">
+                  {selectedTour.dropoff_point_address}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Description and Details */}
+        <div className="space-y-6 sm:space-y-12">
+          <section className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-8 shadow-lg">
+            <h3 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
+              Description
+            </h3>
+            <div>
+              <p className="text-base sm:text-lg leading-relaxed text-muted-foreground">
+                {selectedTour.description}
+              </p>
+            </div>
+          </section>
+
+          <section className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-8 shadow-lg">
+            <h3 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
+              Trip Highlights
+            </h3>
+            <div>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {selectedTour.trip_highlights.map((highlight) => (
+                  <li
+                    key={highlight}
+                    className="flex items-start space-x-3 sm:space-x-4"
+                  >
+                    <div className="mt-1 rounded-full bg-primary/10 p-1 sm:p-1.5">
+                      <svg
+                        className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-base sm:text-lg text-muted-foreground">
+                      {highlight}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          <section className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-8 shadow-lg">
+            <h3 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
+              What's Included
+            </h3>
+            <div>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {selectedTour.includes.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start space-x-3 sm:space-x-4"
+                  >
+                    <div className="mt-1 rounded-full bg-primary/10 p-1 sm:p-1.5">
+                      <svg
+                        className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-base sm:text-lg text-muted-foreground">
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+
+          <section className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-8 shadow-lg">
+            <h3 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
+              Things to Know
+            </h3>
+            <div>
+              <p className="text-base sm:text-lg leading-relaxed text-muted-foreground">
+                {selectedTour.things_to_know}
+              </p>
+            </div>
+          </section>
+
+          <section className="rounded-2xl sm:rounded-3xl border bg-card p-4 sm:p-8 shadow-lg">
+            <h3 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
+              Frequently Asked Questions
+            </h3>
+            <div>
+              <Accordion
+                type="single"
+                collapsible
+                className="space-y-3 sm:space-y-4"
+              >
+                {selectedTour.faq.map((faq: string, index: number) => (
+                  <AccordionItem
+                    key={index}
+                    value={`item-${index}`}
+                    className="border-b last:border-0"
+                  >
+                    <AccordionTrigger className="text-lg sm:text-xl font-semibold text-strong hover:no-underline">
+                      {JSON.parse(faq).question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-base sm:text-lg text-muted-foreground">
+                      {JSON.parse(faq).answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </section>
+        </div>
       </div>
     </div>
   );

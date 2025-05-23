@@ -4,6 +4,13 @@ import { useState } from "react";
 import { StarIcon } from "@heroicons/react/20/solid";
 import { Tour } from "@/app/_features/tours/tour-types";
 import CustomerHeader from "@/app/_features/customer/CustomerHeader";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+} from "@/components/ui/dialog";
+import CreateBookingv2 from "@/app/_features/booking/components/CreateBookingv2/CreateBookingv2";
 
 // Mock reviews data
 const reviews = {
@@ -117,6 +124,7 @@ interface TourDetailsClientProps {
 
 export default function TourDetailsClient({ tour }: TourDetailsClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
 
   return (
     <div className="bg-white">
@@ -317,6 +325,7 @@ export default function TourDetailsClient({ tour }: TourDetailsClientProps) {
 
             <button
               type="button"
+              onClick={() => setIsBookingDialogOpen(true)}
               className="mt-10 flex w-full items-center justify-center rounded-md border border-transparent bg-indigo-600 px-8 py-3 text-base font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-hidden"
             >
               Book this tour
@@ -523,6 +532,18 @@ export default function TourDetailsClient({ tour }: TourDetailsClientProps) {
           </div>
         </section>
       </main>
+
+      <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle>Book Your Tour</DialogTitle>
+          </DialogHeader>
+          <CreateBookingv2
+            customerSelectedTour={tour}
+            onClose={() => setIsBookingDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
