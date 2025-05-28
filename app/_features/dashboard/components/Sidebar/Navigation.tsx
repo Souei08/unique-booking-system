@@ -9,6 +9,7 @@ import {
   CalendarIcon,
   GlobeAmericasIcon,
   ShoppingBagIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/outline";
 
 interface NavigationItem {
@@ -27,9 +28,15 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "staff", "customer"],
   },
   {
+    name: "Calendar",
+    href: "/dashboard/calendar",
+    icon: CalendarIcon,
+    roles: ["admin", "staff", "customer"],
+  },
+  {
     name: "Bookings",
     href: "/dashboard/bookings",
-    icon: CalendarIcon,
+    icon: BookOpenIcon,
     roles: ["admin", "staff", "customer"],
   },
   {

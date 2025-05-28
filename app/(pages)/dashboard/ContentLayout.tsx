@@ -11,6 +11,7 @@ import React, { useState } from "react";
 
 import UpsertTourV2 from "../../_features/tours/forms/upsert-tour-v2/UpsertTourV2";
 import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/CreateBookingv2";
+import { UpsertUser } from "@/app/_features/users/form/UpsertUser";
 
 interface ContentLayoutProps {
   title: string;
@@ -18,9 +19,9 @@ interface ContentLayoutProps {
   buttonText?: string;
   children: React.ReactNode;
 
-  modalTitle: string;
+  modalTitle?: string;
   modalDescription?: string;
-  modalRoute: "booking" | "tours" | "users" | "products";
+  modalRoute?: "booking" | "tours" | "users" | "products";
 }
 
 const ContentLayout = ({
@@ -56,15 +57,17 @@ const ContentLayout = ({
             <p className="mt-2 text-lg text-weak">{description}</p>
           </div>
 
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-            <button
-              type="button"
-              className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand cursor-pointer"
-              onClick={handleButtonClick}
-            >
-              {buttonText}
-            </button>
-          </div>
+          {buttonText && (
+            <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+              <button
+                type="button"
+                className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand cursor-pointer"
+                onClick={handleButtonClick}
+              >
+                {buttonText}
+              </button>
+            </div>
+          )}
         </div>
 
         {children}
@@ -91,6 +94,17 @@ const ContentLayout = ({
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="mb-5">
             <DialogTitle>{modalTitle}</DialogTitle>
+
+            <UpsertUser
+              initialData={{
+                id: "",
+                full_name: "",
+                email: "",
+                role: "",
+                created_at: "",
+              }}
+              onSuccess={() => setIsUserDialogOpen(false)}
+            />
           </DialogHeader>
         </DialogContent>
       </Dialog>

@@ -1,7 +1,6 @@
 import { UsersTable } from "@/app/_features/users/components/UsersTable";
 
 import { getAllUsers } from "@/app/_features/users/api/getAllUsers";
-import { CreateUserDialog } from "@/app/_features/users/components/CreateUserDialog";
 import ContentLayout from "../ContentLayout";
 
 interface User {

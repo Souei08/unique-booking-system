@@ -71,7 +71,10 @@ const SelectTours = ({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 space-y-3 sm:space-y-4">
+              <div
+                className="absolute bottom-0 le
+              t-0 right-0 p-4 sm:p-6 space-y-3 sm:space-y-4"
+              >
                 <div className="space-y-2 sm:space-y-3">
                   <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                     {tour.title}
@@ -82,9 +85,9 @@ const SelectTours = ({
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4 text-white/90 text-xs sm:text-sm">
-                  <div className="flex items-center gap-1 sm:gap-1.5">
+                  <div className="flex items-center sm:gap-1.5">
                     <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="font-medium">${tour.rate}</span>
+                    <span className="font-medium">{tour.rate}</span>
                   </div>
                   <div className="flex items-center gap-1 sm:gap-1.5">
                     <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />

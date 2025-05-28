@@ -262,7 +262,7 @@ const TourTimeAndDate = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-12 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
       {/* Right side - Calendar and Available Times */}
-      <div className="space-y-4 sm:space-y-8 md:sticky md:top-8 md:self-start order-first md:order-last">
+      <div className="space-y-4 sm:space-y-8  md:top-8 md:self-start order-first md:order-last">
         <Card className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg">
           <CardHeader className="pb-2 sm:pb-4">
             <CardTitle className="text-xl sm:text-2xl font-bold">

@@ -35,8 +35,6 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     payment_id,
   } = data;
 
-  console.log(data);
-
   // ✅ Input Validation
   if (
     !first_name ||
@@ -48,8 +46,8 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     !selected_time ||
     !slots ||
     !total_price ||
-    !payment_method
-    // !payment_id
+    !payment_method ||
+    !payment_id
   ) {
     throw new Error("Missing required fields.");
   }

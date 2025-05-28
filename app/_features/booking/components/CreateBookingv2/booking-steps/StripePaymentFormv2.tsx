@@ -37,8 +37,6 @@ export const StripePaymentFormV2 = ({
       redirect: "if_required", // Important: prevent auto-redirect
     });
 
-    console.log("paymentIntent", paymentIntent);
-
     if (error) {
       setErrorMessage(error.message);
       setIsLoading(false);

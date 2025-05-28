@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UpsertUser } from "../form/UpsertUser";
 
 interface User {
   id: string;
@@ -140,6 +141,11 @@ export function UsersTable({ users, onView }: UsersTableProps) {
           </DialogHeader>
 
           {/* Add your user form component here */}
+          {/* <UserForm onSuccess={() => setIsUserDialogOpen(false)} /> */}
+          <UpsertUser
+            initialData={selectedUser as User}
+            onSuccess={() => setIsUserDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </>

@@ -90,10 +90,13 @@ const CreateBookingv2 = ({
     }
   };
 
-  const handleCompleteBooking = async () => {
+  const handleCompleteBooking = async (paymentId: string) => {
     if (!selectedTour?.id || !selectedDate) {
       throw new Error("Missing required tour or date information");
     }
+
+    // Log the current payment information
+    console.log("Current Payment Information:", paymentInformation);
 
     const bookingData = {
       first_name: customerInformation.first_name,
@@ -106,14 +109,23 @@ const CreateBookingv2 = ({
       slots: numberOfPeople,
       total_price: paymentInformation.total_price,
       payment_method: paymentInformation.payment_method,
-      payment_id: paymentInformation.payment_id,
+      payment_id: paymentId,
     };
+
+    console.log("Booking Data:", bookingData);
+
+    if (!bookingData.payment_id) {
+      toast.error("Payment Error", {
+        description: "Payment ID is missing. Please try again.",
+      });
+      return;
+    }
 
     try {
       const response = await createTourBookingv2(bookingData);
       setIsBookingComplete(true);
     } catch (error) {
-      console.error(error);
+      console.error("Booking Error:", error);
       toast.error("Booking Failed", {
         description:
           "There was an error processing your booking. Please try again.",
@@ -177,7 +189,7 @@ const CreateBookingv2 = ({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+      <div className="">
         {/* Progress Bar */}
         <div className="mb-8 sm:mb-12">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4">

@@ -10,8 +10,6 @@ import { Elements } from "@stripe/react-stripe-js";
 
 import { Tour } from "@/app/_features/tours/tour-types";
 
-import { StripePaymentForm } from "./StripePaymentForm";
-
 import { useState } from "react";
 import { useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -71,7 +69,7 @@ const CheckForm = ({
       | CustomerInformation
       | ((prev: CustomerInformation) => CustomerInformation)
   ) => void;
-  handleCompleteBooking: () => void;
+  handleCompleteBooking: (paymentId: string) => void;
 }) => {
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -132,18 +130,18 @@ const CheckForm = ({
     `1970-01-01T${selectedTime}Z`
   ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  const handleSubmit = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      await handleCompleteBooking();
-    } catch (error) {
-      // Error is already handled in the parent component
-      console.error("Error in CheckForm:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleSubmit = async (e: React.MouseEvent) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+  //   try {
+  //     await handleCompleteBooking();
+  //   } catch (error) {
+  //     // Error is already handled in the parent component
+  //     console.error("Error in CheckForm:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
     const fetchClientSecret = async () => {
@@ -443,12 +441,7 @@ const CheckForm = ({
                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                   <StripePaymentFormV2
                     onPaymentSuccess={async (paymentId) => {
-                      await setPaymentInformation({
-                        ...paymentInformation,
-                        payment_id: paymentId,
-                      });
-
-                      await handleCompleteBooking();
+                      await handleCompleteBooking(paymentId);
                     }}
                   />
                 </Elements>

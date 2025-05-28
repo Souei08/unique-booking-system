@@ -66,9 +66,9 @@ const BookingSuccess = ({
           A detailed confirmation has been sent to your email address. Please
           check your inbox.
         </p>
-        <Button onClick={onClose} className="w-full sm:w-auto">
+        {/* <Button onClick={onClose} className="w-full sm:w-auto">
           Return to Home
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
