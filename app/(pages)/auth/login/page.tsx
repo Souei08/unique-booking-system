@@ -10,18 +10,18 @@ const page = async () => {
     <div className="flex h-screen flex-1">
       <div className="flex flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 border-r border-stroke-weak shadow-sm">
         <div className="mx-auto w-full max-w-sm lg:w-96">
-          <div>
+          <div className="flex flex-col items-center">
             <CompanyLogo />
             <h2 className="mt-8 text-2xl/9 font-bold tracking-tight text-strong">
               Sign in to your account
             </h2>
-            <p className="mt-2 text-sm/6  text-weak">
-              Not a member?{" "}
+            <p className="mt-2 text-sm/6 text-weak">
+              Forgot your password?{" "}
               <a
-                href="/auth/register"
+                href="/auth/set-password"
                 className="font-semibold text-brand hover:underline"
               >
-                Sign up here
+                Reset it here
               </a>
             </p>
           </div>
@@ -31,7 +31,7 @@ const page = async () => {
               <LoginForm />
             </div>
 
-            <div className="mt-10">
+            {/* <div className="mt-10">
               <div className="relative">
                 <div
                   aria-hidden="true"
@@ -47,7 +47,7 @@ const page = async () => {
               </div>
 
               <GoogleLoginButton />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

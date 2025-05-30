@@ -12,6 +12,7 @@ import React, { useState } from "react";
 import UpsertTourV2 from "../../_features/tours/forms/upsert-tour-v2/UpsertTourV2";
 import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/CreateBookingv2";
 import { UpsertUser } from "@/app/_features/users/form/UpsertUser";
+import CreateProduct from "@/app/_features/products/components/CreateProduct";
 
 interface ContentLayoutProps {
   title: string;
@@ -95,16 +96,7 @@ const ContentLayout = ({
           <DialogHeader className="mb-5">
             <DialogTitle>{modalTitle}</DialogTitle>
 
-            <UpsertUser
-              initialData={{
-                id: "",
-                full_name: "",
-                email: "",
-                role: "",
-                created_at: "",
-              }}
-              onSuccess={() => setIsUserDialogOpen(false)}
-            />
+            <UpsertUser onSuccess={() => setIsUserDialogOpen(false)} />
           </DialogHeader>
         </DialogContent>
       </Dialog>
@@ -112,8 +104,12 @@ const ContentLayout = ({
       <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="mb-5">
-            <DialogTitle>{modalTitle}</DialogTitle>
+            <DialogTitle className="text-h1 font-bold text-strong">
+              {modalTitle}
+            </DialogTitle>
           </DialogHeader>
+
+          <CreateProduct onSuccess={() => setIsProductDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </main>

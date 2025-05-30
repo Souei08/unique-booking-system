@@ -142,10 +142,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
 
           {/* Add your user form component here */}
           {/* <UserForm onSuccess={() => setIsUserDialogOpen(false)} /> */}
-          <UpsertUser
-            initialData={selectedUser as User}
-            onSuccess={() => setIsUserDialogOpen(false)}
-          />
+          <UpsertUser onSuccess={() => setIsUserDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </>

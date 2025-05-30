@@ -68,7 +68,7 @@ const Sidebar = ({ user }: SidebarProps) => {
       </Dialog>
 
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col border-r lg:border-gray-200 lg:pt-5 lg:pb-6">
-        <div className="mt-5 flex shrink-0 items-center px-6">
+        <div className="mx-auto">
           <CompanyLogo />
         </div>
         <div className="flex h-0 flex-1 flex-col overflow-y-auto pt-1 hover:overflow-y-auto">

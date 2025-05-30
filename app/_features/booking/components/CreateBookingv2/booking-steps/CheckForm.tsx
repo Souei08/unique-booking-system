@@ -9,42 +9,15 @@ import {
 import { Elements } from "@stripe/react-stripe-js";
 
 import { Tour } from "@/app/_features/tours/tour-types";
+import { Product } from "@/app/_features/products/types/product-types";
 
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { StripePaymentFormV2 } from "./StripePaymentFormv2";
+import { getAssignedToursByTourId } from "@/app/_features/products/api/getAssignedToursByTourId";
+import { toast } from "sonner";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
-
-interface AdditionalOption {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
-}
-
-// Mock additional options - replace with actual data from your backend
-const additionalOptions: AdditionalOption[] = [
-  {
-    id: 1,
-    name: "Souvenir Package",
-    price: 25,
-    description: "Exclusive local souvenirs",
-  },
-  {
-    id: 2,
-    name: "Photo Package",
-    price: 50,
-    description: "Professional photos of your experience",
-  },
-  {
-    id: 3,
-    name: "Lunch Package",
-    price: 35,
-    description: "Local cuisine lunch included",
-  },
-];
 
 const CheckForm = ({
   selectedTour,
@@ -71,10 +44,35 @@ const CheckForm = ({
   ) => void;
   handleCompleteBooking: (paymentId: string) => void;
 }) => {
-  const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [productQuantities, setProductQuantities] = useState<
+    Record<string, number>
+  >({});
   const [isLoading, setIsLoading] = useState(false);
-
   const [clientSecret, setClientSecret] = useState("");
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
+  // Fetch available products for the selected tour
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setIsLoadingProducts(true);
+        const assignedTours = await getAssignedToursByTourId(selectedTour.id);
+        console.log("assignedTours", assignedTours);
+        setAvailableProducts(assignedTours as unknown as Product[]);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        toast.error("Failed to fetch available products");
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    if (selectedTour.id) {
+      fetchProducts();
+    }
+  }, [selectedTour.id]);
 
   // Add useEffect to update total price
   useEffect(() => {
@@ -83,7 +81,7 @@ const CheckForm = ({
       ...paymentInformation,
       total_price: total,
     });
-  }, [selectedOptions, selectedTour.rate]);
+  }, [selectedProducts, selectedTour.rate]);
 
   const tourImages = JSON.parse(selectedTour.images) as {
     url: string;
@@ -103,20 +101,42 @@ const CheckForm = ({
     }));
   };
 
-  const toggleOption = (optionId: number) => {
-    setSelectedOptions((prev) =>
-      prev.includes(optionId)
-        ? prev.filter((id) => id !== optionId)
-        : [...prev, optionId]
-    );
+  const toggleProduct = (productId: string) => {
+    setSelectedProducts((prev) => {
+      if (prev.includes(productId)) {
+        // Remove product and its quantity when unselected
+        setProductQuantities((quantities) => {
+          const newQuantities = { ...quantities };
+          delete newQuantities[productId];
+          return newQuantities;
+        });
+        return prev.filter((id) => id !== productId);
+      } else {
+        // Add product with default quantity of 1
+        setProductQuantities((quantities) => ({
+          ...quantities,
+          [productId]: 1,
+        }));
+        return [...prev, productId];
+      }
+    });
+  };
+
+  const updateProductQuantity = (productId: string, quantity: number) => {
+    if (quantity < 1) return;
+    setProductQuantities((prev) => ({
+      ...prev,
+      [productId]: quantity,
+    }));
   };
 
   const calculateTotal = () => {
     let total = selectedTour.rate * numberOfPeople;
-    selectedOptions.forEach((optionId) => {
-      const option = additionalOptions.find((opt) => opt.id === optionId);
-      if (option) {
-        total += option.price * numberOfPeople;
+    selectedProducts.forEach((productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      if (product) {
+        const quantity = productQuantities[productId] || 1;
+        total += product.price * quantity;
       }
     });
     return total;
@@ -245,44 +265,130 @@ const CheckForm = ({
 
         {/* Additional Products Section */}
         <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
-            Additional Products
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {additionalOptions.map((option) => (
-              <div
-                key={option.id}
-                className={`border rounded-xl sm:rounded-2xl p-4 sm:p-6 cursor-pointer transition-all duration-300 ${
-                  selectedOptions.includes(option.id)
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                }`}
-                onClick={() => toggleOption(option.id)}
-              >
-                <div className="flex justify-between items-start gap-3 sm:gap-4">
-                  <div>
-                    <h3 className="text-base sm:text-lg font-semibold text-strong">
-                      {option.name}
-                    </h3>
-                    <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
-                      {option.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-3 sm:space-x-4">
-                    <span className="text-lg sm:text-xl font-bold text-primary">
-                      ${option.price}
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={selectedOptions.includes(option.id)}
-                      onChange={() => toggleOption(option.id)}
-                      className="h-4 w-4 sm:h-5 sm:w-5 text-primary focus:ring-primary border-border rounded"
-                    />
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-strong">
+              Additional Products
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              {selectedProducts.length} selected
+            </span>
+          </div>
+          {isLoadingProducts ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : availableProducts.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {availableProducts.map((product) => (
+                <div
+                  key={product.id}
+                  className={`border rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-300 ${
+                    selectedProducts.includes(product.id)
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <div className="flex items-start gap-4 sm:gap-6">
+                    {/* Product Image */}
+                    <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-lg">
+                      <img
+                        src={product.image_url || ""}
+                        alt={product.name}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    </div>
+
+                    {/* Product Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="text-base sm:text-lg font-semibold text-strong">
+                            {product.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {product.description}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className="text-lg sm:text-xl font-bold text-primary">
+                            ${product.price}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center space-x-2 bg-background rounded-lg px-2 py-1">
+                              <button
+                                onClick={() =>
+                                  updateProductQuantity(
+                                    product.id,
+                                    (productQuantities[product.id] || 1) - 1
+                                  )
+                                }
+                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
+                                disabled={
+                                  !selectedProducts.includes(product.id)
+                                }
+                              >
+                                -
+                              </button>
+                              <span className="w-8 text-center font-medium">
+                                {productQuantities[product.id] || 1}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  updateProductQuantity(
+                                    product.id,
+                                    (productQuantities[product.id] || 1) + 1
+                                  )
+                                }
+                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
+                                disabled={
+                                  !selectedProducts.includes(product.id)
+                                }
+                              >
+                                +
+                              </button>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={selectedProducts.includes(product.id)}
+                                onChange={() => toggleProduct(product.id)}
+                                className="sr-only peer"
+                              />
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                <svg
+                  className="w-8 h-8 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
               </div>
-            ))}
-          </div>
+              <h3 className="text-lg font-semibold text-strong mb-2">
+                No Additional Products
+              </h3>
+              <p className="text-muted-foreground">
+                There are no additional products available for this tour.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -386,30 +492,31 @@ const CheckForm = ({
                   </span>
                 </div>
 
-                {selectedOptions.length > 0 && (
+                {selectedProducts.length > 0 && (
                   <div className="space-y-2 sm:space-y-3">
                     <h3 className="text-sm sm:text-base font-medium text-muted-foreground">
                       Additional Products
                     </h3>
-                    {selectedOptions.map((optionId) => {
-                      const option = additionalOptions.find(
-                        (opt) => opt.id === optionId
+                    {selectedProducts.map((productId) => {
+                      const product = availableProducts.find(
+                        (p) => p.id === productId
                       );
-                      return option ? (
+                      const quantity = productQuantities[productId] || 1;
+                      return product ? (
                         <div
-                          key={option.id}
+                          key={product.id}
                           className="flex justify-between items-center text-xs sm:text-sm"
                         >
                           <div className="flex-1">
                             <span className="text-muted-foreground">
-                              {option.name}
+                              {product.name}
                             </span>
                             <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                              ${option.price} × {numberOfPeople} people
+                              ${product.price} × {quantity} items
                             </p>
                           </div>
                           <span className="font-medium">
-                            ${option.price * numberOfPeople}
+                            ${product.price * quantity}
                           </span>
                         </div>
                       ) : null;

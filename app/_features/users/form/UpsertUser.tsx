@@ -1,13 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import { useForm } from "react-hook-form";
-
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
-
 import {
   Form,
   FormControl,
@@ -17,7 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
 import {
   Select,
   SelectContent,
@@ -26,25 +22,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  created_at: string;
-  last_login?: string;
-  avatar_url?: string;
-}
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
+import { inviteUserServerAction } from "../api/inviteUserRole";
 
 const userFormSchema = z.object({
-  id: z.string().optional(),
   full_name: z.string().min(2, {
     message: "Full name must be at least 2 characters.",
   }),
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  role: z.enum(["RESERVATION_AGENT", "RESELLER", "ADMIN"], {
+  role: z.enum(["reservation_agent", "reseller", "ADMIN"], {
     required_error: "Please select a role.",
   }),
 });
@@ -52,45 +41,42 @@ const userFormSchema = z.object({
 type UserFormValues = z.infer<typeof userFormSchema>;
 
 interface UpsertUserProps {
-  initialData?: User;
   onSuccess?: () => void;
-  mode?: "create" | "update";
 }
 
-export function UpsertUser({
-  initialData,
-  onSuccess,
-  mode = "create",
-}: UpsertUserProps) {
+export function UpsertUser({ onSuccess }: UpsertUserProps) {
+  const supabase = createClientComponentClient();
+
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
-    defaultValues: initialData
-      ? {
-          id: initialData.id,
-          full_name: initialData.full_name,
-          email: initialData.email,
-          role: initialData.role as "RESERVATION_AGENT" | "RESELLER" | "ADMIN",
-        }
-      : {
-          full_name: "",
-          email: "",
-          role: undefined,
-        },
+    defaultValues: {
+      full_name: "",
+      email: "",
+      role: undefined,
+    },
   });
 
   async function onSubmit(data: UserFormValues) {
     try {
-      // TODO: Implement the API call to create/update user
-      console.log("Upserting user:", data);
+      const res = await inviteUserServerAction(data);
+
+      console.log(res);
+
+      if (!res.success) {
+        throw new Error(res.error || "Failed to invite user");
+      }
+
+      showSuccessToast("Invitation sent successfully!");
       onSuccess?.();
-    } catch (error) {
-      console.error("Error upserting user:", error);
+    } catch (error: any) {
+      console.error("Error sending invite:", error);
+      showErrorToast(error.message || "Failed to send invitation.");
     }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-5">
         <FormField
           control={form.control}
           name="full_name"
@@ -113,10 +99,9 @@ export function UpsertUser({
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input
-                  placeholder="Enter email address"
                   type="email"
+                  placeholder="Enter email address"
                   {...field}
-                  disabled={mode === "update"} // Email cannot be changed after creation
                 />
               </FormControl>
               <FormMessage />
@@ -137,10 +122,12 @@ export function UpsertUser({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="RESERVATION_AGENT">
+                  <SelectItem value="reservation_agent">
                     Reservation Agent
                   </SelectItem>
-                  <SelectItem value="RESELLER">Reseller</SelectItem>
+                  <SelectItem value="reseller">
+                    Reseller/Hotel Partners
+                  </SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
@@ -150,7 +137,7 @@ export function UpsertUser({
         />
 
         <Button type="submit" className="w-full">
-          {mode === "create" ? "Create User" : "Update User"}
+          Send Invitation
         </Button>
       </form>
     </Form>
