@@ -511,7 +511,7 @@ const TourTimeAndDate = ({
 
           {/* Title and Category */}
           <div className="mb-6 sm:mb-10">
-            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight text-strong sm:text-5xl">
+            <h1 className="text-2xl font-bold tracking-tight text-strong sm:text-5xl">
               {selectedTour.title}
             </h1>
             <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-2 sm:gap-4">
