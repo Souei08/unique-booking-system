@@ -16,7 +16,7 @@ import CheckForm from "./booking-steps/CheckForm";
 import BookingSuccess from "./booking-steps/BookingSuccess";
 
 // Types
-import { DateValue } from "@internationalized/date";
+import { DateValue, parseDate, CalendarDate } from "@internationalized/date";
 import { Tour } from "@/app/_features/tours/tour-types";
 
 import {
@@ -33,9 +33,11 @@ import { formatToDateString } from "@/app/_lib/utils/utils";
 const CreateBookingv2 = ({
   onClose,
   customerSelectedTour,
+  initialDate,
 }: {
   onClose: () => void;
   customerSelectedTour?: Tour;
+  initialDate?: Date;
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isBookingComplete, setIsBookingComplete] = useState(false);
@@ -46,7 +48,9 @@ const CreateBookingv2 = ({
   );
 
   // Step 2
-  const [selectedDate, setSelectedDate] = useState<DateValue>();
+  const [selectedDate, setSelectedDate] = useState<DateValue | undefined>(
+    initialDate ? parseDate(initialDate.toISOString().split("T")[0]) : undefined
+  );
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
 
