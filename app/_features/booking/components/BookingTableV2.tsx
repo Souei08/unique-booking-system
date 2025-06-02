@@ -56,7 +56,7 @@ export function BookingTableV2({
 
   const columns: ColumnDef<BookingTable>[] = [
     {
-      accessorKey: "booking_id",
+      accessorKey: "reference_number",
       header: "Booking ID",
     },
     {
@@ -129,7 +129,7 @@ export function BookingTableV2({
     },
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: "Date Created",
       cell: ({ row }) => {
         return format(new Date(row.getValue("created_at")), "MMM dd, yyyy");
       },
@@ -209,10 +209,10 @@ export function BookingTableV2({
               bookingId={selectedBooking.booking_id}
               manageToken={selectedBooking.manage_token}
               onClose={() => setIsUpdateBookingDialogOpen(false)}
-              onUpdate={async (updatedBooking) => {
-                // await onUpdateStatus?.(updatedBooking);
-                // setIsUpdateBookingDialogOpen(false);
-              }}
+              // onUpdate={async (updatedBooking) => {
+              //   // await onUpdateStatus?.(updatedBooking);
+              //   // setIsUpdateBookingDialogOpen(false);
+              // }}
             />
           )}
         </DialogContent>

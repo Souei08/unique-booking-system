@@ -11,7 +11,12 @@ interface BookingData {
   slots: number;
   total_price: number;
   payment_method: string;
-  payment_id: string;
+  payment_id: string | null;
+  products: Array<{
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+  }>;
 }
 
 export async function createTourBookingv2(data: BookingData): Promise<{
@@ -33,6 +38,7 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     total_price,
     payment_method,
     payment_id,
+    products,
   } = data;
 
   // ✅ Input Validation
@@ -46,8 +52,8 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     !selected_time ||
     !slots ||
     !total_price ||
-    !payment_method ||
-    !payment_id
+    !payment_method
+    // !payment_id
   ) {
     throw new Error("Missing required fields.");
   }
@@ -68,6 +74,7 @@ export async function createTourBookingv2(data: BookingData): Promise<{
         _total_price: total_price,
         _payment_method: payment_method,
         _payment_id: payment_id,
+        _products: products,
       }
     );
 

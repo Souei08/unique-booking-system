@@ -3,7 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { fetchCalendarSlotSummary } from "@/app/_features/calendar/api/fetchCalendarSlotSummary";
 import { getAllBookings } from "@/app/_features/booking/api/getAllBookings";
-import { BookingTable } from "@/app/_features/booking/types/booking-types";
+import { getBookingsByTourAndDateTime } from "@/app/_features/booking/api/getBookingsByTourAndDateTime";
+import {
+  BookingTable,
+  BookingResponse,
+} from "@/app/_features/booking/types/booking-types";
+
 import {
   Drawer,
   DrawerContent,
@@ -12,10 +17,16 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { format } from "date-fns";
-import { X, Plus, UserPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  X,
+  Plus,
+  UserPlus,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Clock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import CreateBookingv2 from "@/app/_features/booking/components/CreateBookingv2/CreateBookingv2";
-import AdminCreateBooking from "@/app/_features/booking/components/AdminCreateBooking/AdminCreateBooking";
 import { getAllTours } from "@/app/_features/tours/api/getAllTours";
 import { Tour } from "@/app/_features/tours/tour-types";
 import {
@@ -25,6 +36,11 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
+import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickBooking";
+import { parseDate } from "@internationalized/date";
+import { toast } from "sonner";
+import { formatTime } from "@/app/_utils/formatTime";
+import UpdateBooking from "@/app/_features/booking/components/UpdateBooking";
 
 interface Slot {
   tour_type: string;
@@ -80,20 +96,36 @@ function generateMonthMatrix(year: number, month: number): (string | null)[][] {
 }
 
 const CalendarBookingPage: React.FC = () => {
+  const [bookings, setBookings] = useState<BookingTable[]>([]);
+  const [tours, setTours] = useState<Tour[]>([]);
+  const [selectedSlotBookings, setSelectedSlotBookings] = useState<
+    BookingResponse[]
+  >([]);
+
   const [slots, setSlots] = useState<Slot[]>([]);
   const [monthMatrix, setMonthMatrix] = useState<(string | null)[][]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [bookings, setBookings] = useState<BookingTable[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isCreateBookingOpen, setIsCreateBookingOpen] = useState(false);
-  const [isAdminBookingOpen, setIsAdminBookingOpen] = useState(false);
-  const [tours, setTours] = useState<Tour[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(false);
 
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [selectedTour, setSelectedTour] = useState<string>("All");
   const [onlyAvailable, setOnlyAvailable] = useState<boolean>(false);
+
+  const [selectedTourForBooking, setSelectedTourForBooking] =
+    useState<Tour | null>(null);
+  const [selectedTimeForBooking, setSelectedTimeForBooking] =
+    useState<string>("");
+
+  const [isCreateBookingOpen, setIsCreateBookingOpen] = useState(false);
+
+  const [isUpdateBookingDialogOpen, setIsUpdateBookingDialogOpen] =
+    useState<boolean>(false);
+  const [selectedBookingToUpdate, setSelectedBookingToUpdate] =
+    useState<BookingResponse | null>(null);
 
   useEffect(() => {
     async function loadTours() {
@@ -158,10 +190,14 @@ const CalendarBookingPage: React.FC = () => {
 
   const getDateBookings = (dateKey: string) => {
     return bookings.filter((booking) => {
-      const bookingDate = new Date(booking.booking_date)
-        .toISOString()
-        .split("T")[0];
-      return bookingDate === dateKey;
+      const bookingDate = new Date(booking.booking_date);
+      const selectedDate = new Date(dateKey);
+
+      return (
+        bookingDate.getFullYear() === selectedDate.getFullYear() &&
+        bookingDate.getMonth() === selectedDate.getMonth() &&
+        bookingDate.getDate() === selectedDate.getDate()
+      );
     });
   };
 
@@ -182,29 +218,60 @@ const CalendarBookingPage: React.FC = () => {
     return date < today;
   };
 
-  const handleDateClick = (dateKey: string | null) => {
-    if (dateKey) {
-      setSelectedDate(dateKey);
-      setIsDrawerOpen(true);
-    }
+  const isDateFullyBooked = (dateKey: string): boolean => {
+    const daySlots = getDaySlots(dateKey);
+    if (daySlots.length === 0) return false;
+
+    // Check if all slots for the selected tour type are fully booked
+    const selectedTourSlots =
+      selectedTour === "All"
+        ? daySlots
+        : daySlots.filter((slot) => slot.tour_type === selectedTour);
+
+    if (selectedTourSlots.length === 0) return false;
+
+    return selectedTourSlots.every(
+      (slot) => typeof slot.booked === "number" && slot.available === 0
+    );
   };
 
-  const handleCreateBooking = () => {
-    setIsCreateBookingOpen(true);
+  const handleDateCardClick = async (
+    dateKey: string | null,
+    time: string,
+    tour: string
+  ) => {
+    if (dateKey) {
+      setSelectedDate(dateKey);
+      setSelectedTimeForBooking(time);
+
+      const selectedTour = tours.find((t) => t.title === tour) || null;
+      setSelectedTourForBooking(selectedTour);
+      setIsDrawerOpen(true);
+
+      // Fetch bookings for the selected slot
+      if (selectedTour) {
+        setIsLoadingBookings(true);
+        try {
+          const bookings = await getBookingsByTourAndDateTime({
+            tourTitle: tour,
+            date: dateKey,
+            time: time,
+          });
+
+          setSelectedSlotBookings(bookings);
+        } catch (error) {
+          console.error("Error fetching slot bookings:", error);
+          toast.error("Failed to fetch bookings for this slot");
+        } finally {
+          setIsLoadingBookings(false);
+        }
+      }
+    }
   };
 
   const handleCloseCreateBooking = () => {
     setIsCreateBookingOpen(false);
     // Refresh bookings after creating a new one
-    loadBookings();
-  };
-
-  const handleAdminBooking = () => {
-    setIsAdminBookingOpen(true);
-  };
-
-  const handleCloseAdminBooking = () => {
-    setIsAdminBookingOpen(false);
     loadBookings();
   };
 
@@ -359,7 +426,6 @@ const CalendarBookingPage: React.FC = () => {
             : monthMatrix.flat().map((dateKey, i) => (
                 <div
                   key={i}
-                  onClick={() => handleDateClick(dateKey)}
                   className={`min-h-[100px] sm:min-h-[120px] md:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all bg-background cursor-pointer ${
                     dateKey
                       ? "hover:shadow-md"
@@ -397,11 +463,18 @@ const CalendarBookingPage: React.FC = () => {
                                   ? "bg-gray-50 border-gray-200"
                                   : "bg-fill border-gray-200"
                               } hover:shadow-sm`}
+                              onClick={() =>
+                                handleDateCardClick(
+                                  dateKey,
+                                  slot.slot_time || "",
+                                  slot.tour_type || ""
+                                )
+                              }
                             >
                               {slot.slot_time && (
                                 <div className="font-medium text-strong text-xs sm:text-sm mb-0.5 sm:mb-1 flex flex-col gap-1">
                                   <span className="truncate">
-                                    {slot.slot_time}
+                                    {formatTime(slot.slot_time)}
                                   </span>
                                   <span className="text-[10px] sm:text-xs text-gray-600 truncate">
                                     {slot.tour_type}
@@ -491,144 +564,249 @@ const CalendarBookingPage: React.FC = () => {
         <DrawerContent className="h-screen">
           <div className="flex flex-col h-full">
             <DrawerHeader className="border-b flex flex-row items-center justify-between p-4">
-              <DrawerTitle>
-                Bookings for{" "}
-                {selectedDate && format(new Date(selectedDate), "MMMM d, yyyy")}
-              </DrawerTitle>
+              <div className="space-y-1">
+                <DrawerTitle className="text-xl sm:text-2xl font-bold">
+                  Booking Details
+                </DrawerTitle>
+                {selectedTourForBooking && (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      {selectedTourForBooking.title}
+                    </p>
+                  </div>
+                )}
+              </div>
               <DrawerClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
               </DrawerClose>
             </DrawerHeader>
             <div className="flex-1 overflow-y-auto p-4">
-              {/* {selectedDate && !isPastDate(selectedDate) && (
-                <div className="flex gap-2 mb-4">
-                  <Button
-                    onClick={handleAdminBooking}
-                    className="flex items-center gap-2"
-                    variant="outline"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Admin Booking
-                  </Button>
-                  <Button
-                    onClick={handleCreateBooking}
-                    className="flex items-center gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create Booking
-                  </Button>
+              {/* Tour Details Section */}
+              {selectedTourForBooking && (
+                <div className="mb-6 bg-card rounded-xl border p-4">
+                  <div className="flex gap-4">
+                    <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                      <img
+                        src={
+                          JSON.parse(selectedTourForBooking.images).find(
+                            (image: any) => image.isFeature
+                          ).url
+                        }
+                        alt={selectedTourForBooking.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold mb-2">
+                        {selectedTourForBooking.title}
+                      </h3>
+                      <div className="space-y-1 text-sm text-muted-foreground">
+                        <p className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          {selectedDate &&
+                            format(new Date(selectedDate), "MMMM d, yyyy")}
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          {formatTime(selectedTimeForBooking)}
+                        </p>
+                        <p className="flex items-center gap-2">
+                          <UserPlus className="w-4 h-4" />
+                          Remaining Slots:{" "}
+                          {slots.find(
+                            (slot) =>
+                              slot.date === selectedDate &&
+                              slot.slot_time === selectedTimeForBooking &&
+                              slot.tour_type === selectedTourForBooking.title
+                          )?.available || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )} */}
-              <div className="space-y-4">
-                {selectedDate && getDateBookings(selectedDate).length > 0 ? (
-                  getDateBookings(selectedDate).map((booking) => (
+              )}
+
+              {/* Bookings Section */}
+              {selectedDate && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">
+                    Current Bookings
+                  </h3>
+                  <div className="space-y-4">
+                    {isLoadingBookings ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
+                      </div>
+                    ) : selectedSlotBookings.length > 0 ? (
+                      selectedSlotBookings.map((booking) => (
+                        <div
+                          key={booking.id}
+                          className="p-4 rounded-lg border border-gray-200 bg-white hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => {
+                            setSelectedBookingToUpdate(booking);
+                            setIsUpdateBookingDialogOpen(true);
+                          }}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-semibold text-lg">
+                                {booking.users.full_name}
+                              </h3>
+                              <p className="text-sm text-gray-600">
+                                {booking.tours.title}
+                              </p>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs uppercase font-bold ${
+                                  booking.status === "confirmed"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-yellow-100 text-yellow-800"
+                                }`}
+                              >
+                                {booking.status}
+                              </span>
+                              {/* <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  booking.payments[0].status === "paid"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {booking.payments[0].status}
+                              </span> */}
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-600">Reference Number</p>
+                              <p className="font-medium">
+                                {booking.reference_number}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600">Slots</p>
+                              <p className="font-medium">
+                                {booking.slots} people
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600">Total Price</p>
+                              <p className="font-medium">
+                                ${booking.total_price}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600">Email</p>
+                              <p className="font-medium truncate">
+                                {booking.users.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                        <p>No bookings for this slot</p>
+                        <p className="text-sm mt-1">
+                          {selectedDate && isPastDate(selectedDate)
+                            ? "Cannot create bookings for past dates"
+                            : "Select another slot to view bookings"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Create Booking Button */}
+              {selectedDate &&
+                !isPastDate(selectedDate) &&
+                slots.find(
+                  (slot) =>
+                    slot.date === selectedDate &&
+                    slot.slot_time === selectedTimeForBooking &&
+                    slot.tour_type === selectedTourForBooking?.title &&
+                    slot.available > 0
+                ) && (
+                  <div className="mt-6">
                     <div
-                      key={booking.booking_id}
-                      className="p-4 rounded-lg border border-gray-200 bg-white hover:shadow-md transition-shadow"
+                      className="bg-background rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group"
+                      onClick={() => setIsCreateBookingOpen(true)}
                     >
-                      <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-brand/10 p-3 rounded-lg group-hover:bg-brand/20 transition-colors">
+                          <Plus className="h-6 w-6 text-brand" />
+                        </div>
                         <div>
-                          <h3 className="font-semibold text-lg">
-                            {booking.full_name}
+                          <h3 className="font-semibold text-lg group-hover:text-brand transition-colors">
+                            Create New Booking
                           </h3>
                           <p className="text-sm text-gray-600">
-                            {booking.tour_title}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              booking.booking_status === "confirmed"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-yellow-100 text-yellow-800"
-                            }`}
-                          >
-                            {booking.booking_status}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-gray-600">Time</p>
-                          <p className="font-medium">{booking.selected_time}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Slots</p>
-                          <p className="font-medium">{booking.slots} people</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Total Price</p>
-                          <p className="font-medium">${booking.total_price}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Payment Status</p>
-                          <p className="font-medium">
-                            {booking.payment_status}
+                            Click to create a new booking for this date and tour
                           </p>
                         </div>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                    <p>No bookings for this date</p>
-                    <p className="text-sm mt-1">
-                      {selectedDate && isPastDate(selectedDate)
-                        ? "Cannot create bookings for past dates"
-                        : "Select another date to view bookings"}
-                    </p>
                   </div>
                 )}
-              </div>
             </div>
           </div>
         </DrawerContent>
       </Drawer>
 
       {/* Create Booking Modal */}
-      {isCreateBookingOpen && (
-        <Dialog
-          open={isCreateBookingOpen}
-          onOpenChange={setIsCreateBookingOpen}
-        >
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Booking</DialogTitle>
-              <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </DialogClose>
-            </DialogHeader>
-            <CreateBookingv2
-              onClose={handleCloseCreateBooking}
-              customerSelectedTour={undefined}
-              initialDate={selectedDate ? new Date(selectedDate) : undefined}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      {isCreateBookingOpen &&
+        selectedTourForBooking &&
+        selectedDate &&
+        selectedTimeForBooking && (
+          <Dialog
+            open={isCreateBookingOpen}
+            onOpenChange={setIsCreateBookingOpen}
+          >
+            <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+              <DialogHeader>
+                <DialogTitle></DialogTitle>
+                <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </DialogClose>
+              </DialogHeader>
+              <QuickBooking
+                onClose={handleCloseCreateBooking}
+                selectedTour={selectedTourForBooking}
+                selectedDate={parseDate(selectedDate)}
+                selectedTime={selectedTimeForBooking}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
 
-      {/* Admin Create Booking Modal */}
-      {isAdminBookingOpen && (
-        <Dialog open={isAdminBookingOpen} onOpenChange={setIsAdminBookingOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create Admin Booking</DialogTitle>
-              <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </DialogClose>
-            </DialogHeader>
-            <AdminCreateBooking
-              onClose={handleCloseAdminBooking}
-              initialDate={selectedDate ? new Date(selectedDate) : undefined}
-              tours={tours}
-              onSuccess={loadBookings}
+      <Dialog
+        open={isUpdateBookingDialogOpen}
+        onOpenChange={setIsUpdateBookingDialogOpen}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle></DialogTitle>
+          </DialogHeader>
+          {selectedBookingToUpdate && (
+            <UpdateBooking
+              bookingId={selectedBookingToUpdate.id}
+              manageToken={selectedBookingToUpdate.manage_token}
+              onClose={() => {
+                setIsUpdateBookingDialogOpen(false);
+                setSelectedBookingToUpdate(null);
+              }}
+              // onUpdate={async (updatedBooking) => {
+              //   // await onUpdateStatus?.(updatedBooking);
+              //   // setIsUpdateBookingDialogOpen(false);
+              // }}
             />
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

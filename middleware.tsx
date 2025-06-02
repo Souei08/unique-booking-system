@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
 // Apply middleware to API routes and protected pages
 export const config = {
   matcher: [
-    "/api/:path*", // Protect all API routes
+    "/api/:path((?!webhooks/stripe).*)", // Protect all API routes
     "/dashboard/:path*", // Protect dashboard pages
   ],
 };

@@ -14,6 +14,7 @@ import {
 } from "@internationalized/date";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import { formatTime } from "@/app/_utils/formatTime";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -307,10 +308,7 @@ const TourTimeAndDate = ({
                 className="grid gap-3 sm:gap-4"
               >
                 {availableTimes.map((timeSlot, index) => {
-                  const timeDate = new Date(
-                    `${selectedDate.toString()}T${timeSlot.start_time}`
-                  );
-                  const formattedTime = format(timeDate, "h:mm a");
+                  const formattedTime = formatTime(timeSlot.start_time);
 
                   return (
                     <div

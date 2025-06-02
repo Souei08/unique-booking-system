@@ -21,6 +21,7 @@ export default async function BookingsPage() {
     selected_time: booking.selected_time,
     booking_status: booking.booking_status,
     payment_status: booking.payment_status,
+    reference_number: booking.reference_number,
   }));
 
   return (

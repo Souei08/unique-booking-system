@@ -1,9 +1,8 @@
 import { PaymentElement } from "@stripe/react-stripe-js";
-
 import { useState } from "react";
-
 import { useElements } from "@stripe/react-stripe-js";
 import { useStripe } from "@stripe/react-stripe-js";
+import { toast } from "sonner";
 
 export const StripePaymentFormV2 = ({
   onPaymentSuccess,
@@ -19,29 +18,56 @@ export const StripePaymentFormV2 = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
+    setErrorMessage(undefined);
 
-    if (!stripe || !elements) return;
-
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      setErrorMessage(submitError.message);
+    if (!stripe || !elements) {
+      setErrorMessage("Payment system is not ready. Please try again.");
       setIsLoading(false);
       return;
     }
 
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      //   confirmParams: {
-      //     return_url: `${window.location.origin}/payment-success`,
-      //   },
-      redirect: "if_required", // Important: prevent auto-redirect
-    });
+    try {
+      // First, validate the form
+      const { error: submitError } = await elements.submit();
+      if (submitError) {
+        setErrorMessage(submitError.message);
+        toast.error("Payment Form Error", {
+          description: submitError.message,
+        });
+        setIsLoading(false);
+        return;
+      }
 
-    if (error) {
-      setErrorMessage(error.message);
-      setIsLoading(false);
-    } else if (paymentIntent && paymentIntent.status === "succeeded") {
-      onPaymentSuccess(paymentIntent.id); // Sync payment
+      // Then, process the payment
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        redirect: "if_required",
+      });
+
+      if (error) {
+        setErrorMessage(error.message);
+        toast.error("Payment Failed", {
+          description: error.message,
+        });
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        // Payment successful, update booking status
+        onPaymentSuccess(paymentIntent.id);
+        toast.success("Payment Successful", {
+          description: "Your booking has been confirmed.",
+        });
+      } else {
+        // Handle other payment statuses
+        setErrorMessage("Payment is still processing. Please wait...");
+        toast.info("Payment Processing", {
+          description: "Your payment is being processed. Please wait...",
+        });
+      }
+    } catch (error) {
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      toast.error("Payment Error", {
+        description: "An unexpected error occurred. Please try again.",
+      });
+    } finally {
       setIsLoading(false);
     }
   };
@@ -49,7 +75,9 @@ export const StripePaymentFormV2 = ({
   return (
     <form onSubmit={handleSubmit}>
       <PaymentElement />
-      {errorMessage && <p className="text-red-500 mt-2">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="text-red-500 mt-2 text-sm">{errorMessage}</p>
+      )}
       <button
         type="submit"
         disabled={isLoading}
@@ -77,10 +105,10 @@ export const StripePaymentFormV2 = ({
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            Processing...
+            Processing Payment...
           </div>
         ) : (
-          "Pay And Create Booking"
+          "Complete Payment"
         )}
       </button>
     </form>
