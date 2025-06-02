@@ -37,6 +37,7 @@ interface QuickBookingProps {
   selectedTour: Tour;
   selectedDate: DateValue;
   selectedTime: string;
+  onSuccess?: () => void;
 }
 
 const QuickBooking = ({
@@ -44,6 +45,7 @@ const QuickBooking = ({
   selectedTour,
   selectedDate,
   selectedTime,
+  onSuccess,
 }: QuickBookingProps) => {
   const [isBookingComplete, setIsBookingComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -184,6 +186,7 @@ const QuickBooking = ({
       });
 
       setIsBookingComplete(true);
+      onSuccess?.();
     } catch (error) {
       console.error("Booking Error:", error);
       toast.error("Booking Failed", {
