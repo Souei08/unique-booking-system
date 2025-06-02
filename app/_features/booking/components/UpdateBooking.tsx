@@ -59,12 +59,14 @@ interface UpdateBookingProps {
   bookingId: string;
   manageToken: string;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 const UpdateBooking: React.FC<UpdateBookingProps> = ({
   bookingId,
   manageToken,
   onClose,
+  onSuccess,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -123,6 +125,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         );
         toast.success("Booking rescheduled successfully");
         fetchBooking();
+        onSuccess?.();
       } else {
         throw new Error("Failed to reschedule booking");
       }
@@ -160,6 +163,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         toast.success("Customer information updated successfully");
         setIsUpdateCustomerModalOpen(false);
         fetchBooking();
+        onSuccess?.();
       }
     } catch (error) {
       console.error(error);
@@ -225,6 +229,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
       );
       toast.success("Payment link created successfully");
       fetchBooking();
+      onSuccess?.();
     } catch (error) {
       console.error(error);
       toast.error("Failed to create payment link");

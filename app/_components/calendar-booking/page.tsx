@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Calendar,
   Clock,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllTours } from "@/app/_features/tours/api/getAllTours";
@@ -109,6 +110,7 @@ const CalendarBookingPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingBookings, setIsLoadingBookings] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
   const [year, setYear] = useState<number>(new Date().getFullYear());
@@ -126,6 +128,27 @@ const CalendarBookingPage: React.FC = () => {
     useState<boolean>(false);
   const [selectedBookingToUpdate, setSelectedBookingToUpdate] =
     useState<BookingResponse | null>(null);
+
+  const fetchSlotBookings = async (
+    tourTitle: string,
+    date: string,
+    time: string
+  ) => {
+    setIsLoadingBookings(true);
+    try {
+      const bookings = await getBookingsByTourAndDateTime({
+        tourTitle,
+        date,
+        time,
+      });
+      setSelectedSlotBookings(bookings);
+    } catch (error) {
+      console.error("Error fetching slot bookings:", error);
+      toast.error("Failed to fetch bookings for this slot");
+    } finally {
+      setIsLoadingBookings(false);
+    }
+  };
 
   useEffect(() => {
     async function loadTours() {
@@ -250,29 +273,54 @@ const CalendarBookingPage: React.FC = () => {
 
       // Fetch bookings for the selected slot
       if (selectedTour) {
-        setIsLoadingBookings(true);
-        try {
-          const bookings = await getBookingsByTourAndDateTime({
-            tourTitle: tour,
-            date: dateKey,
-            time: time,
-          });
-
-          setSelectedSlotBookings(bookings);
-        } catch (error) {
-          console.error("Error fetching slot bookings:", error);
-          toast.error("Failed to fetch bookings for this slot");
-        } finally {
-          setIsLoadingBookings(false);
-        }
+        await fetchSlotBookings(tour, dateKey, time);
       }
     }
   };
 
-  const handleCloseCreateBooking = () => {
+  const handleCloseCreateBooking = async () => {
     setIsCreateBookingOpen(false);
-    // Refresh bookings after creating a new one
-    loadBookings();
+    // Only refresh bookings and calendar data after creating a new one
+    await Promise.all([loadBookings(), loadCalendarData()]);
+
+    // Refresh selected slot bookings if we have the necessary data
+    if (selectedTourForBooking && selectedDate && selectedTimeForBooking) {
+      await fetchSlotBookings(
+        selectedTourForBooking.title,
+        selectedDate,
+        selectedTimeForBooking
+      );
+    }
+  };
+
+  const loadCalendarData = async () => {
+    setIsLoading(true);
+    try {
+      const data: Slot[] = await fetchCalendarSlotSummary({
+        month,
+        year,
+        tourTitle: selectedTour === "All" ? null : selectedTour,
+        onlyAvailable,
+      });
+      setSlots(data);
+    } catch (error) {
+      console.error("Error loading calendar data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([loadBookings(), loadCalendarData()]);
+      toast.success("Calendar refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing calendar:", error);
+      toast.error("Failed to refresh calendar");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const loadBookings = async () => {
@@ -378,7 +426,7 @@ const CalendarBookingPage: React.FC = () => {
             </select>
           </div>
 
-          <div className="flex items-center mt-2 sm:mt-6">
+          <div className="flex items-center gap-3 mt-2 sm:mt-6">
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
@@ -386,12 +434,23 @@ const CalendarBookingPage: React.FC = () => {
                 onChange={() => setOnlyAvailable(!onlyAvailable)}
                 className="sr-only peer"
               />
-
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
               <span className="ml-3 text-sm font-medium text-strong">
                 Show only available
               </span>
             </label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="ml-2"
+            >
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
           </div>
         </div>
       </div>
@@ -778,6 +837,21 @@ const CalendarBookingPage: React.FC = () => {
                 selectedTour={selectedTourForBooking}
                 selectedDate={parseDate(selectedDate)}
                 selectedTime={selectedTimeForBooking}
+                onSuccess={() => {
+                  // Refresh calendar data and selected slot bookings
+                  loadCalendarData();
+                  if (
+                    selectedTourForBooking &&
+                    selectedDate &&
+                    selectedTimeForBooking
+                  ) {
+                    fetchSlotBookings(
+                      selectedTourForBooking.title,
+                      selectedDate,
+                      selectedTimeForBooking
+                    );
+                  }
+                }}
               />
             </DialogContent>
           </Dialog>
@@ -799,10 +873,20 @@ const CalendarBookingPage: React.FC = () => {
                 setIsUpdateBookingDialogOpen(false);
                 setSelectedBookingToUpdate(null);
               }}
-              // onUpdate={async (updatedBooking) => {
-              //   // await onUpdateStatus?.(updatedBooking);
-              //   // setIsUpdateBookingDialogOpen(false);
-              // }}
+              onSuccess={() => {
+                // Only refresh selected slot bookings
+                if (
+                  selectedTourForBooking &&
+                  selectedDate &&
+                  selectedTimeForBooking
+                ) {
+                  fetchSlotBookings(
+                    selectedTourForBooking.title,
+                    selectedDate,
+                    selectedTimeForBooking
+                  );
+                }
+              }}
             />
           )}
         </DialogContent>
