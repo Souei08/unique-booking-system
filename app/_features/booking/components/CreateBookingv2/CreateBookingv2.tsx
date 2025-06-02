@@ -18,6 +18,7 @@ import BookingSuccess from "./booking-steps/BookingSuccess";
 // Types
 import { DateValue, parseDate, CalendarDate } from "@internationalized/date";
 import { Tour } from "@/app/_features/tours/tour-types";
+import { Product } from "@/app/_features/products/types/product-types";
 
 import {
   CustomerInformation,
@@ -26,6 +27,7 @@ import {
 
 // Api
 import { createTourBookingv2 } from "../../api/CreateTourBookingv2";
+import { updateBookingPaymentStatus } from "../../api/updateBookingPaymentStatus";
 
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
@@ -41,6 +43,7 @@ const CreateBookingv2 = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isBookingComplete, setIsBookingComplete] = useState(false);
+  const [bookingId, setBookingId] = useState<string | null>(null);
 
   // Step 1
   const [selectedTour, setSelectedTour] = useState<Tour>(
@@ -70,6 +73,13 @@ const CreateBookingv2 = ({
       total_price: 0,
     });
 
+  // Add state for products
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [productQuantities, setProductQuantities] = useState<
+    Record<string, number>
+  >({});
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+
   useEffect(() => {
     if (selectedTour && selectedTour.id) {
       setCurrentStep(2);
@@ -94,13 +104,21 @@ const CreateBookingv2 = ({
     }
   };
 
-  const handleCompleteBooking = async (paymentId: string) => {
+  const handleCompleteBooking = async (paymentId: string | null) => {
     if (!selectedTour?.id || !selectedDate) {
       throw new Error("Missing required tour or date information");
     }
 
-    // Log the current payment information
-    console.log("Current Payment Information:", paymentInformation);
+    // Format products data for the API
+    const productsData = selectedProducts.map((productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      const quantity = productQuantities[productId] || 1;
+      return {
+        product_id: productId,
+        quantity: quantity,
+        unit_price: product?.price || 0,
+      };
+    });
 
     const bookingData = {
       first_name: customerInformation.first_name,
@@ -114,20 +132,21 @@ const CreateBookingv2 = ({
       total_price: paymentInformation.total_price,
       payment_method: paymentInformation.payment_method,
       payment_id: paymentId,
+      products: productsData,
     };
 
-    console.log("Booking Data:", bookingData);
-
-    if (!bookingData.payment_id) {
-      toast.error("Payment Error", {
-        description: "Payment ID is missing. Please try again.",
-      });
-      return;
-    }
-
     try {
+      // Create booking first
       const response = await createTourBookingv2(bookingData);
-      setIsBookingComplete(true);
+
+      if (response && response.booking_id) {
+        setBookingId(response.booking_id);
+
+        // Update payment status
+        await updateBookingPaymentStatus(response.booking_id, paymentId);
+
+        setIsBookingComplete(true);
+      }
     } catch (error) {
       console.error("Booking Error:", error);
       toast.error("Booking Failed", {
@@ -141,10 +160,11 @@ const CreateBookingv2 = ({
   if (isBookingComplete) {
     return (
       <BookingSuccess
+        isAdmin={false}
         selectedTour={selectedTour!}
         selectedDate={selectedDate!}
         selectedTime={selectedTime}
-        customerEmail={customerInformation.email}
+        bookingId={bookingId || ""}
         onClose={onClose}
       />
     );
@@ -184,6 +204,13 @@ const CreateBookingv2 = ({
             setPaymentInformation={setPaymentInformation}
             setCustomerInformation={setCustomerInformation}
             handleCompleteBooking={handleCompleteBooking}
+            selectedProducts={selectedProducts}
+            setSelectedProducts={setSelectedProducts}
+            productQuantities={productQuantities}
+            setProductQuantities={setProductQuantities}
+            availableProducts={availableProducts}
+            setAvailableProducts={setAvailableProducts}
+            setNumberOfPeople={setNumberOfPeople}
           />
         );
       default:

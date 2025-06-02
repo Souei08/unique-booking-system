@@ -26,11 +26,18 @@ import {
   CreateTourDTO,
   TourLocalImage,
 } from "@/app/_features/tours/tour-types";
-
-import { X } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { X, Info } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ImageUploadInput } from "./ImageUploadInput";
+// import {
+//   Tooltip,
+//   TooltipContent,
+//   TooltipProvider,
+//   TooltipTrigger,
+// } from "@/components/ui/tooltip";
 
 import { updateTourClient } from "../../api/client/updateTourClient";
 import { createTourClient } from "../../api/client/createTourClient";
@@ -283,462 +290,634 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
   };
 
   return (
-    <div className="w-full mt-5">
+    <div className="w-full mx-auto mt-5 space-y-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="title">Title</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="title"
-                      placeholder="Enter tour title"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="category">Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger id="category" aria-label="Select category">
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="horseback_riding">
-                        Horseback Riding
-                      </SelectItem>
-                      <SelectItem value="jet_ski_tour">Jet Ski Tour</SelectItem>
-                      <SelectItem value="safari_tour_and_snorkeling">
-                        Safari Tour and Snorkeling
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="duration"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="duration">Duration (hours)</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="duration"
-                      type="number"
-                      placeholder="Enter duration in hours"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="group_size_limit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="group_size_limit">
-                    Group Size Limit
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id="group_size_limit"
-                      type="number"
-                      placeholder="Enter group size limit"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="rate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="rate">Rate (USD)</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="rate"
-                      type="number"
-                      placeholder="Enter rate in USD"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="slots"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="slots">Available Slots</FormLabel>
-                  <FormControl>
-                    <Input
-                      id="slots"
-                      type="number"
-                      placeholder="Enter available slots"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="description">Description</FormLabel>
-                <FormControl>
-                  <Textarea
-                    id="description"
-                    placeholder="Enter tour description"
-                    className="min-h-[100px]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="meeting_point_address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="meeting_point_address">
-                    Meeting Point
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id="meeting_point_address"
-                      placeholder="Enter meeting point address"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="dropoff_point_address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel htmlFor="dropoff_point_address">
-                    Dropoff Point
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      id="dropoff_point_address"
-                      placeholder="Enter dropoff point address"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="things_to_know"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor="things_to_know">Things to Know</FormLabel>
-                <FormControl>
-                  <Textarea
-                    id="things_to_know"
-                    placeholder="Enter things to know"
-                    className="min-h-[100px]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {/* Languages */}
-          <FormField
-            control={form.control}
-            name="languages"
-            render={({ field }) => {
-              const value = Array.isArray(field.value) ? field.value : [""];
-              return (
-                <FormItem>
-                  <FormLabel htmlFor="languages">Languages</FormLabel>
-                  <div className="space-y-2">
-                    {value.map((item, index) => (
-                      <div key={index} className="flex gap-2">
+          {/* Basic Information Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Basic Information
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Enter the essential details about your tour.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="title">Tour Title</FormLabel>
+                      <FormControl>
                         <Input
-                          id={`languages-${index}`}
-                          aria-label={`Language ${index + 1}`}
-                          value={item}
-                          onChange={(e) =>
-                            updateItem("languages", index, e.target.value)
-                          }
-                          placeholder="Enter language"
+                          id="title"
+                          placeholder="Enter a descriptive title for your tour"
+                          {...field}
                         />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Remove language ${index + 1}`}
-                          onClick={() => removeItem("languages", index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => addItem("languages")}
-                    >
-                      Add Language
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          {/* Trip Highlights */}
-          <FormField
-            control={form.control}
-            name="trip_highlights"
-            render={({ field }) => {
-              const value = Array.isArray(field.value) ? field.value : [""];
-              return (
-                <FormItem>
-                  <FormLabel htmlFor="trip_highlights">
-                    Trip Highlights
-                  </FormLabel>
-                  <div className="space-y-2">
-                    {value.map((item, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          id={`trip_highlights-${index}`}
-                          aria-label={`Trip highlight ${index + 1}`}
-                          value={item}
-                          onChange={(e) =>
-                            updateItem("trip_highlights", index, e.target.value)
-                          }
-                          placeholder="Enter trip highlight"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Remove trip highlight ${index + 1}`}
-                          onClick={() => removeItem("trip_highlights", index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => addItem("trip_highlights")}
-                    >
-                      Add Highlight
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-
-          {/* Includes */}
-          <FormField
-            control={form.control}
-            name="includes"
-            render={({ field }) => {
-              const value = Array.isArray(field.value) ? field.value : [""];
-              return (
-                <FormItem>
-                  <FormLabel htmlFor="includes">What's Included</FormLabel>
-                  <div className="space-y-2">
-                    {value.map((item, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input
-                          id={`includes-${index}`}
-                          aria-label={`Inclusion ${index + 1}`}
-                          value={item}
-                          onChange={(e) =>
-                            updateItem("includes", index, e.target.value)
-                          }
-                          placeholder="Enter inclusion"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Remove inclusion ${index + 1}`}
-                          onClick={() => removeItem("includes", index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => addItem("includes")}
-                    >
-                      Add Inclusion
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-
-          {/* FAQ */}
-          <FormField
-            control={form.control}
-            name="faq"
-            render={({ field }) => {
-              const value = Array.isArray(field.value)
-                ? field.value
-                : [{ question: "", answer: "" }];
-              return (
-                <FormItem>
-                  <FormLabel htmlFor="faq">
-                    Frequently Asked Questions
-                  </FormLabel>
-                  <div className="space-y-4">
-                    {value.map((faq, index) => (
-                      <div
-                        key={index}
-                        className="space-y-2 border rounded-lg p-4"
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="category">Tour Category</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
                       >
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1 space-y-2">
-                            <div className="mb-5">
-                              <FormLabel
-                                htmlFor={`faq-question-${index}`}
-                                className="mb-2"
+                        <FormControl>
+                          <SelectTrigger id="category">
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="horseback_riding">
+                            Horseback Riding
+                          </SelectItem>
+                          <SelectItem value="jet_ski_tour">
+                            Jet Ski Tour
+                          </SelectItem>
+                          <SelectItem value="safari_tour_and_snorkeling">
+                            Safari Tour and Snorkeling
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="description">
+                      Tour Description
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="description"
+                        placeholder="Provide a detailed description of your tour experience"
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Tour Details Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Tour Details
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Specify the practical details of your tour.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel
+                        htmlFor="duration"
+                        className="flex items-center gap-2"
+                      >
+                        Duration
+                        <span className="text-sm text-muted-foreground">
+                          (in hours)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            id="duration"
+                            type="number"
+                            min="1"
+                            step="0.5"
+                            placeholder="e.g., 2.5"
+                            className="pr-12"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <span className="text-muted-foreground">hrs</span>
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        How long will the tour last? Enter the duration in
+                        hours.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="group_size_limit"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel
+                        htmlFor="group_size_limit"
+                        className="flex items-center gap-2"
+                      >
+                        Maximum Group Size
+                        <span className="text-sm text-muted-foreground">
+                          (per tour)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            id="group_size_limit"
+                            type="number"
+                            min="1"
+                            placeholder="e.g., 10"
+                            className="pr-12"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <span className="text-muted-foreground">
+                              people
+                            </span>
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        What's the maximum number of people allowed per tour?
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="slots"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel
+                        htmlFor="slots"
+                        className="flex items-center gap-2"
+                      >
+                        Available Slots
+                        <span className="text-sm text-muted-foreground">
+                          (total capacity)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            id="slots"
+                            type="number"
+                            min="1"
+                            placeholder="e.g., 20"
+                            className="pr-12"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <span className="text-muted-foreground">slots</span>
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        How many total slots are available for booking?
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel
+                        htmlFor="rate"
+                        className="flex items-center gap-2"
+                      >
+                        Tour Rate
+                        <span className="text-sm text-muted-foreground">
+                          (per person)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            id="rate"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="e.g., 99.99"
+                            className="pl-8 pr-12"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value))
+                            }
+                          />
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <span className="text-muted-foreground">$</span>
+                          </div>
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <span className="text-muted-foreground">USD</span>
+                          </div>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        What's the price per person for this tour?
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Location Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Location Information
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Specify where the tour starts and ends.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="meeting_point_address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="meeting_point_address">
+                        Meeting Point
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          id="meeting_point_address"
+                          placeholder="Enter meeting location"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dropoff_point_address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="dropoff_point_address">
+                        Dropoff Point
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          id="dropoff_point_address"
+                          placeholder="Enter dropoff location"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tour Features */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Tour Features
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Add languages, highlights, and inclusions.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="languages"
+                render={({ field }) => {
+                  const value = Array.isArray(field.value) ? field.value : [""];
+                  return (
+                    <FormItem>
+                      <FormLabel htmlFor="languages">Languages</FormLabel>
+                      <div className="space-y-2">
+                        {value.map((item, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              id={`languages-${index}`}
+                              value={item}
+                              onChange={(e) =>
+                                updateItem("languages", index, e.target.value)
+                              }
+                              placeholder="Enter language"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeItem("languages", index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => addItem("languages")}
+                        >
+                          Add Language
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+
+              <FormField
+                control={form.control}
+                name="trip_highlights"
+                render={({ field }) => {
+                  const value = Array.isArray(field.value) ? field.value : [""];
+                  return (
+                    <FormItem>
+                      <FormLabel htmlFor="trip_highlights">
+                        Trip Highlights
+                      </FormLabel>
+                      <div className="space-y-2">
+                        {value.map((item, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              id={`trip_highlights-${index}`}
+                              value={item}
+                              onChange={(e) =>
+                                updateItem(
+                                  "trip_highlights",
+                                  index,
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Enter highlight"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() =>
+                                removeItem("trip_highlights", index)
+                              }
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => addItem("trip_highlights")}
+                        >
+                          Add Highlight
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+
+              <FormField
+                control={form.control}
+                name="includes"
+                render={({ field }) => {
+                  const value = Array.isArray(field.value) ? field.value : [""];
+                  return (
+                    <FormItem>
+                      <FormLabel htmlFor="includes">What's Included</FormLabel>
+                      <div className="space-y-2">
+                        {value.map((item, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              id={`includes-${index}`}
+                              value={item}
+                              onChange={(e) =>
+                                updateItem("includes", index, e.target.value)
+                              }
+                              placeholder="Enter inclusion"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeItem("includes", index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => addItem("includes")}
+                        >
+                          Add Inclusion
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Additional Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Additional Information
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Add important details and FAQs.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="things_to_know"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="things_to_know">
+                      Things to Know
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="things_to_know"
+                        placeholder="Enter important information for participants"
+                        className="min-h-[120px]"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="faq"
+                render={({ field }) => {
+                  const value = Array.isArray(field.value)
+                    ? field.value
+                    : [{ question: "", answer: "" }];
+                  return (
+                    <FormItem>
+                      <FormLabel htmlFor="faq">
+                        Frequently Asked Questions
+                      </FormLabel>
+                      <div className="space-y-4">
+                        {value.map((faq, index) => (
+                          <div
+                            key={index}
+                            className="space-y-2 border rounded-lg p-4 bg-muted/50"
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1 space-y-2">
+                                <div className="mb-4">
+                                  <FormLabel
+                                    htmlFor={`faq-question-${index}`}
+                                    className="mb-2"
+                                  >
+                                    Question
+                                  </FormLabel>
+                                  <Input
+                                    id={`faq-question-${index}`}
+                                    value={faq.question}
+                                    onChange={(e) =>
+                                      updateItem("faq", index, {
+                                        ...faq,
+                                        question: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Enter question"
+                                  />
+                                </div>
+                                <div>
+                                  <FormLabel
+                                    htmlFor={`faq-answer-${index}`}
+                                    className="mb-2"
+                                  >
+                                    Answer
+                                  </FormLabel>
+                                  <Textarea
+                                    id={`faq-answer-${index}`}
+                                    value={faq.answer}
+                                    onChange={(e) =>
+                                      updateItem("faq", index, {
+                                        ...faq,
+                                        answer: e.target.value,
+                                      })
+                                    }
+                                    placeholder="Enter answer"
+                                    className="min-h-[100px]"
+                                  />
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeItem("faq", index)}
                               >
-                                Question
-                              </FormLabel>
-                              <Input
-                                id={`faq-question-${index}`}
-                                value={faq.question}
-                                onChange={(e) =>
-                                  updateItem("faq", index, {
-                                    ...faq,
-                                    question: e.target.value,
-                                  })
-                                }
-                                placeholder="Enter question"
-                              />
-                            </div>
-                            <div className="mb-5">
-                              <FormLabel
-                                htmlFor={`faq-answer-${index}`}
-                                className="mb-2"
-                              >
-                                Answer
-                              </FormLabel>
-                              <Textarea
-                                id={`faq-answer-${index}`}
-                                value={faq.answer}
-                                onChange={(e) =>
-                                  updateItem("faq", index, {
-                                    ...faq,
-                                    answer: e.target.value,
-                                  })
-                                }
-                                placeholder="Enter answer"
-                                className="min-h-[100px]"
-                              />
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeItem("faq", index)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        ))}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => addItem("faq")}
+                        >
+                          Add FAQ
+                        </Button>
                       </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => addItem("faq")}
-                    >
-                      Add FAQ
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+            </CardContent>
+          </Card>
 
           {/* Image Upload Section */}
-          <div className="space-y-4">
-            <ImageUploadInput
-              value={currentImages}
-              onChange={handleImagesChange}
-              label="Upload Tour Images"
-              multiple={true}
-              maxFiles={10}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Tour Images
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Upload images to showcase your tour.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ImageUploadInput
+                value={currentImages}
+                onChange={handleImagesChange}
+                label="Upload Tour Images"
+                multiple={true}
+                maxFiles={10}
+              />
+            </CardContent>
+          </Card>
 
-          <div className="flex justify-end">
+          <div className="flex justify-end space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting
-                ? "Submitting..."
+                ? "Saving..."
                 : initialData
                 ? "Update Tour"
                 : "Create Tour"}

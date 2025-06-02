@@ -16,6 +16,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { StripePaymentFormV2 } from "./StripePaymentFormv2";
 import { getAssignedToursByTourId } from "@/app/_features/products/api/getAssignedToursByTourId";
 import { toast } from "sonner";
+import { formatTime } from "@/app/_utils/formatTime";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
 
@@ -24,16 +25,26 @@ const CheckForm = ({
   selectedDate,
   selectedTime,
   numberOfPeople,
+  setNumberOfPeople,
   customerInformation,
   paymentInformation,
   setPaymentInformation,
   setCustomerInformation,
   handleCompleteBooking,
+  selectedProducts,
+  setSelectedProducts,
+  productQuantities,
+  setProductQuantities,
+  availableProducts,
+  setAvailableProducts,
+  isAdmin = false,
+  isLoading = false,
 }: {
   selectedTour: Tour;
   selectedDate: DateValue;
   selectedTime: string;
   numberOfPeople: number;
+  setNumberOfPeople: (number: number) => void;
   customerInformation: CustomerInformation;
   paymentInformation: PaymentInformation;
   setPaymentInformation: (paymentInformation: PaymentInformation) => void;
@@ -42,16 +53,28 @@ const CheckForm = ({
       | CustomerInformation
       | ((prev: CustomerInformation) => CustomerInformation)
   ) => void;
-  handleCompleteBooking: (paymentId: string) => void;
+  handleCompleteBooking: (paymentId: string | null) => void;
+  selectedProducts: string[];
+  setSelectedProducts: (
+    products: string[] | ((prev: string[]) => string[])
+  ) => void;
+  productQuantities: Record<string, number>;
+  setProductQuantities: (
+    quantities:
+      | Record<string, number>
+      | ((prev: Record<string, number>) => Record<string, number>)
+  ) => void;
+  availableProducts: Product[];
+  setAvailableProducts: (
+    products: Product[] | ((prev: Product[]) => Product[])
+  ) => void;
+  isAdmin?: boolean;
+  isLoading?: boolean;
 }) => {
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [productQuantities, setProductQuantities] = useState<
-    Record<string, number>
-  >({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [clientSecret, setClientSecret] = useState("");
-  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [shouldFetchPaymentIntent, setShouldFetchPaymentIntent] =
+    useState(false);
+  const [clientSecret, setClientSecret] = useState<string>("");
 
   // Fetch available products for the selected tour
   useEffect(() => {
@@ -81,6 +104,8 @@ const CheckForm = ({
       ...paymentInformation,
       total_price: total,
     });
+    // Set flag to fetch new payment intent when total changes
+    setShouldFetchPaymentIntent(true);
   }, [selectedProducts, selectedTour.rate]);
 
   const tourImages = JSON.parse(selectedTour.images) as {
@@ -139,16 +164,18 @@ const CheckForm = ({
         total += product.price * quantity;
       }
     });
-    return total;
+    // Round to 2 decimal places to avoid floating point issues
+    return Math.round(total * 100) / 100;
   };
 
   const formattedDate = format(
     new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day),
     "MMMM dd, yyyy"
   );
-  const formattedTime = new Date(
-    `1970-01-01T${selectedTime}Z`
-  ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  // const formattedTime = new Date(
+  //   `1970-01-01T${selectedTime}Z`
+  // ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   // const handleSubmit = async (e: React.MouseEvent) => {
   //   e.preventDefault();
@@ -163,24 +190,55 @@ const CheckForm = ({
   //   }
   // };
 
-  useEffect(() => {
-    const fetchClientSecret = async () => {
+  const fetchClientSecret = async () => {
+    if (isAdmin) return;
+
+    try {
+      const total = calculateTotal();
+      // Prepare product details
+      const productDetails = selectedProducts.map((productId) => {
+        const product = availableProducts.find((p) => p.id === productId);
+        return {
+          id: productId,
+          name: product?.name,
+          price: product?.price,
+          quantity: productQuantities[productId] || 1,
+        };
+      });
+
       const response = await fetch("/api/create-payment-intent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: calculateTotal() * 100,
+          amount: Math.round(total * 100), // Convert to cents and ensure integer
           email: customerInformation.email,
+          name: `${customerInformation.first_name} ${customerInformation.last_name}`,
+          phone: customerInformation.phone_number,
+          tourDetails: {
+            title: selectedTour.title,
+            rate: selectedTour.rate,
+            numberOfPeople: numberOfPeople,
+          },
+          productDetails: productDetails,
         }),
       });
       const data = await response.json();
       setClientSecret(data.clientSecret);
-    };
+      setShouldFetchPaymentIntent(false);
+    } catch (error) {
+      console.error("Error creating payment intent:", error);
+      toast.error("Failed to create payment intent");
+    }
+  };
 
-    fetchClientSecret();
-  }, []);
+  // Only fetch payment intent when shouldFetchPaymentIntent is true
+  useEffect(() => {
+    if (shouldFetchPaymentIntent && !isAdmin) {
+      fetchClientSecret();
+    }
+  }, [shouldFetchPaymentIntent]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-12 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
@@ -464,7 +522,7 @@ const CheckForm = ({
                         Time
                       </p>
                       <p className="text-sm sm:text-base font-semibold text-strong">
-                        {formattedTime}
+                        {formatTime(selectedTime)}
                       </p>
                     </div>
                   </div>
@@ -472,7 +530,32 @@ const CheckForm = ({
 
                 <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
                   <span>Group Size</span>
-                  <span className="font-medium">{numberOfPeople} people</span>
+                  <div className="flex items-center space-x-3 bg-background rounded-lg px-3 py-1.5 border">
+                    <button
+                      onClick={() => {
+                        if (numberOfPeople > 1) {
+                          setNumberOfPeople(numberOfPeople - 1);
+                        }
+                      }}
+                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-lg font-medium"
+                      disabled={numberOfPeople <= 1}
+                      aria-label="Decrease group size"
+                    >
+                      -
+                    </button>
+                    <span className="font-medium w-8 text-center text-base">
+                      {numberOfPeople}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setNumberOfPeople(numberOfPeople + 1);
+                      }}
+                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors text-lg font-medium"
+                      aria-label="Increase group size"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -541,17 +624,62 @@ const CheckForm = ({
           {/* Payment Method Section */}
           <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
-              Card Payment
+              {isAdmin ? "Complete Booking" : "Card Payment"}
             </h2>
             <div className="space-y-4 sm:space-y-6">
-              {clientSecret && (
-                <Elements stripe={stripePromise} options={{ clientSecret }}>
-                  <StripePaymentFormV2
-                    onPaymentSuccess={async (paymentId) => {
-                      await handleCompleteBooking(paymentId);
-                    }}
-                  />
-                </Elements>
+              {isAdmin ? (
+                <div className="space-y-4">
+                  <div className="bg-muted/50 p-4 rounded-lg">
+                    <h3 className="font-medium text-strong mb-2">
+                      Payment Link Information
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      When you complete this booking, a payment link will be
+                      generated and sent to the customer's email. The booking
+                      will be marked as pending until the customer completes the
+                      payment.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleCompleteBooking(null)}
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium flex items-center justify-center"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>{" "}
+                        Creating...
+                      </span>
+                    ) : (
+                      "Create Booking with Payment Link"
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {!clientSecret && !isLoading && (
+                    <button
+                      onClick={() => setShouldFetchPaymentIntent(true)}
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium"
+                    >
+                      Initialize Payment
+                    </button>
+                  )}
+                  {isLoading && (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  )}
+                  {clientSecret && !isLoading && (
+                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                      <StripePaymentFormV2
+                        onPaymentSuccess={async (paymentId) => {
+                          await handleCompleteBooking(paymentId);
+                        }}
+                      />
+                    </Elements>
+                  )}
+                </>
               )}
             </div>
           </div>

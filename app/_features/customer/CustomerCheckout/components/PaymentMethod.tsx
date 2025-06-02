@@ -1,9 +1,6 @@
 import React from "react";
 
-const paymentMethods = [
-  { id: "credit-card", title: "Credit card" },
-  { id: "on-arrived", title: "On arrival" },
-];
+const paymentMethods = [{ id: "credit-card", title: "Credit card" }];
 
 const PaymentMethod = () => {
   return (
@@ -13,14 +10,15 @@ const PaymentMethod = () => {
       <fieldset className="mt-4">
         <legend className="sr-only">Payment type</legend>
         <div className="space-y-4 sm:flex sm:items-center sm:space-y-0 sm:space-x-10">
-          {paymentMethods.map((paymentMethod, paymentMethodIdx) => (
+          {paymentMethods.map((paymentMethod) => (
             <div key={paymentMethod.id} className="flex items-center">
               <input
-                defaultChecked={paymentMethodIdx === 0}
+                defaultChecked={true}
                 id={paymentMethod.id}
                 name="payment-type"
                 type="radio"
                 className="relative size-4 appearance-none rounded-full border border-gray-300 bg-white before:absolute before:inset-1 before:rounded-full before:bg-white not-checked:before:hidden checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:before:bg-gray-400 forced-colors:appearance-auto forced-colors:before:hidden"
+                disabled
               />
               <label
                 htmlFor={paymentMethod.id}
