@@ -51,7 +51,7 @@ export default async function BookingSuccessPage(props: PageProps) {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Info title="Tour" value={booking.tour_title} />
-                <Info title="Booking ID" value={booking.booking_id} />
+                <Info title="Booking ID" value={booking.reference_number} />
                 <Info
                   title="Date"
                   value={format(new Date(booking.booking_date), "MMMM d, yyyy")}
@@ -80,9 +80,6 @@ export default async function BookingSuccessPage(props: PageProps) {
           <div className="flex justify-center space-x-4">
             <Button asChild variant="outline">
               <Link href="/">Return to Home</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/bookings">View All Bookings</Link>
             </Button>
           </div>
         </div>
