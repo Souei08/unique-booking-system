@@ -73,7 +73,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
     },
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: "Date Created",
       cell: ({ row }) => {
         return format(new Date(row.getValue("created_at")), "MMM dd, yyyy");
       },

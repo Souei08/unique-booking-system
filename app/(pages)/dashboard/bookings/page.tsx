@@ -1,12 +1,12 @@
 import { BookingTableV2 } from "@/app/_features/booking/components/BookingTableV2";
 import { getAllBookings } from "@/app/_features/booking/api/getAllBookings";
 import ContentLayout from "@/app/(pages)/dashboard/ContentLayout";
+import { Suspense } from "react";
 
 // Add revalidation timing if needed
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 0; // Disable static revalidation to allow dynamic updates
 
-export default async function BookingsPage() {
-  // This runs on the server
+async function BookingsList() {
   const bookings = await getAllBookings();
 
   const updatedBookings = bookings.map((booking) => ({
@@ -15,7 +15,7 @@ export default async function BookingsPage() {
     tour_id: booking.tour_id,
     tour_title: booking.tour_title,
     slots: booking.slots,
-    total_price: booking.total_price,
+    amount_paid: booking.amount_paid,
     created_at: booking.booking_created_at,
     booking_date: booking.booking_date,
     selected_time: booking.selected_time,
@@ -24,6 +24,10 @@ export default async function BookingsPage() {
     reference_number: booking.reference_number,
   }));
 
+  return <BookingTableV2 bookings={updatedBookings as any} />;
+}
+
+export default async function BookingsPage() {
   return (
     <ContentLayout
       title="List of Bookings"
@@ -33,7 +37,9 @@ export default async function BookingsPage() {
       modalDescription="Create a direct booking for a customer."
       modalRoute="booking"
     >
-      <BookingTableV2 bookings={updatedBookings as any} />
+      <Suspense fallback={<div>Loading bookings...</div>}>
+        <BookingsList />
+      </Suspense>
     </ContentLayout>
   );
 }

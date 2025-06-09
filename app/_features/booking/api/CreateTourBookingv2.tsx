@@ -17,6 +17,10 @@ interface BookingData {
     quantity: number;
     unit_price: number;
   }>;
+  slot_details: Array<{
+    type: string;
+    price: number;
+  }>;
 }
 
 export async function createTourBookingv2(data: BookingData): Promise<{
@@ -39,6 +43,7 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     payment_method,
     payment_id,
     products,
+    slot_details,
   } = data;
 
   // ✅ Input Validation
@@ -52,7 +57,8 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     !selected_time ||
     !slots ||
     !total_price ||
-    !payment_method
+    !payment_method ||
+    !slot_details
     // !payment_id
   ) {
     throw new Error("Missing required fields.");
@@ -75,6 +81,7 @@ export async function createTourBookingv2(data: BookingData): Promise<{
         _payment_method: payment_method,
         _payment_id: payment_id,
         _products: products,
+        _slot_details: slot_details,
       }
     );
 
@@ -92,7 +99,6 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     return {
       success: true,
       booking_id: booking.booking_id,
-      //   manage_link: `https://yourdomain.com/manage-booking/${booking.manage_token}`,
     };
   } catch (err: any) {
     console.error("Unhandled Error:", err);

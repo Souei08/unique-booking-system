@@ -71,15 +71,12 @@ const SelectTours = ({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-              <div
-                className="absolute bottom-0 le
-              t-0 right-0 p-4 sm:p-6 space-y-3 sm:space-y-4"
-              >
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 space-y-3 sm:space-y-4 text-left">
                 <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight text-left">
                     {tour.title}
                   </h3>
-                  <p className="text-white/90 text-xs sm:text-sm leading-relaxed line-clamp-2">
+                  <p className="text-white/90 text-xs sm:text-sm leading-relaxed line-clamp-2 text-left">
                     {tour.description}
                   </p>
                 </div>

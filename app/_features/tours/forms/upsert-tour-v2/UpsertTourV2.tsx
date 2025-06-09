@@ -69,6 +69,29 @@ const tourFormSchema = z.object({
       })
     )
     .min(1, "At least one FAQ is required"),
+  custom_slot_types: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Name is required"),
+        price: z.number().min(0, "Price must be a positive number"),
+        description: z.string().optional(),
+      })
+    )
+    .optional()
+    .default([]),
+  custom_slot_fields: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Field name is required"),
+        type: z.enum(["text", "number", "select", "checkbox"]),
+        required: z.boolean(),
+        options: z.array(z.string()).optional(),
+        label: z.string().min(1, "Label is required"),
+        placeholder: z.string().optional(),
+      })
+    )
+    .optional()
+    .default([]),
   // images: z.string().min(1, "At least one image is required"),
 });
 
@@ -125,6 +148,12 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
       faq: initialData?.faq?.length
         ? initialData.faq.map((faq) => JSON.parse(faq))
         : [{ question: "", answer: "" }],
+      custom_slot_types: initialData?.custom_slot_types
+        ? JSON.parse(initialData.custom_slot_types)
+        : [],
+      custom_slot_fields: initialData?.custom_slot_fields
+        ? JSON.parse(initialData.custom_slot_fields)
+        : [],
       // images: initialData?.images || "[]",
     },
   });
@@ -148,6 +177,12 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
         faq: formData.faq
           .filter((f) => f.question && f.answer)
           .map((f) => JSON.stringify(f)),
+        custom_slot_types: formData.custom_slot_types
+          ? JSON.stringify(formData.custom_slot_types)
+          : null,
+        custom_slot_fields: formData.custom_slot_fields
+          ? JSON.stringify(formData.custom_slot_fields)
+          : null,
       };
 
       // Step 1: Create or update tour
@@ -256,12 +291,15 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
   //   }
   // };
 
-  const addItem = (field: keyof TourFormValues) => {
+  const addItem = (field: keyof TourFormValues, value?: any) => {
     const currentValue = form.getValues(field) as any[];
     if (field === "faq") {
-      form.setValue(field, [...currentValue, { question: "", answer: "" }]);
+      form.setValue(field, [
+        ...currentValue,
+        value || { question: "", answer: "" },
+      ]);
     } else {
-      form.setValue(field, [...currentValue, ""]);
+      form.setValue(field, [...currentValue, value || ""]);
     }
   };
 
@@ -474,89 +512,462 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
                     </FormItem>
                   )}
                 />
+              </div>
+            </CardContent>
+          </Card>
 
+          {/* Custom Slot Configuration */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Slot Configuration
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Set up your tour's capacity and pricing structure. You can
+                either use a simple single-price model or create different
+                pricing tiers.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-8">
+              {/* Basic Slot Settings */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">Basic Settings</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="slots"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel
+                          htmlFor="slots"
+                          className="flex items-center gap-2"
+                        >
+                          Available Slots
+                          <span className="text-sm text-muted-foreground">
+                            (total capacity)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              id="slots"
+                              type="number"
+                              min="1"
+                              placeholder="e.g., 20"
+                              className="pr-12"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
+                            />
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                              <span className="text-muted-foreground">
+                                slots
+                              </span>
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          The total number of slots available for booking. This
+                          is your tour's maximum capacity.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="rate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel
+                          htmlFor="rate"
+                          className="flex items-center gap-2"
+                        >
+                          Base Rate
+                          <span className="text-sm text-muted-foreground">
+                            (per person)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input
+                              id="rate"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="e.g., 99.99"
+                              className="pl-8 pr-12"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(Number(e.target.value))
+                              }
+                            />
+                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                              <span className="text-muted-foreground">$</span>
+                            </div>
+                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                              <span className="text-muted-foreground">USD</span>
+                            </div>
+                          </div>
+                        </FormControl>
+                        <FormDescription>
+                          The default price per person. If you don't need
+                          different pricing tiers, you can leave the custom slot
+                          types empty.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              <Separator className="my-6" />
+
+              {/* Custom Slot Types */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">
+                    Pricing Tiers (Optional)
+                  </h3>
+                </div>
                 <FormField
                   control={form.control}
-                  name="slots"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel
-                        htmlFor="slots"
-                        className="flex items-center gap-2"
-                      >
-                        Available Slots
-                        <span className="text-sm text-muted-foreground">
-                          (total capacity)
-                        </span>
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            id="slots"
-                            type="number"
-                            min="1"
-                            placeholder="e.g., 20"
-                            className="pr-12"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
+                  name="custom_slot_types"
+                  render={({ field }) => {
+                    const value = Array.isArray(field.value) ? field.value : [];
+                    return (
+                      <FormItem>
+                        <FormDescription className="mb-4">
+                          Create different pricing tiers for your tour. For
+                          example: Adult ($100), Child ($50), Senior ($75). If
+                          you only need a single price, you can skip this
+                          section.
+                        </FormDescription>
+                        <div className="space-y-4">
+                          {value.map((type, index) => (
+                            <div
+                              key={index}
+                              className="space-y-2 border rounded-lg p-4 bg-muted/50"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1 space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <FormLabel>Name</FormLabel>
+                                      <Input
+                                        value={type.name || ""}
+                                        onChange={(e) =>
+                                          updateItem(
+                                            "custom_slot_types",
+                                            index,
+                                            {
+                                              ...type,
+                                              name: e.target.value,
+                                            }
+                                          )
+                                        }
+                                        placeholder="e.g., Adult, Child, Senior"
+                                      />
+                                    </div>
+                                    <div>
+                                      <FormLabel>Price</FormLabel>
+                                      <div className="relative">
+                                        <Input
+                                          type="number"
+                                          min="0"
+                                          step="0.01"
+                                          value={type.price || 0}
+                                          onChange={(e) =>
+                                            updateItem(
+                                              "custom_slot_types",
+                                              index,
+                                              {
+                                                ...type,
+                                                price: Number(e.target.value),
+                                              }
+                                            )
+                                          }
+                                          className="pl-8"
+                                        />
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                          <span className="text-muted-foreground">
+                                            $
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <FormLabel>
+                                      Description (Optional)
+                                    </FormLabel>
+                                    <Textarea
+                                      value={type.description || ""}
+                                      onChange={(e) =>
+                                        updateItem("custom_slot_types", index, {
+                                          ...type,
+                                          description: e.target.value,
+                                        })
+                                      }
+                                      placeholder="Describe this pricing tier (e.g., 'Children under 12 years old')"
+                                    />
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    removeItem("custom_slot_types", index)
+                                  }
+                                  className="ml-2"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() =>
+                              addItem("custom_slot_types", {
+                                name: "",
+                                price: 0,
+                                description: "",
+                              })
                             }
-                          />
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <span className="text-muted-foreground">slots</span>
-                          </div>
+                            className="w-full"
+                          >
+                            Add Pricing Tier
+                          </Button>
                         </div>
-                      </FormControl>
-                      <FormDescription>
-                        How many total slots are available for booking?
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
+              </div>
 
+              <Separator className="my-6" />
+
+              {/* Custom Slot Fields */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Info className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">
+                    Additional Information Fields (Optional)
+                  </h3>
+                </div>
                 <FormField
                   control={form.control}
-                  name="rate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel
-                        htmlFor="rate"
-                        className="flex items-center gap-2"
-                      >
-                        Tour Rate
-                        <span className="text-sm text-muted-foreground">
-                          (per person)
-                        </span>
-                      </FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            id="rate"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="e.g., 99.99"
-                            className="pl-8 pr-12"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
+                  name="custom_slot_fields"
+                  render={({ field }) => {
+                    const value = Array.isArray(field.value) ? field.value : [];
+                    return (
+                      <FormItem>
+                        <FormDescription className="mb-4">
+                          Add custom fields to collect additional information
+                          from your customers. For example: dietary
+                          restrictions, special requirements, or equipment
+                          preferences. This section is optional.
+                        </FormDescription>
+                        <div className="space-y-4">
+                          {value.map((field, index) => (
+                            <div
+                              key={index}
+                              className="space-y-2 border rounded-lg p-4 bg-muted/50"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1 space-y-4">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <FormLabel>Field Name</FormLabel>
+                                      <Input
+                                        value={field.name || ""}
+                                        onChange={(e) =>
+                                          updateItem(
+                                            "custom_slot_fields",
+                                            index,
+                                            {
+                                              ...field,
+                                              name: e.target.value,
+                                            }
+                                          )
+                                        }
+                                        placeholder="e.g., dietary_restrictions"
+                                      />
+                                      <FormDescription className="mt-1">
+                                        Used internally (no spaces, lowercase)
+                                      </FormDescription>
+                                    </div>
+                                    <div>
+                                      <FormLabel>Display Label</FormLabel>
+                                      <Input
+                                        value={field.label || ""}
+                                        onChange={(e) =>
+                                          updateItem(
+                                            "custom_slot_fields",
+                                            index,
+                                            {
+                                              ...field,
+                                              label: e.target.value,
+                                            }
+                                          )
+                                        }
+                                        placeholder="e.g., Dietary Restrictions"
+                                      />
+                                      <FormDescription className="mt-1">
+                                        Shown to users
+                                      </FormDescription>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                      <FormLabel>Field Type</FormLabel>
+                                      <Select
+                                        value={field.type || "text"}
+                                        onValueChange={(value) =>
+                                          updateItem(
+                                            "custom_slot_fields",
+                                            index,
+                                            {
+                                              ...field,
+                                              type: value,
+                                            }
+                                          )
+                                        }
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select field type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="text">
+                                            Text
+                                          </SelectItem>
+                                          <SelectItem value="number">
+                                            Number
+                                          </SelectItem>
+                                          <SelectItem value="select">
+                                            Select
+                                          </SelectItem>
+                                          <SelectItem value="checkbox">
+                                            Checkbox
+                                          </SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <FormLabel>
+                                        Placeholder (Optional)
+                                      </FormLabel>
+                                      <Input
+                                        value={field.placeholder || ""}
+                                        onChange={(e) =>
+                                          updateItem(
+                                            "custom_slot_fields",
+                                            index,
+                                            {
+                                              ...field,
+                                              placeholder: e.target.value,
+                                            }
+                                          )
+                                        }
+                                        placeholder="Enter placeholder text"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {field.type === "select" && (
+                                    <div>
+                                      <FormLabel>
+                                        Options (one per line)
+                                      </FormLabel>
+                                      <Textarea
+                                        value={field.options?.join("\n") || ""}
+                                        onChange={(e) =>
+                                          updateItem(
+                                            "custom_slot_fields",
+                                            index,
+                                            {
+                                              ...field,
+                                              options: e.target.value
+                                                .split("\n")
+                                                .filter(Boolean),
+                                            }
+                                          )
+                                        }
+                                        placeholder="Option 1&#10;Option 2&#10;Option 3"
+                                        className="min-h-[100px]"
+                                      />
+                                      <FormDescription className="mt-1">
+                                        Enter each option on a new line
+                                      </FormDescription>
+                                    </div>
+                                  )}
+
+                                  <div className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={field.required || false}
+                                      onChange={(e) =>
+                                        updateItem(
+                                          "custom_slot_fields",
+                                          index,
+                                          {
+                                            ...field,
+                                            required: e.target.checked,
+                                          }
+                                        )
+                                      }
+                                      className="h-4 w-4"
+                                    />
+                                    <FormLabel>Required field</FormLabel>
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    removeItem("custom_slot_fields", index)
+                                  }
+                                  className="ml-2"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() =>
+                              addItem("custom_slot_fields", {
+                                name: "",
+                                type: "text",
+                                required: false,
+                                label: "",
+                                placeholder: "",
+                              })
                             }
-                          />
-                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <span className="text-muted-foreground">$</span>
-                          </div>
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                            <span className="text-muted-foreground">USD</span>
-                          </div>
+                            className="w-full"
+                          >
+                            Add Information Field
+                          </Button>
                         </div>
-                      </FormControl>
-                      <FormDescription>
-                        What's the price per person for this tour?
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
             </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { createClient } from "@/supabase/client";
@@ -23,6 +23,7 @@ import { Product } from "@/app/_features/products/types/product-types";
 import {
   CustomerInformation,
   PaymentInformation,
+  SlotDetail,
 } from "@/app/_features/booking/types/booking-types";
 
 // Api
@@ -31,6 +32,7 @@ import { updateBookingPaymentStatus } from "../../api/updateBookingPaymentStatus
 
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
+import { CustomSlotType } from "../CreateBookingv2/booking-steps/SlotDetails";
 
 interface QuickBookingProps {
   onClose: () => void;
@@ -51,6 +53,20 @@ const QuickBooking = ({
   const [isLoading, setIsLoading] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
+  const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([
+    {
+      type:
+        selectedTour.custom_slot_types &&
+        selectedTour.custom_slot_types !== "[]"
+          ? JSON.parse(selectedTour.custom_slot_types)[0].name
+          : "",
+      price:
+        selectedTour.custom_slot_types &&
+        selectedTour.custom_slot_types !== "[]"
+          ? JSON.parse(selectedTour.custom_slot_types)[0].price
+          : 0,
+    },
+  ]);
 
   // Customer and Payment Information
   const [customerInformation, setCustomerInformation] =
@@ -75,6 +91,64 @@ const QuickBooking = ({
   >({});
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
 
+  const customSlotTypes =
+    selectedTour.custom_slot_types && selectedTour.custom_slot_types !== "[]"
+      ? JSON.parse(selectedTour.custom_slot_types)
+      : null;
+
+  const customSlotFields =
+    selectedTour.custom_slot_fields && selectedTour.custom_slot_fields !== "[]"
+      ? JSON.parse(selectedTour.custom_slot_fields)
+      : [];
+
+  // Update slot details when selectedTour changes
+  useEffect(() => {
+    if (
+      selectedTour?.custom_slot_types &&
+      selectedTour.custom_slot_types !== "[]"
+    ) {
+      const customTypes = JSON.parse(selectedTour.custom_slot_types);
+      if (customTypes.length > 0) {
+        setSlotDetails([
+          {
+            type: customTypes[0].name,
+            price: customTypes[0].price,
+          },
+        ]);
+      }
+    }
+  }, [selectedTour]);
+
+  const calculateTotal = () => {
+    let total = 0;
+
+    // Calculate tour price based on slot types if they exist
+    if (customSlotTypes && customSlotTypes.length > 0) {
+      // Sum up prices from slot details
+      total = slotDetails.reduce((sum, slot) => {
+        const slotType = customSlotTypes.find(
+          (type: CustomSlotType) => type.name === slot.type
+        );
+        return sum + (slotType?.price || 0);
+      }, 0);
+    } else {
+      // Use regular tour rate if no custom slot types
+      total = selectedTour.rate * numberOfPeople;
+    }
+
+    // Add product prices
+    selectedProducts.forEach((productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      if (product) {
+        const quantity = productQuantities[productId] || 1;
+        total += product.price * quantity;
+      }
+    });
+
+    // Round to 2 decimal places to avoid floating point issues
+    return Math.round(total * 100) / 100;
+  };
+
   const handleCompleteBooking = async (paymentId: string | null) => {
     if (!selectedTour?.id || !selectedDate) {
       toast.error("Missing Information", {
@@ -84,23 +158,6 @@ const QuickBooking = ({
     }
 
     setIsLoading(true);
-
-    // Calculate total price
-    const calculateTotal = () => {
-      let total = selectedTour.rate * numberOfPeople;
-
-      selectedProducts.forEach((productId) => {
-        const product = availableProducts.find((p) => p.id === productId);
-        if (product) {
-          const quantity = productQuantities[productId] || 1;
-          total += product.price * quantity;
-        }
-      });
-      // Round to 2 decimal places to avoid floating point issues
-      return Math.round(total * 100) / 100;
-    };
-
-    const total = calculateTotal();
 
     // Format products data for the API
     const productsData = selectedProducts.map((productId) => {
@@ -125,10 +182,11 @@ const QuickBooking = ({
         booking_date: formatToDateString(selectedDate) || "",
         selected_time: selectedTime,
         slots: numberOfPeople,
-        total_price: total,
+        total_price: calculateTotal(),
         payment_method: paymentInformation.payment_method,
         payment_id: paymentId || null,
         products: productsData,
+        slot_details: slotDetails,
       });
 
       if (!bookingResponse.success) {
@@ -151,13 +209,13 @@ const QuickBooking = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: Math.round(total * 100), // Convert to cents and ensure integer
+          amount: Math.round(calculateTotal() * 100), // Convert to cents and ensure integer
           email: customerInformation.email,
           name: `${customerInformation.first_name} ${customerInformation.last_name}`,
           phone: customerInformation.phone_number,
           booking_id: bookingId,
           slots: numberOfPeople,
-          booking_price: selectedTour.rate * 100, // Convert to cents and ensure integer
+          booking_price: calculateTotal() * 100, // Convert to cents and ensure integer
           tourProducts: productsData.map((product) => ({
             name:
               availableProducts.find((p) => p.id === product.product_id)
@@ -166,6 +224,9 @@ const QuickBooking = ({
             unit_price: Math.round(product.unit_price * 100), // Convert to cents and ensure integer
           })),
           bookingTitle: selectedTour.title,
+          slotDetails: slotDetails,
+          customSlotTypes: customSlotTypes,
+          customSlotFields: customSlotFields,
         }),
       });
 
@@ -261,6 +322,12 @@ const QuickBooking = ({
               isAdmin={true}
               isLoading={isLoading}
               setNumberOfPeople={setNumberOfPeople}
+              calculateTotal={calculateTotal}
+              setSlotDetails={setSlotDetails}
+              slotDetails={slotDetails}
+              customSlotTypes={customSlotTypes}
+              customSlotFields={customSlotFields}
+              handleNext={() => {}}
             />
           </div>
         </div>

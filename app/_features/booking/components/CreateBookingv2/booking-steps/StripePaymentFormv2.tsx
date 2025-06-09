@@ -6,8 +6,13 @@ import { toast } from "sonner";
 
 export const StripePaymentFormV2 = ({
   onPaymentSuccess,
+  handleCompleteBooking,
 }: {
-  onPaymentSuccess: (paymentId: string) => void;
+  onPaymentSuccess: (paymentId: string, bookingId: string) => void;
+  handleCompleteBooking: (paymentId: string | null) => Promise<{
+    success: boolean;
+    bookingId: string | null;
+  }>;
 }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -27,7 +32,7 @@ export const StripePaymentFormV2 = ({
     }
 
     try {
-      // First, validate the form
+      // 1. Validate form fields (card inputs etc)
       const { error: submitError } = await elements.submit();
       if (submitError) {
         setErrorMessage(submitError.message);
@@ -38,20 +43,32 @@ export const StripePaymentFormV2 = ({
         return;
       }
 
-      // Then, process the payment
+      // 2. Create booking and update metadata before confirming payment
+
+      const bookingResult = await handleCompleteBooking(null);
+      if (!bookingResult.success || !bookingResult.bookingId) {
+        toast.error("Booking Failed", {
+          description: "We couldn't finalize your booking before payment.",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Confirm the payment AFTER booking is fully processed and metadata updated
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         redirect: "if_required",
       });
 
       if (error) {
+        console.log("Payment Error", error);
         setErrorMessage(error.message);
         toast.error("Payment Failed", {
           description: error.message,
         });
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         // Payment successful, update booking status
-        onPaymentSuccess(paymentIntent.id);
+        onPaymentSuccess(paymentIntent.id, bookingResult.bookingId);
         toast.success("Payment Successful", {
           description: "Your booking has been confirmed.",
         });
@@ -63,6 +80,7 @@ export const StripePaymentFormV2 = ({
         });
       }
     } catch (error) {
+      console.log("Payment Error", error);
       setErrorMessage("An unexpected error occurred. Please try again.");
       toast.error("Payment Error", {
         description: "An unexpected error occurred. Please try again.",
@@ -74,41 +92,24 @@ export const StripePaymentFormV2 = ({
 
   return (
     <form onSubmit={handleSubmit}>
-      <PaymentElement />
+      <div className="mb-6">
+        <PaymentElement />
+      </div>
       {errorMessage && (
         <p className="text-red-500 mt-2 text-sm">{errorMessage}</p>
       )}
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full px-6 mt-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand/90 focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:outline-none disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300"
       >
         {isLoading ? (
-          <div className="flex items-center justify-center">
-            <svg
-              className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Processing Payment...
+          <div className="flex items-center justify-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            Processing...
           </div>
         ) : (
-          "Complete Payment"
+          "Pay Now"
         )}
       </button>
     </form>

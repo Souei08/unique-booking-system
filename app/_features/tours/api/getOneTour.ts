@@ -1,4 +1,6 @@
-import { createClient } from "@/supabase/server";
+"use client";
+
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { Tour } from "@/app/_features/tours/tour-types";
 
 /**
@@ -6,23 +8,23 @@ import { Tour } from "@/app/_features/tours/tour-types";
  * @param id The ID of the tour to get
  * @returns The tour
  */
-export async function getTourById(id: string): Promise<Tour | null> {
+export const getTourById = async (tourId: string): Promise<Tour | null> => {
   try {
-    const supabase = await createClient();
+    const supabase = createClientComponentClient();
+
     const { data, error } = await supabase
       .from("tours")
       .select("*")
-      .eq("id", id)
+      .eq("id", tourId)
       .single();
 
     if (error) {
-      console.error("Error fetching tour:", error);
-      return null;
+      throw error;
     }
 
-    return data as unknown as Tour;
+    return data;
   } catch (error) {
     console.error("Error fetching tour:", error);
     return null;
   }
-}
+};

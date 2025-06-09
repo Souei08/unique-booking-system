@@ -19,10 +19,10 @@ export const UserMenu = () => {
           transition
           className="absolute right-0 z-10 mt-2 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white ring-1 shadow-lg ring-black/5 transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
         >
-          <UserMenuSection
+          {/* <UserMenuSection
             items={["View profile", "Settings", "Notifications"]}
           />
-          <UserMenuSection items={["Get desktop app", "Support"]} />
+          <UserMenuSection items={["Get desktop app", "Support"]} /> */}
           <UserMenuSection items={["Logout"]} />
         </MenuItems>
       </Menu>

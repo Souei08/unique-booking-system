@@ -3,7 +3,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Tour } from "@/app/_features/tours/tour-types";
 import { format } from "date-fns";
-import { Eye, MoreHorizontal, Pencil, Trash2, Calendar } from "lucide-react";
+import {
+  Eye,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Calendar,
+  Link,
+  LinkIcon,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,7 +91,7 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
 
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: "Date Created",
       cell: ({ row }) => {
         return format(new Date(row.getValue("created_at")), "MMM dd, yyyy");
       },
@@ -112,6 +120,15 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
               >
                 <Eye className="mr-2 h-4 w-4" />
                 View Tour
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  redirect(`/widget?booking_id=${tour.id}`);
+                }}
+                className="cursor-pointer"
+              >
+                <LinkIcon className="mr-2 h-4 w-4" />
+                View Tour Booking Widget
               </DropdownMenuItem>
 
               <DropdownMenuItem
