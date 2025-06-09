@@ -23,6 +23,7 @@ import UpsertTourV2 from "../../_features/tours/forms/upsert-tour-v2/UpsertTourV
 import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/CreateBookingv2";
 import { UpsertUser } from "@/app/_features/users/form/UpsertUser";
 import CreateProduct from "@/app/_features/products/components/CreateProduct";
+import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickBooking";
 
 interface ContentLayoutProps {
   title: string;
@@ -119,8 +120,11 @@ const ContentLayout = ({
           )}
 
           {modalRoute === "booking" && (
-            <CreateBookingv2
+            <QuickBooking
               onClose={() => handleDialogClose(setIsTourDialogOpen)}
+              selectedTour={null as any}
+              selectedDate={null as any}
+              selectedTime={null as any}
             />
           )}
         </DialogContent>

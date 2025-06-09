@@ -7,6 +7,16 @@ import { createClient } from "@/supabase/client";
 
 // Components
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 // Icons
 import { ChevronLeft } from "lucide-react";
@@ -14,9 +24,11 @@ import { ChevronLeft } from "lucide-react";
 // Booking Steps
 import CheckForm from "../CreateBookingv2/booking-steps/CheckForm";
 import BookingSuccess from "../CreateBookingv2/booking-steps/BookingSuccess";
+import TourTimeAndDate from "../CreateBookingv2/booking-steps/TourTimeAndDate";
+import SelectTours from "../CreateBookingv2/booking-steps/SelectTours";
 
 // Types
-import { DateValue } from "@internationalized/date";
+import { DateValue, parseDate } from "@internationalized/date";
 import { Tour } from "@/app/_features/tours/tour-types";
 import { Product } from "@/app/_features/products/types/product-types";
 
@@ -36,34 +48,55 @@ import { CustomSlotType } from "../CreateBookingv2/booking-steps/SlotDetails";
 
 interface QuickBookingProps {
   onClose: () => void;
-  selectedTour: Tour;
-  selectedDate: DateValue;
-  selectedTime: string;
+  selectedTour: Tour | null;
+  selectedDate: DateValue | null;
+  selectedTime: string | null;
   onSuccess?: () => void;
 }
 
 const QuickBooking = ({
   onClose,
-  selectedTour,
-  selectedDate,
-  selectedTime,
+  selectedTour: initialSelectedTour,
+  selectedDate: initialSelectedDate,
+  selectedTime: initialSelectedTime,
   onSuccess,
 }: QuickBookingProps) => {
+  // Determine initial step based on provided information
+  const getInitialStep = () => {
+    if (initialSelectedTour?.id && initialSelectedDate && initialSelectedTime) {
+      return 3; // Skip to last step if all info is provided
+    } else if (initialSelectedTour?.id) {
+      return 2; // Skip to date/time selection if only tour is provided
+    }
+    return 1; // Start with tour selection if nothing is provided
+  };
+
+  const [currentStep, setCurrentStep] = useState(getInitialStep());
   const [isBookingComplete, setIsBookingComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<DateValue>(
+    initialSelectedDate || parseDate(new Date().toISOString().split("T")[0])
+  );
+  const [selectedTime, setSelectedTime] = useState<string>(
+    initialSelectedTime || ""
+  );
+  const [selectedTour, setSelectedTour] = useState<Tour | null>(
+    initialSelectedTour
+  );
   const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([
     {
       type:
-        selectedTour.custom_slot_types &&
-        selectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(selectedTour.custom_slot_types)[0].name
+        initialSelectedTour?.custom_slot_types &&
+        initialSelectedTour.custom_slot_types !== "[]"
+          ? JSON.parse(initialSelectedTour.custom_slot_types)[0].name
           : "",
       price:
-        selectedTour.custom_slot_types &&
-        selectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(selectedTour.custom_slot_types)[0].price
+        initialSelectedTour?.custom_slot_types &&
+        initialSelectedTour.custom_slot_types !== "[]"
+          ? JSON.parse(initialSelectedTour.custom_slot_types)[0].price
           : 0,
     },
   ]);
@@ -92,12 +125,12 @@ const QuickBooking = ({
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
 
   const customSlotTypes =
-    selectedTour.custom_slot_types && selectedTour.custom_slot_types !== "[]"
+    selectedTour?.custom_slot_types && selectedTour.custom_slot_types !== "[]"
       ? JSON.parse(selectedTour.custom_slot_types)
       : null;
 
   const customSlotFields =
-    selectedTour.custom_slot_fields && selectedTour.custom_slot_fields !== "[]"
+    selectedTour?.custom_slot_fields && selectedTour.custom_slot_fields !== "[]"
       ? JSON.parse(selectedTour.custom_slot_fields)
       : [];
 
@@ -119,8 +152,24 @@ const QuickBooking = ({
     }
   }, [selectedTour]);
 
+  // Update step if all required information becomes available
+  useEffect(() => {
+    // Only update step if we're not already on step 3 and all info is available
+    if (
+      initialSelectedTour?.id &&
+      initialSelectedDate &&
+      initialSelectedTime &&
+      currentStep !== 3
+    ) {
+      // Prevent infinite loop by checking if we're not already on step 3
+      setCurrentStep(3);
+    }
+  }, [initialSelectedTour, initialSelectedDate, initialSelectedTime]);
+
   const calculateTotal = () => {
     let total = 0;
+
+    if (!selectedTour) return total;
 
     // Calculate tour price based on slot types if they exist
     if (customSlotTypes && customSlotTypes.length > 0) {
@@ -261,11 +310,86 @@ const QuickBooking = ({
     }
   };
 
+  // Add handler for back navigation
+  const handleBack = () => {
+    if (currentStep > 1) {
+      // If we're on step 3 and all info is available, stay on step 3
+      if (
+        currentStep === 3 &&
+        selectedTour?.id &&
+        selectedDate &&
+        selectedTime
+      ) {
+        return;
+      }
+      setCurrentStep(currentStep - 1);
+    } else {
+      onClose();
+    }
+  };
+
+  // Add handler for close attempt
+  const handleCloseAttempt = () => {
+    if (currentStep > 1) {
+      setShowConfirmDialog(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowConfirmDialog(false);
+    onClose();
+  };
+
+  // Add handler for tour selection
+  const handleTourSelect = (tour: Tour) => {
+    setSelectedTour(tour);
+    // If date and time are already selected, go to last step
+    if (selectedDate && selectedTime) {
+      setCurrentStep(3);
+    } else {
+      setCurrentStep(2);
+    }
+  };
+
+  // Add handler for date changes
+  const handleDateChange = (newDate: DateValue) => {
+    setSelectedDate(newDate);
+    // Clear time selection
+    setSelectedTime("");
+    // Reset number of people
+    setNumberOfPeople(1);
+    // Clear selected products
+    setSelectedProducts([]);
+    setProductQuantities({});
+    // Reset slot details to initial state
+    if (
+      selectedTour?.custom_slot_types &&
+      selectedTour.custom_slot_types !== "[]"
+    ) {
+      const customTypes = JSON.parse(selectedTour.custom_slot_types);
+      if (customTypes.length > 0) {
+        setSlotDetails([
+          {
+            type: customTypes[0].name,
+            price: customTypes[0].price,
+          },
+        ]);
+      }
+    }
+  };
+
+  // Add handler for time selection
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+  };
+
   if (isBookingComplete) {
     return (
       <BookingSuccess
         isAdmin={true}
-        selectedTour={selectedTour}
+        selectedTour={selectedTour!}
         selectedDate={selectedDate}
         selectedTime={selectedTime}
         bookingId={bookingId || ""}
@@ -277,25 +401,46 @@ const QuickBooking = ({
   return (
     <div className="min-h-screen bg-background">
       <div className="">
-        {/* Header */}
-        <div className="mb-8 sm:mb-12">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0 mb-4">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary text-primary-foreground font-semibold text-sm sm:text-base">
-                1
+        {/* Progress Bar */}
+        <div className="mb-4 md:mb-8 lg:mb-12 px-3 md:px-6">
+          <div className="flex flex-col gap-2 md:gap-6 mb-3 md:mb-4">
+            <div className="flex items-center justify-between">
+              {currentStep > 1 &&
+              !(
+                currentStep === 3 &&
+                selectedTour?.id &&
+                selectedDate &&
+                selectedTime
+              ) ? (
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  className="flex items-center gap-1.5 md:gap-2 text-strong hover:bg-strong/10 transition-colors text-sm md:text-base -ml-1.5 md:-ml-2 px-3 md:px-4 py-1.5 md:py-2 border-strong/20 hover:border-strong/30"
+                >
+                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Back</span>
+                </Button>
+              ) : (
+                <div className="w-12 md:w-16" />
+              )}
+              <div className="flex items-center gap-2.5 md:gap-4">
+                <h2 className="text-base md:text-xl lg:text-2xl font-bold text-strong">
+                  {currentStep === 1 && "Select Tour"}
+                  {currentStep === 2 && "Choose Date & Time"}
+                  {currentStep === 3 && "Complete Booking"}
+                </h2>
+
+                <div className="flex items-center justify-center w-6 h-6 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-strong text-primary-foreground font-semibold text-xs md:text-base">
+                  {currentStep}
+                </div>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-strong">
-                Complete Booking
-              </h2>
             </div>
-            <Button
-              variant="ghost"
-              onClick={onClose}
-              className="flex items-center gap-2 text-muted-foreground hover:text-strong transition-colors w-full sm:w-auto justify-center sm:justify-start"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              Cancel
-            </Button>
+          </div>
+          <div className="relative h-1 md:h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+            <div
+              className="absolute top-0 left-0 h-full bg-brand dark:bg-brand transition-all duration-300 ease-in-out"
+              style={{ width: `${(currentStep / 3) * 100}%` }}
+            />
           </div>
         </div>
 
@@ -303,32 +448,53 @@ const QuickBooking = ({
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-2xl sm:rounded-3xl" />
           <div className="relative p-4 sm:p-6">
-            <CheckForm
-              selectedTour={selectedTour}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              numberOfPeople={numberOfPeople}
-              customerInformation={customerInformation}
-              paymentInformation={paymentInformation}
-              setPaymentInformation={setPaymentInformation}
-              setCustomerInformation={setCustomerInformation}
-              handleCompleteBooking={handleCompleteBooking}
-              selectedProducts={selectedProducts}
-              setSelectedProducts={setSelectedProducts}
-              productQuantities={productQuantities}
-              setProductQuantities={setProductQuantities}
-              availableProducts={availableProducts}
-              setAvailableProducts={setAvailableProducts}
-              isAdmin={true}
-              isLoading={isLoading}
-              setNumberOfPeople={setNumberOfPeople}
-              calculateTotal={calculateTotal}
-              setSlotDetails={setSlotDetails}
-              slotDetails={slotDetails}
-              customSlotTypes={customSlotTypes}
-              customSlotFields={customSlotFields}
-              handleNext={() => {}}
-            />
+            {currentStep === 1 ? (
+              <SelectTours
+                setSelectedTour={handleTourSelect}
+                handleNext={() => setCurrentStep(2)}
+              />
+            ) : currentStep === 2 ? (
+              <TourTimeAndDate
+                selectedTour={selectedTour!}
+                handleNext={() => setCurrentStep(3)}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                setSelectedDate={handleDateChange}
+                setSelectedTime={handleTimeSelect}
+                numberOfPeople={numberOfPeople}
+                setNumberOfPeople={setNumberOfPeople}
+                customSlotTypes={customSlotTypes}
+                setSlotDetails={setSlotDetails}
+                slotDetails={slotDetails}
+              />
+            ) : (
+              <CheckForm
+                selectedTour={selectedTour!}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                numberOfPeople={numberOfPeople}
+                customerInformation={customerInformation}
+                paymentInformation={paymentInformation}
+                setPaymentInformation={setPaymentInformation}
+                setCustomerInformation={setCustomerInformation}
+                handleCompleteBooking={handleCompleteBooking}
+                selectedProducts={selectedProducts}
+                setSelectedProducts={setSelectedProducts}
+                productQuantities={productQuantities}
+                setProductQuantities={setProductQuantities}
+                availableProducts={availableProducts}
+                setAvailableProducts={setAvailableProducts}
+                isAdmin={true}
+                isLoading={isLoading}
+                setNumberOfPeople={setNumberOfPeople}
+                calculateTotal={calculateTotal}
+                setSlotDetails={setSlotDetails}
+                slotDetails={slotDetails}
+                customSlotTypes={customSlotTypes}
+                customSlotFields={customSlotFields}
+                handleNext={() => {}}
+              />
+            )}
           </div>
         </div>
 
@@ -338,6 +504,24 @@ const QuickBooking = ({
           <p className="mt-2">Secure booking powered by Stripe</p>
         </div>
       </div>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to leave?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your booking progress will be lost if you leave this page. Are you
+              sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose}>
+              Yes, leave page
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
