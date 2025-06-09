@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { TableV2 } from "@/app/_components/common/TableV2";
 import { useState } from "react";
 import {
@@ -29,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import UpdateBooking from "./UpdateBooking";
+import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
 
 interface BookingTableV2Props {
   bookings: BookingTable[];
@@ -72,25 +73,11 @@ export function BookingTableV2({
       header: "Booking Status",
       cell: ({ row }) => {
         const bookingStatus = row.getValue("booking_status") as string;
-
-        const getStatusColor = (status: string) => {
-          const statusColors: { [key: string]: string } = {
-            pending: "bg-yellow-500",
-            confirmed: "bg-green-500",
-            checked_in: "bg-blue-500",
-            cancelled: "bg-red-500",
-          };
-          return statusColors[status.toLowerCase()] || "bg-gray-500";
-        };
-
         return (
-          <Badge
-            className={`${getStatusColor(
-              bookingStatus
-            )} text-white uppercase font-bold`}
-          >
-            {bookingStatus}
-          </Badge>
+          <StatusBadge
+            status={bookingStatus.toLowerCase() as any}
+            type="booking"
+          />
         );
       },
     },
@@ -116,10 +103,10 @@ export function BookingTableV2({
       header: "Slots",
     },
     {
-      accessorKey: "total_price",
+      accessorKey: "amount_paid",
       header: "Total Price",
       cell: ({ row }) => {
-        const amount = parseFloat(row.getValue("total_price"));
+        const amount = parseFloat(row.getValue("amount_paid"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
@@ -202,19 +189,22 @@ export function BookingTableV2({
       >
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Update Booking</DialogTitle>
+            <DialogTitle className="sr-only">Update Booking</DialogTitle>
           </DialogHeader>
-          {selectedBooking && (
-            <UpdateBooking
-              bookingId={selectedBooking.booking_id}
-              manageToken={selectedBooking.manage_token}
-              onClose={() => setIsUpdateBookingDialogOpen(false)}
-              // onUpdate={async (updatedBooking) => {
-              //   // await onUpdateStatus?.(updatedBooking);
-              //   // setIsUpdateBookingDialogOpen(false);
-              // }}
-            />
-          )}
+
+          <div className="flex flex-col gap-4">
+            {selectedBooking && (
+              <UpdateBooking
+                bookingId={selectedBooking.booking_id}
+                manageToken={selectedBooking.manage_token}
+                onClose={() => setIsUpdateBookingDialogOpen(false)}
+                // onUpdate={async (updatedBooking) => {
+                //   // await onUpdateStatus?.(updatedBooking);
+                //   // setIsUpdateBookingDialogOpen(false);
+                // }}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>

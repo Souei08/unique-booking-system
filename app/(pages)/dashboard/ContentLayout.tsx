@@ -8,6 +8,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import React, { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import UpsertTourV2 from "../../_features/tours/forms/upsert-tour-v2/UpsertTourV2";
 import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/CreateBookingv2";
@@ -38,6 +48,7 @@ const ContentLayout = ({
   const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   const handleButtonClick = () => {
     if (modalRoute === "users") {
@@ -47,6 +58,19 @@ const ContentLayout = ({
     } else {
       setIsTourDialogOpen(true);
     }
+  };
+
+  const handleDialogClose = (setDialogOpen: (value: boolean) => void) => {
+    if (modalRoute === "booking") {
+      setShowConfirmDialog(true);
+    } else {
+      setDialogOpen(false);
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowConfirmDialog(false);
+    setIsTourDialogOpen(false);
   };
 
   return (
@@ -74,7 +98,16 @@ const ContentLayout = ({
         {children}
       </div>
 
-      <Dialog open={isTourDialogOpen} onOpenChange={setIsTourDialogOpen}>
+      <Dialog
+        open={isTourDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleDialogClose(setIsTourDialogOpen);
+          } else {
+            setIsTourDialogOpen(true);
+          }
+        }}
+      >
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="mb-5">
             <DialogTitle>{modalTitle}</DialogTitle>
@@ -86,7 +119,9 @@ const ContentLayout = ({
           )}
 
           {modalRoute === "booking" && (
-            <CreateBookingv2 onClose={() => setIsTourDialogOpen(false)} />
+            <CreateBookingv2
+              onClose={() => handleDialogClose(setIsTourDialogOpen)}
+            />
           )}
         </DialogContent>
       </Dialog>
@@ -112,6 +147,24 @@ const ContentLayout = ({
           <CreateProduct onSuccess={() => setIsProductDialogOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to leave?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your booking progress will be lost if you leave this page. Are you
+              sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmClose}>
+              Yes, leave page
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };

@@ -12,13 +12,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { getLocalTimeZone, parseDate, today } from "@internationalized/date";
+import { getLocalTimeZone, parseDate } from "@internationalized/date";
 import { RenderCalendar } from "@/app/_components/calendar-v2/RenderCalendar";
 import { getTourSchedule } from "@/app/_features/tours/api/tour-schedule/client/getTourSchedule";
 import { DateValue } from "@internationalized/date";
 import { getRemainingSlots } from "@/app/_features/booking/api/getRemainingSlots";
 import { Badge } from "@/components/ui/badge";
 import { getFullyBookedDatesFromList } from "@/app/_features/booking/api/getFullyBookedDatesFromList";
+import { CalendarDays, Clock, RefreshCw } from "lucide-react";
 
 interface TimeSlot {
   start_time: string;
@@ -96,7 +97,6 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
         setSelectedTime(currentTime);
       }
     } else {
-      // Reset values when modal closes
       setSelectedDate(null);
       setSelectedTime(null);
       setAvailableTimes([]);
@@ -110,17 +110,13 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
       setLoading(true);
       try {
         const schedules = await getTourSchedule(tourId);
-
         const activeWeekdays = new Set(
           schedules.map((schedule) => schedule.weekday)
         );
-
-        // Create the daysOfWeek array with active status
         const daysOfWeek = allWeekdays.map((day) => ({
           day,
           isActive: activeWeekdays.has(day),
         }));
-
         setAvailableWeekdays(daysOfWeek);
         setTourSchedules(schedules);
       } catch (error) {
@@ -146,12 +142,10 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
         "EEEE"
       ).toLowerCase();
 
-      // Filter schedules and ensure we're comparing lowercase weekdays
       const times = tourSchedules
         .filter((schedule) => schedule.weekday.toLowerCase() === weekday)
         .flatMap((schedule) => JSON.parse(schedule.available_time));
 
-      // Get remaining slots for each time
       const timesWithSlots = await Promise.all(
         times.map(async (time: { start_time: string }) => {
           const remainingSlots = await getRemainingSlots(
@@ -168,7 +162,6 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
 
       setAvailableTimes(timesWithSlots);
 
-      // Reset selected time if current selection has no slots
       if (selectedTime) {
         const currentTimeSlot = timesWithSlots.find(
           (slot) => slot.start_time === selectedTime
@@ -184,7 +177,6 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
     }
   };
 
-  // Update available times when date changes
   useEffect(() => {
     if (selectedDate) {
       getAvailableTimesForDate();
@@ -200,7 +192,7 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
       .filter((d) => d.isActive)
       .map((d) => d.day.toLowerCase());
 
-    const monthNum = new Date(`${month} 1, ${year}`).getMonth(); // 0-indexed
+    const monthNum = new Date(`${month} 1, ${year}`).getMonth();
     const yearNum = parseInt(year);
 
     const dates: string[] = [];
@@ -215,7 +207,7 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
         const localDate = new Date(
           date.getTime() - date.getTimezoneOffset() * 60000
         );
-        const formatted = localDate.toISOString().split("T")[0]; // 'YYYY-MM-DD'
+        const formatted = localDate.toISOString().split("T")[0];
         dates.push(formatted);
       }
 
@@ -262,108 +254,129 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold text-center">
+      <DialogContent className="max-w-[95vw] sm:max-w-[800px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="space-y-4">
+          <DialogTitle className="text-2xl font-bold text-strong flex items-center gap-2">
+            <RefreshCw className="w-5 h-5" />
             Reschedule Booking
           </DialogTitle>
+          <p className="text-sm text-gray-500">
+            Select a new date and time for this booking. Make sure to check the
+            available slots.
+          </p>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Calendar */}
-          <div className="bg-background rounded-lg border border-stroke-weak">
-            <div className="px-6 py-4 border-b border-stroke-weak">
-              <h2 className="text-h2 font-medium text-strong">Select Date</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Date Selection */}
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-strong flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5" />
+                  Select Date
+                </h3>
+              </div>
+              <div className="p-6">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <div className="w-full max-w-md mx-auto">
+                    <RenderCalendar
+                      daysofWeek={
+                        availableWeekdays.length > 0
+                          ? availableWeekdays
+                          : allWeekdays.map((day) => ({ day, isActive: true }))
+                      }
+                      setSelectedDate={setSelectedDate}
+                      onMonthChange={handleMonthChange}
+                      disabledDates={fullyBookedDates}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="p-6">
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : (
-                <div className="w-full max-w-[400px] mx-auto">
-                  <RenderCalendar
-                    daysofWeek={
-                      availableWeekdays.length > 0
-                        ? availableWeekdays
-                        : allWeekdays.map((day) => ({ day, isActive: true }))
-                    }
-                    setSelectedDate={setSelectedDate}
-                    onMonthChange={handleMonthChange}
-                    disabledDates={fullyBookedDates}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Available Times */}
-          <div className="bg-background rounded-lg border border-stroke-weak">
-            <div className="px-6 py-4 border-b border-stroke-weak">
-              <h2 className="text-h2 font-medium text-strong">
-                Available Times
-              </h2>
-            </div>
-            <div className="p-6">
-              {loadingTimeSlots ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : availableTimes.length > 0 ? (
-                <RadioGroup
-                  value={selectedTime || ""}
-                  onValueChange={setSelectedTime}
-                  className="grid gap-2"
-                >
-                  {availableTimes.map((timeSlot, index) => {
-                    // Parse the time string and format it
-                    const timeDate = new Date(
-                      `${selectedDate?.toString()}T${timeSlot.start_time}`
-                    );
-                    const formattedTime = format(timeDate, "h:mm a");
+            {/* Time Selection */}
+            <div className="bg-white rounded-xl border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-strong flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Select Time
+                </h3>
+              </div>
+              <div className="p-6">
+                {loadingTimeSlots ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : availableTimes.length > 0 ? (
+                  <RadioGroup
+                    value={selectedTime || ""}
+                    onValueChange={setSelectedTime}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                  >
+                    {availableTimes.map((timeSlot, index) => {
+                      const timeDate = new Date(
+                        `${selectedDate?.toString()}T${timeSlot.start_time}`
+                      );
+                      const formattedTime = format(timeDate, "h:mm a");
 
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "flex items-center space-x-3 rounded-lg border p-3 hover:bg-accent cursor-pointer transition-colors",
-                          selectedTime === timeSlot.start_time &&
-                            "border-primary bg-accent",
-                          timeSlot.remainingSlots === 0 &&
-                            "opacity-50 cursor-not-allowed"
-                        )}
-                      >
-                        <RadioGroupItem
-                          value={timeSlot.start_time}
-                          id={`time-${index}`}
-                          className="border-primary"
-                          disabled={timeSlot.remainingSlots === 0}
-                        />
-                        <Label
-                          htmlFor={`time-${index}`}
-                          className="flex w-full cursor-pointer items-center justify-between"
+                      return (
+                        <div
+                          key={index}
+                          className={cn(
+                            "flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent cursor-pointer transition-colors",
+                            selectedTime === timeSlot.start_time &&
+                              "border-primary bg-accent",
+                            timeSlot.remainingSlots === 0 &&
+                              "opacity-50 cursor-not-allowed"
+                          )}
                         >
-                          <span className="font-medium">{formattedTime}</span>
-                          <Badge
-                            variant={
-                              timeSlot.remainingSlots > 0
-                                ? "default"
-                                : "destructive"
-                            }
+                          <RadioGroupItem
+                            value={timeSlot.start_time}
+                            id={`time-${index}`}
+                            className="border-primary"
+                            disabled={timeSlot.remainingSlots === 0}
+                          />
+                          <Label
+                            htmlFor={`time-${index}`}
+                            className="flex w-full cursor-pointer items-center justify-between"
                           >
-                            {timeSlot.remainingSlots} slots left
-                          </Badge>
-                        </Label>
-                      </div>
-                    );
-                  })}
-                </RadioGroup>
-              ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  {selectedDate
-                    ? "No available times for this date"
-                    : "Please select a date first"}
-                </div>
-              )}
+                            <span className="font-medium">{formattedTime}</span>
+                            <Badge
+                              variant={
+                                timeSlot.remainingSlots > 0
+                                  ? "default"
+                                  : "destructive"
+                              }
+                            >
+                              {timeSlot.remainingSlots} slots left
+                            </Badge>
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </RadioGroup>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                      <Clock className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      {selectedDate
+                        ? "No Available Times"
+                        : "Select a Date First"}
+                    </h3>
+                    <p className="text-gray-500">
+                      {selectedDate
+                        ? "There are no available time slots for this date."
+                        : "Please select a date to view available time slots."}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -382,7 +395,14 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
               disabled={isLoading || !selectedDate || !selectedTime}
               className="w-full sm:w-auto"
             >
-              {isLoading ? "Rescheduling..." : "Reschedule"}
+              {isLoading ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Rescheduling...
+                </>
+              ) : (
+                "Reschedule"
+              )}
             </Button>
           </DialogFooter>
         </form>

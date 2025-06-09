@@ -10,6 +10,7 @@ import {
   GlobeAmericasIcon,
   ShoppingBagIcon,
   BookOpenIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
 
 interface NavigationItem {
@@ -55,6 +56,12 @@ const navigationItems: NavigationItem[] = [
     name: "Users",
     href: "/dashboard/users",
     icon: UserGroupIcon,
+    roles: ["admin"],
+  },
+  {
+    name: "Analytics",
+    href: "/dashboard/analytics",
+    icon: ChartBarIcon,
     roles: ["admin"],
   },
   // {

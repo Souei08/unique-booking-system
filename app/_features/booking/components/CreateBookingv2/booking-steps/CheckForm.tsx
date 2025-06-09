@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import {
   CustomerInformation,
   PaymentInformation,
+  SlotDetail,
 } from "@/app/_features/booking/types/booking-types";
 // import { StripePayment } from "@/app/_components/stripe/StripePayment";
 import { Elements } from "@stripe/react-stripe-js";
@@ -17,8 +18,10 @@ import { StripePaymentFormV2 } from "./StripePaymentFormv2";
 import { getAssignedToursByTourId } from "@/app/_features/products/api/getAssignedToursByTourId";
 import { toast } from "sonner";
 import { formatTime } from "@/app/_utils/formatTime";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
+import SlotDetails, { CustomSlotType, CustomSlotField } from "./SlotDetails";
+import PersonalInformation from "./PersonalInformation";
+import AdditionalProducts from "./AdditionalProducts";
+import { Card, CardContent } from "@/components/ui/card";
 
 const CheckForm = ({
   selectedTour,
@@ -39,6 +42,12 @@ const CheckForm = ({
   setAvailableProducts,
   isAdmin = false,
   isLoading = false,
+  setSlotDetails,
+  slotDetails,
+  customSlotTypes,
+  customSlotFields,
+  handleNext,
+  calculateTotal,
 }: {
   selectedTour: Tour;
   selectedDate: DateValue;
@@ -70,28 +79,229 @@ const CheckForm = ({
   ) => void;
   isAdmin?: boolean;
   isLoading?: boolean;
+  setSlotDetails: React.Dispatch<React.SetStateAction<SlotDetail[]>>;
+  slotDetails: SlotDetail[];
+  customSlotTypes: CustomSlotType[] | null;
+  customSlotFields: CustomSlotField[];
+  handleNext: () => void;
+  calculateTotal: () => number;
 }) => {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [shouldFetchPaymentIntent, setShouldFetchPaymentIntent] =
-    useState(false);
-  const [clientSecret, setClientSecret] = useState<string>("");
+  const [validationErrors, setValidationErrors] = useState<{
+    personalInfo: string[];
+    slots: string[];
+    payment: string[];
+  }>({
+    personalInfo: [],
+    slots: [],
+    payment: [],
+  });
 
-  // Fetch available products for the selected tour
+  // Update number of people when slot details change
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setIsLoadingProducts(true);
-        const assignedTours = await getAssignedToursByTourId(selectedTour.id);
-        console.log("assignedTours", assignedTours);
-        setAvailableProducts(assignedTours as unknown as Product[]);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        toast.error("Failed to fetch available products");
-      } finally {
-        setIsLoadingProducts(false);
+    if (customSlotTypes && customSlotTypes.length > 0) {
+      setNumberOfPeople(slotDetails.length);
+    }
+  }, [slotDetails, customSlotTypes]);
+
+  // Handle slot details change
+  const handleSlotDetailsChange = (
+    details: SlotDetail[],
+    totalPrice: number
+  ) => {
+    // Update slot details with prices
+    const updatedSlotDetails = details.map((slot) => ({
+      ...slot,
+      price: getSlotPrice(slot),
+    }));
+
+    // Update the slot details state
+    setSlotDetails(updatedSlotDetails);
+
+    // Update payment information with new total
+    // setPaymentInformation({
+    //   ...paymentInformation,
+    //   total_price: totalPrice,
+    // });
+  };
+
+  // Handle adding a new slot
+  const handleAddSlot = () => {
+    if (
+      selectedTour.group_size_limit &&
+      numberOfPeople >= selectedTour.group_size_limit
+    ) {
+      toast.error("Group size limit reached", {
+        description: `Maximum group size is ${selectedTour.group_size_limit} people.`,
+      });
+      return;
+    }
+
+    setNumberOfPeople(numberOfPeople + 1);
+    setSlotDetails((prev) => [
+      ...prev,
+      {
+        type: customSlotTypes?.[0]?.name || "",
+        price: customSlotTypes?.[0]?.price || 0,
+      },
+    ]);
+  };
+
+  // Handle removing a slot
+  const handleRemoveSlot = (index: number) => {
+    if (numberOfPeople <= 1) return;
+
+    setNumberOfPeople(numberOfPeople - 1);
+    setSlotDetails((prev) => {
+      const newSlots = [...prev];
+      newSlots.splice(index, 1);
+      return newSlots;
+    });
+  };
+
+  // Validate slots and return validation result
+  const validateSlots = (slots: SlotDetail[]) => {
+    const errors: string[] = [];
+
+    // Validate each slot
+    slots.forEach((slot, index) => {
+      // Validate custom slot fields
+      customSlotFields.forEach((field) => {
+        if (field.required) {
+          const value = slot[field.name];
+          if (value === undefined || value === null || value === "") {
+            errors.push(`Slot ${index + 1}: ${field.label} is required`);
+          }
+        }
+      });
+
+      // Validate slot type if custom slot types exist
+      if (customSlotTypes) {
+        if (!slot.type) {
+          errors.push(`Slot ${index + 1}: Type is required`);
+        } else if (!customSlotTypes.find((t) => t.name === slot.type)) {
+          errors.push(`Slot ${index + 1}: Invalid type selected`);
+        }
       }
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
+  };
+
+  // Validate and complete booking
+  const validateAndCompleteBooking = async (
+    paymentId: string | null = null
+  ) => {
+    const errors = {
+      personalInfo: [] as string[],
+      slots: [] as string[],
+      payment: [] as string[],
     };
 
+    // Validate slots first
+    const slotValidation = validateSlots(slotDetails);
+    if (!slotValidation.isValid) {
+      errors.slots = slotValidation.errors;
+    }
+
+    // Validate personal information
+    const requiredFields: (keyof CustomerInformation)[] = [
+      "first_name",
+      "last_name",
+      "email",
+      "phone_number",
+    ];
+
+    const missingFields = requiredFields.filter(
+      (field) =>
+        !customerInformation[field] || customerInformation[field].trim() === ""
+    );
+
+    if (missingFields.length > 0) {
+      errors.personalInfo = missingFields.map((field) =>
+        field
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (
+      customerInformation.email &&
+      !emailRegex.test(customerInformation.email)
+    ) {
+      errors.personalInfo.push("Please enter a valid email address");
+    }
+
+    // Validate phone number format (basic validation)
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+    if (
+      customerInformation.phone_number &&
+      !phoneRegex.test(customerInformation.phone_number)
+    ) {
+      errors.personalInfo.push("Please enter a valid phone number");
+    }
+
+    // Validate payment information
+    if (!paymentInformation.payment_method) {
+      errors.payment.push("Please select a payment method");
+    }
+
+    setValidationErrors(errors);
+
+    // If any errors exist, return false
+    if (Object.values(errors).some((arr) => arr.length > 0)) {
+      return false;
+    }
+
+    // If admin, proceed with booking
+    if (isAdmin) {
+      try {
+        await handleCompleteBooking(paymentId);
+        return true;
+      } catch (error) {
+        console.error("Error completing booking:", error);
+        toast.error("Failed to complete booking. Please try again.");
+        return false;
+      }
+    } else {
+      handleNext();
+    }
+  };
+
+  // Get price per slot
+  const getSlotPrice = (slot: SlotDetail) => {
+    if (customSlotTypes) {
+      const typeDef = customSlotTypes.find((t) => t.name === slot.type);
+      return typeDef ? typeDef.price : selectedTour.rate;
+    }
+    return selectedTour.rate;
+  };
+
+  // Fetch available products for the selected tour
+  const fetchProducts = async () => {
+    if (!selectedTour.id) return;
+
+    try {
+      setIsLoadingProducts(true);
+      const assignedTours = await getAssignedToursByTourId(selectedTour.id);
+      setAvailableProducts(assignedTours as unknown as Product[]);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      toast.error("Failed to fetch available products");
+      setAvailableProducts([]); // Reset products on error
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  // Only fetch products when the component mounts or when explicitly needed
+  useEffect(() => {
     if (selectedTour.id) {
       fetchProducts();
     }
@@ -104,9 +314,7 @@ const CheckForm = ({
       ...paymentInformation,
       total_price: total,
     });
-    // Set flag to fetch new payment intent when total changes
-    setShouldFetchPaymentIntent(true);
-  }, [selectedProducts, selectedTour.rate]);
+  }, [selectedProducts, selectedTour.rate, slotDetails]);
 
   const tourImages = JSON.parse(selectedTour.images) as {
     url: string;
@@ -114,59 +322,46 @@ const CheckForm = ({
   }[];
   const featuredImage = tourImages.find((image) => image.isFeature);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    field: keyof CustomerInformation
-  ) => {
-    const { name, value } = e.target;
+  // const handleInputChange = (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  //   field: keyof CustomerInformation
+  // ) => {
+  //   const { name, value } = e.target;
 
-    setCustomerInformation((prev: CustomerInformation) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  //   setCustomerInformation((prev: CustomerInformation) => ({
+  //     ...prev,
+  //     [field]: value,
+  //   }));
+  // };
 
-  const toggleProduct = (productId: string) => {
-    setSelectedProducts((prev) => {
-      if (prev.includes(productId)) {
-        // Remove product and its quantity when unselected
-        setProductQuantities((quantities) => {
-          const newQuantities = { ...quantities };
-          delete newQuantities[productId];
-          return newQuantities;
-        });
-        return prev.filter((id) => id !== productId);
-      } else {
-        // Add product with default quantity of 1
-        setProductQuantities((quantities) => ({
-          ...quantities,
-          [productId]: 1,
-        }));
-        return [...prev, productId];
-      }
-    });
-  };
+  // const toggleProduct = (productId: string) => {
+  //   setSelectedProducts((prev) => {
+  //     if (prev.includes(productId)) {
+  //       // Remove product and its quantity when unselected
+  //       setProductQuantities((quantities) => {
+  //         const newQuantities = { ...quantities };
+  //         delete newQuantities[productId];
+  //         return newQuantities;
+  //       });
+  //       return prev.filter((id) => id !== productId);
+  //     } else {
+  //       // Add product with default quantity of 1
+  //       setProductQuantities((quantities) => ({
+  //         ...quantities,
+  //         [productId]: 1,
+  //       }));
+  //       return [...prev, productId];
+  //     }
+  //   });
+  // };
 
-  const updateProductQuantity = (productId: string, quantity: number) => {
-    if (quantity < 1) return;
-    setProductQuantities((prev) => ({
-      ...prev,
-      [productId]: quantity,
-    }));
-  };
-
-  const calculateTotal = () => {
-    let total = selectedTour.rate * numberOfPeople;
-    selectedProducts.forEach((productId) => {
-      const product = availableProducts.find((p) => p.id === productId);
-      if (product) {
-        const quantity = productQuantities[productId] || 1;
-        total += product.price * quantity;
-      }
-    });
-    // Round to 2 decimal places to avoid floating point issues
-    return Math.round(total * 100) / 100;
-  };
+  // const updateProductQuantity = (productId: string, quantity: number) => {
+  //   if (quantity < 1) return;
+  //   setProductQuantities((prev) => ({
+  //     ...prev,
+  //     [productId]: quantity,
+  //   }));
+  // };
 
   const formattedDate = format(
     new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day),
@@ -190,269 +385,56 @@ const CheckForm = ({
   //   }
   // };
 
-  const fetchClientSecret = async () => {
-    if (isAdmin) return;
-
-    try {
-      const total = calculateTotal();
-      // Prepare product details
-      const productDetails = selectedProducts.map((productId) => {
-        const product = availableProducts.find((p) => p.id === productId);
-        return {
-          id: productId,
-          name: product?.name,
-          price: product?.price,
-          quantity: productQuantities[productId] || 1,
-        };
-      });
-
-      const response = await fetch("/api/create-payment-intent", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: Math.round(total * 100), // Convert to cents and ensure integer
-          email: customerInformation.email,
-          name: `${customerInformation.first_name} ${customerInformation.last_name}`,
-          phone: customerInformation.phone_number,
-          tourDetails: {
-            title: selectedTour.title,
-            rate: selectedTour.rate,
-            numberOfPeople: numberOfPeople,
-          },
-          productDetails: productDetails,
-        }),
-      });
-      const data = await response.json();
-      setClientSecret(data.clientSecret);
-      setShouldFetchPaymentIntent(false);
-    } catch (error) {
-      console.error("Error creating payment intent:", error);
-      toast.error("Failed to create payment intent");
-    }
-  };
-
   // Only fetch payment intent when shouldFetchPaymentIntent is true
-  useEffect(() => {
-    if (shouldFetchPaymentIntent && !isAdmin) {
-      fetchClientSecret();
-    }
-  }, [shouldFetchPaymentIntent]);
+  // useEffect(() => {
+  //   if (shouldFetchPaymentIntent && !isAdmin) {
+  //     fetchClientSecret();
+  //   }
+
+  //   console.log("running");
+  // }, [shouldFetchPaymentIntent]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-12 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
       {/* Main Content - Left Column */}
       <div className="lg:col-span-2 space-y-6 sm:space-y-8">
         {/* User Information Section */}
-        <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
-            Personal Information
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            <div>
-              <label
-                htmlFor="firstName"
-                className="block text-sm font-medium text-muted-foreground mb-1.5 sm:mb-2"
-              >
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={customerInformation.first_name}
-                onChange={(e) => handleInputChange(e, "first_name")}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-background border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="lastName"
-                className="block text-sm font-medium text-muted-foreground mb-1.5 sm:mb-2"
-              >
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={customerInformation.last_name}
-                onChange={(e) => handleInputChange(e, "last_name")}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-background border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-muted-foreground mb-1.5 sm:mb-2"
-              >
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={customerInformation.email}
-                onChange={(e) => handleInputChange(e, "email")}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-background border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base"
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-muted-foreground mb-1.5 sm:mb-2"
-              >
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={customerInformation.phone_number}
-                onChange={(e) => handleInputChange(e, "phone_number")}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-background border rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary text-sm sm:text-base"
-                required
-              />
-            </div>
-          </div>
-        </div>
+        <PersonalInformation
+          customerInformation={customerInformation}
+          setCustomerInformation={setCustomerInformation}
+          validationErrors={validationErrors}
+        />
+
+        {/* Slot Booking Section */}
+        {(customSlotTypes || customSlotFields.length > 0) && (
+          <SlotDetails
+            numberOfPeople={numberOfPeople}
+            customSlotTypes={customSlotTypes}
+            customSlotFields={customSlotFields}
+            tourRate={selectedTour.rate}
+            onSlotDetailsChange={handleSlotDetailsChange}
+            setSlotDetails={setSlotDetails}
+            slotDetails={slotDetails}
+            readOnly={false}
+            handleAddSlot={handleAddSlot}
+            handleRemoveSlot={handleRemoveSlot}
+          />
+        )}
 
         {/* Additional Products Section */}
-        <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-strong">
-              Additional Products
-            </h2>
-            <span className="text-sm text-muted-foreground">
-              {selectedProducts.length} selected
-            </span>
-          </div>
-          {isLoadingProducts ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : availableProducts.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
-              {availableProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className={`border rounded-xl sm:rounded-2xl p-4 sm:p-6 transition-all duration-300 ${
-                    selectedProducts.includes(product.id)
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <div className="flex items-start gap-4 sm:gap-6">
-                    {/* Product Image */}
-                    <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 overflow-hidden rounded-lg">
-                      <img
-                        src={product.image_url || ""}
-                        alt={product.name}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    </div>
-
-                    {/* Product Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <h3 className="text-base sm:text-lg font-semibold text-strong">
-                            {product.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {product.description}
-                          </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <span className="text-lg sm:text-xl font-bold text-primary">
-                            ${product.price}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center space-x-2 bg-background rounded-lg px-2 py-1">
-                              <button
-                                onClick={() =>
-                                  updateProductQuantity(
-                                    product.id,
-                                    (productQuantities[product.id] || 1) - 1
-                                  )
-                                }
-                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
-                                disabled={
-                                  !selectedProducts.includes(product.id)
-                                }
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center font-medium">
-                                {productQuantities[product.id] || 1}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  updateProductQuantity(
-                                    product.id,
-                                    (productQuantities[product.id] || 1) + 1
-                                  )
-                                }
-                                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors"
-                                disabled={
-                                  !selectedProducts.includes(product.id)
-                                }
-                              >
-                                +
-                              </button>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedProducts.includes(product.id)}
-                                onChange={() => toggleProduct(product.id)}
-                                className="sr-only peer"
-                              />
-                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                            </label>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                <svg
-                  className="w-8 h-8 text-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-strong mb-2">
-                No Additional Products
-              </h3>
-              <p className="text-muted-foreground">
-                There are no additional products available for this tour.
-              </p>
-            </div>
-          )}
-        </div>
+        <AdditionalProducts
+          isLoadingProducts={isLoadingProducts}
+          availableProducts={availableProducts}
+          selectedProducts={selectedProducts}
+          setSelectedProducts={setSelectedProducts}
+          productQuantities={productQuantities}
+          setProductQuantities={setProductQuantities}
+        />
       </div>
 
       {/* Order Summary - Right Column */}
       <div className="lg:col-span-1">
-        <div className="sticky top-8 space-y-6 sm:space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
               Order Summary
@@ -530,157 +512,345 @@ const CheckForm = ({
 
                 <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
                   <span>Group Size</span>
-                  <div className="flex items-center space-x-3 bg-background rounded-lg px-3 py-1.5 border">
-                    <button
-                      onClick={() => {
-                        if (numberOfPeople > 1) {
-                          setNumberOfPeople(numberOfPeople - 1);
+                  {customSlotTypes && customSlotTypes.length > 0 ? (
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2 bg-background rounded-lg px-3 py-1.5 border">
+                        <button
+                          onClick={() =>
+                            handleRemoveSlot(slotDetails.length - 1)
+                          }
+                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-brand/10 transition-colors disabled:bg-gray-200 disabled:hover:bg-gray-200 text-lg font-medium"
+                          disabled={numberOfPeople <= 1}
+                          aria-label="Decrease slots"
+                        >
+                          -
+                        </button>
+                        <span className="font-medium w-8 text-center text-base">
+                          {numberOfPeople}
+                        </span>
+                        <button
+                          onClick={handleAddSlot}
+                          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-brand/10 transition-colors disabled:bg-gray-200 disabled:hover:bg-gray-200 text-lg font-medium"
+                          disabled={
+                            selectedTour.group_size_limit
+                              ? numberOfPeople >= selectedTour.group_size_limit
+                              : false
+                          }
+                          aria-label="Increase slots"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 rounded-full bg-brand"></div>
+                        <span className="text-sm text-weak">
+                          {slotDetails.length}{" "}
+                          {slotDetails.length === 1 ? "Slot" : "Slots"}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-3 bg-background rounded-lg px-3 py-1.5 border">
+                      <button
+                        onClick={() => {
+                          if (numberOfPeople > 1) {
+                            setNumberOfPeople(numberOfPeople - 1);
+                          }
+                        }}
+                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-brand/10 transition-colors disabled:bg-gray-200 disabled:hover:bg-gray-200 text-lg font-medium"
+                        disabled={numberOfPeople <= 1}
+                        aria-label="Decrease group size"
+                      >
+                        -
+                      </button>
+                      <span className="font-medium w-8 text-center text-base">
+                        {numberOfPeople}
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (
+                            selectedTour.group_size_limit &&
+                            numberOfPeople >= selectedTour.group_size_limit
+                          ) {
+                            toast.error("Group size limit reached", {
+                              description: `Maximum group size is ${selectedTour.group_size_limit} people.`,
+                            });
+                            return;
+                          }
+                          setNumberOfPeople(numberOfPeople + 1);
+                        }}
+                        className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-brand/10 transition-colors disabled:bg-gray-200 disabled:hover:bg-gray-200 text-lg font-medium"
+                        disabled={
+                          selectedTour.group_size_limit
+                            ? numberOfPeople >= selectedTour.group_size_limit
+                            : false
                         }
-                      }}
-                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-lg font-medium"
-                      disabled={numberOfPeople <= 1}
-                      aria-label="Decrease group size"
-                    >
-                      -
-                    </button>
-                    <span className="font-medium w-8 text-center text-base">
-                      {numberOfPeople}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setNumberOfPeople(numberOfPeople + 1);
-                      }}
-                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors text-lg font-medium"
-                      aria-label="Increase group size"
-                    >
-                      +
-                    </button>
-                  </div>
+                        aria-label="Increase group size"
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Price Breakdown */}
-              <div className="border-t pt-4 sm:pt-6 space-y-3 sm:space-y-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <span className="text-sm sm:text-base font-medium text-muted-foreground">
-                      Tour Price
-                    </span>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
-                      ${selectedTour.rate} × {numberOfPeople} people
-                    </p>
-                  </div>
-                  <span className="text-base sm:text-lg font-semibold text-strong">
-                    ${selectedTour.rate * numberOfPeople}
-                  </span>
-                </div>
+              <div className="border-t border-stroke-weak pt-4 sm:pt-6 space-y-3 sm:space-y-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <span className="text-sm sm:text-base font-medium text-strong">
+                        Tour Price
+                      </span>
+                      {customSlotTypes && customSlotTypes.length > 0 ? (
+                        <div className="space-y-2 mt-2">
+                          {(() => {
+                            // Group slots by type and count occurrences
+                            const groupedSlots = slotDetails.reduce(
+                              (acc, slot) => {
+                                const slotType = customSlotTypes.find(
+                                  (type) => type.name === slot.type
+                                );
+                                const typeName = slotType?.name || "";
+                                const price = slotType?.price || 0;
 
-                {selectedProducts.length > 0 && (
-                  <div className="space-y-2 sm:space-y-3">
-                    <h3 className="text-sm sm:text-base font-medium text-muted-foreground">
-                      Additional Products
-                    </h3>
-                    {selectedProducts.map((productId) => {
-                      const product = availableProducts.find(
-                        (p) => p.id === productId
-                      );
-                      const quantity = productQuantities[productId] || 1;
-                      return product ? (
-                        <div
-                          key={product.id}
-                          className="flex justify-between items-center text-xs sm:text-sm"
-                        >
-                          <div className="flex-1">
-                            <span className="text-muted-foreground">
-                              {product.name}
+                                if (!acc[typeName]) {
+                                  acc[typeName] = {
+                                    count: 0,
+                                    price: price,
+                                  };
+                                }
+                                acc[typeName].count++;
+                                return acc;
+                              },
+                              {} as Record<
+                                string,
+                                { count: number; price: number }
+                              >
+                            );
+
+                            return Object.entries(groupedSlots).map(
+                              ([typeName, { count, price }], index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-fill/50 rounded-lg px-3 py-2"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-brand"></div>
+                                    <span className="text-sm text-weak">
+                                      {typeName} × {count}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm font-medium text-strong ml-2">
+                                    ${price * count}
+                                  </span>
+                                </div>
+                              )
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between bg-fill/50 rounded-lg px-3 py-2 mt-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-brand"></div>
+                            <span className="text-sm text-weak">
+                              ${selectedTour.rate} × {numberOfPeople} people
                             </span>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                              ${product.price} × {quantity} items
-                            </p>
                           </div>
-                          <span className="font-medium">
-                            ${product.price * quantity}
+                          <span className="text-sm font-medium text-strong ml-2">
+                            ${selectedTour.rate * numberOfPeople}
                           </span>
                         </div>
-                      ) : null;
-                    })}
+                      )}
+                    </div>
                   </div>
-                )}
 
-                <div className="border-t pt-3 sm:pt-4">
+                  {selectedProducts.length > 0 && (
+                    <div className="space-y-2">
+                      <span className="text-sm sm:text-base font-medium text-strong">
+                        Additional Products
+                      </span>
+                      <div className="space-y-2">
+                        {selectedProducts.map((productId) => {
+                          const product = availableProducts.find(
+                            (p) => p.id === productId
+                          );
+                          const quantity = productQuantities[productId] || 1;
+                          return product ? (
+                            <div
+                              key={product.id}
+                              className="flex items-center justify-between bg-fill/50 rounded-lg px-3 py-2"
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-stroke-strong"></div>
+                                <div>
+                                  <span className="text-sm text-weak">
+                                    {product.name}
+                                  </span>
+                                  <p className="text-xs text-weak/70">
+                                    {quantity} × $
+                                    {parseFloat(
+                                      product.price.toString()
+                                    ).toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+                              <span className="text-sm font-medium text-strong ml-2">
+                                $
+                                {parseFloat(
+                                  (product.price * quantity).toString()
+                                ).toFixed(2)}
+                              </span>
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-stroke-weak pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-base sm:text-lg font-semibold text-strong">
-                      Total
+                      Total Amount
                     </span>
-                    <span className="text-xl sm:text-2xl font-bold text-primary">
-                      ${calculateTotal()}
-                    </span>
+                    <div className="text-right">
+                      <span className="text-xl sm:text-2xl font-bold text-brand">
+                        ${calculateTotal().toFixed(2)}
+                      </span>
+                      <p className="text-xs text-weak mt-1">
+                        Including all taxes and fees
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Continue to Payment Button */}
+                  <div className="mt-6">
+                    {isAdmin ? (
+                      <div className="space-y-4">
+                        <div className="bg-muted/50 p-4 rounded-lg">
+                          <h3 className="font-medium text-strong mb-2">
+                            Payment Link
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            A payment link will be sent to the customer's email.
+                            Booking will be pending until payment is completed.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => validateAndCompleteBooking()}
+                          className="w-full bg-brand text-white hover:bg-brand/90 px-4 py-2 rounded-lg font-medium flex items-center justify-center disabled:bg-gray-400 disabled:hover:bg-gray-400"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <span className="flex items-center gap-2">
+                              <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>{" "}
+                              Creating...
+                            </span>
+                          ) : (
+                            "Create Booking"
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="w-full rounded-lg sm:rounded-xl lg:rounded-2xl bg-brand px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-sm sm:text-base lg:text-lg font-semibold text-white hover:bg-brand/90 focus:ring-4 focus:ring-brand focus:ring-offset-4 focus:outline-none disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300"
+                        disabled={!selectedTime || !numberOfPeople}
+                        onClick={() => validateAndCompleteBooking(null)}
+                      >
+                        Continue to Payment
+                      </button>
+                    )}
+
+                    {/* Error Summary Section */}
+                    {(validationErrors.personalInfo.length > 0 ||
+                      validationErrors.slots.length > 0 ||
+                      validationErrors.payment.length > 0) && (
+                      <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <svg
+                            className="h-5 w-5 text-red-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <h3 className="text-sm font-semibold text-red-800">
+                            Please fix the following errors
+                          </h3>
+                        </div>
+                        <div className="space-y-3">
+                          {validationErrors.personalInfo.length > 0 && (
+                            <div>
+                              <h4 className="text-xs font-medium text-red-700 mb-1.5">
+                                Personal Information
+                              </h4>
+                              <ul className="space-y-1">
+                                {validationErrors.personalInfo.map(
+                                  (error, index) => (
+                                    <li
+                                      key={index}
+                                      className="text-xs text-red-600 flex items-start gap-1.5"
+                                    >
+                                      <span className="mt-1">•</span>
+                                      <span>{error}</span>
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                          {validationErrors.slots.length > 0 && (
+                            <div>
+                              <h4 className="text-xs font-medium text-red-700 mb-1.5">
+                                Slot Details
+                              </h4>
+                              <ul className="space-y-1">
+                                {validationErrors.slots.map((error, index) => (
+                                  <li
+                                    key={index}
+                                    className="text-xs text-red-600 flex items-start gap-1.5"
+                                  >
+                                    <span className="mt-1">•</span>
+                                    <span>{error}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {validationErrors.payment.length > 0 && (
+                            <div>
+                              <h4 className="text-xs font-medium text-red-700 mb-1.5">
+                                Payment Information
+                              </h4>
+                              <ul className="space-y-1">
+                                {validationErrors.payment.map(
+                                  (error, index) => (
+                                    <li
+                                      key={index}
+                                      className="text-xs text-red-600 flex items-start gap-1.5"
+                                    >
+                                      <span className="mt-1">•</span>
+                                      <span>{error}</span>
+                                    </li>
+                                  )
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Payment Method Section */}
-          <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
-              {isAdmin ? "Complete Booking" : "Card Payment"}
-            </h2>
-            <div className="space-y-4 sm:space-y-6">
-              {isAdmin ? (
-                <div className="space-y-4">
-                  <div className="bg-muted/50 p-4 rounded-lg">
-                    <h3 className="font-medium text-strong mb-2">
-                      Payment Link Information
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      When you complete this booking, a payment link will be
-                      generated and sent to the customer's email. The booking
-                      will be marked as pending until the customer completes the
-                      payment.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleCompleteBooking(null)}
-                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium flex items-center justify-center"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>{" "}
-                        Creating...
-                      </span>
-                    ) : (
-                      "Create Booking with Payment Link"
-                    )}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {!clientSecret && !isLoading && (
-                    <button
-                      onClick={() => setShouldFetchPaymentIntent(true)}
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium"
-                    >
-                      Initialize Payment
-                    </button>
-                  )}
-                  {isLoading && (
-                    <div className="flex items-center justify-center py-4">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    </div>
-                  )}
-                  {clientSecret && !isLoading && (
-                    <Elements stripe={stripePromise} options={{ clientSecret }}>
-                      <StripePaymentFormV2
-                        onPaymentSuccess={async (paymentId) => {
-                          await handleCompleteBooking(paymentId);
-                        }}
-                      />
-                    </Elements>
-                  )}
-                </>
-              )}
             </div>
           </div>
         </div>

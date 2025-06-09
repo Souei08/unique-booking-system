@@ -1,14 +1,10 @@
-"use client";
+import { Suspense } from "react";
+import TourBookingsClient from "@/app/_features/widget/components/TourBookingsClient";
 
-import React from "react";
-import CreateBookingv2 from "../_features/booking/components/CreateBookingv2/CreateBookingv2";
-
-const TourBookingWidget = () => {
+export default function TourBookingWidgetPage() {
   return (
-    <div className="w-7/12 mx-auto pt-10">
-      <CreateBookingv2 onClose={() => {}} />
-    </div>
+    <Suspense fallback={<div className="w-7/12 mx-auto pt-10">Loading...</div>}>
+      <TourBookingsClient />
+    </Suspense>
   );
-};
-
-export default TourBookingWidget;
+}

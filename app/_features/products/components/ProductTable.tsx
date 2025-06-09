@@ -96,7 +96,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
     },
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: "Date Created",
       cell: ({ row }) => (
         <div>{format(new Date(row.original.created_at), "MMM d, yyyy")}</div>
       ),

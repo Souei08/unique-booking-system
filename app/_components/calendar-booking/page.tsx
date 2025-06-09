@@ -41,7 +41,8 @@ import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickB
 import { parseDate } from "@internationalized/date";
 import { toast } from "sonner";
 import { formatTime } from "@/app/_utils/formatTime";
-import UpdateBooking from "@/app/_features/booking/components/UpdateBooking";
+import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface Slot {
   tour_type: string;
@@ -114,7 +115,7 @@ const CalendarBookingPage: React.FC = () => {
 
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
   const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [selectedTour, setSelectedTour] = useState<string>("All");
+  const [selectedTour, setSelectedTour] = useState<string>("");
   const [onlyAvailable, setOnlyAvailable] = useState<boolean>(false);
 
   const [selectedTourForBooking, setSelectedTourForBooking] =
@@ -128,6 +129,7 @@ const CalendarBookingPage: React.FC = () => {
     useState<boolean>(false);
   const [selectedBookingToUpdate, setSelectedBookingToUpdate] =
     useState<BookingResponse | null>(null);
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
   const fetchSlotBookings = async (
     tourTitle: string,
@@ -155,6 +157,10 @@ const CalendarBookingPage: React.FC = () => {
       try {
         const data = await getAllTours();
         setTours(data);
+        // Set the first tour as default if available
+        if (data.length > 0) {
+          setSelectedTour(data[0].title);
+        }
       } catch (error) {
         console.error("Error loading tours:", error);
       }
@@ -350,6 +356,18 @@ const CalendarBookingPage: React.FC = () => {
     }
   };
 
+  const toggleDateExpansion = (dateKey: string) => {
+    setExpandedDates((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(dateKey)) {
+        newSet.delete(dateKey);
+      } else {
+        newSet.add(dateKey);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="w-full mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
       {/* Filters Section */}
@@ -456,23 +474,26 @@ const CalendarBookingPage: React.FC = () => {
       </div>
 
       {/* Calendar Grid */}
-      <div className="bg-background rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6 overflow-x-auto">
-        <div className="grid grid-cols-7 gap-2 sm:gap-3 md:gap-4 min-w-[600px]">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div
-              key={d}
-              className="text-center py-2 sm:py-3 font-semibold text-weak bg-fill rounded-lg text-xs sm:text-sm"
-            >
-              {d}
-            </div>
-          ))}
+      <div className="bg-background rounded-xl shadow-sm border border-gray-200 p-2 sm:p-3 md:p-4 lg:p-6 overflow-x-auto">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3 md:gap-4 min-w-[280px]">
+          {/* Weekday Headers */}
+          <div className="hidden lg:grid grid-cols-7 col-span-7 gap-2 sm:gap-3 md:gap-4">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div
+                key={d}
+                className="text-center py-2 sm:py-3 font-semibold text-weak bg-fill rounded-lg text-xs sm:text-sm"
+              >
+                {d}
+              </div>
+            ))}
+          </div>
 
           {isLoading
             ? // Skeleton loading state
               Array.from({ length: 35 }).map((_, i) => (
                 <div
                   key={i}
-                  className="min-h-[100px] sm:min-h-[120px] md:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 bg-background animate-pulse"
+                  className="min-h-[80px] sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 bg-background animate-pulse"
                 >
                   <div className="h-4 bg-gray-200 rounded w-16 mb-2"></div>
                   <div className="space-y-2">
@@ -485,7 +506,7 @@ const CalendarBookingPage: React.FC = () => {
             : monthMatrix.flat().map((dateKey, i) => (
                 <div
                   key={i}
-                  className={`min-h-[100px] sm:min-h-[120px] md:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all bg-background cursor-pointer ${
+                  className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all bg-background cursor-pointer ${
                     dateKey
                       ? "hover:shadow-md"
                       : "opacity-0 pointer-events-none"
@@ -494,14 +515,22 @@ const CalendarBookingPage: React.FC = () => {
                   {dateKey ? (
                     <>
                       <div
-                        className={`font-semibold mb-1 sm:mb-2 text-xs sm:text-sm ${
+                        className={`font-semibold mb-1 sm:mb-2 text-xs sm:text-sm flex items-center gap-1 ${
                           isPastDate(dateKey) ? "text-gray-500" : "text-strong"
                         }`}
                       >
-                        {new Date(dateKey).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        <span className="hidden lg:inline">
+                          {new Date(dateKey).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                        <span className="lg:hidden">
+                          {new Date(dateKey).toLocaleDateString("en-US", {
+                            month: "numeric",
+                            day: "numeric",
+                          })}
+                        </span>
                         {isPastDate(dateKey) && (
                           <span className="ml-1 text-[10px] font-normal text-gray-400">
                             (Past)
@@ -510,103 +539,125 @@ const CalendarBookingPage: React.FC = () => {
                       </div>
                       <div className="space-y-1 sm:space-y-2">
                         {getDaySlots(dateKey).length > 0 ? (
-                          getDaySlots(dateKey).map((slot, idx) => (
-                            <div
-                              key={idx}
-                              className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
-                                isFullyBooked(slot)
-                                  ? "bg-red-50 border-red-200"
-                                  : isPartiallyBooked(slot)
-                                  ? "bg-amber-50 border-amber-200"
-                                  : isPastDate(dateKey)
-                                  ? "bg-gray-50 border-gray-200"
-                                  : "bg-fill border-gray-200"
-                              } hover:shadow-sm`}
-                              onClick={() =>
-                                handleDateCardClick(
-                                  dateKey,
-                                  slot.slot_time || "",
-                                  slot.tour_type || ""
-                                )
-                              }
-                            >
-                              {slot.slot_time && (
-                                <div className="font-medium text-strong text-xs sm:text-sm mb-0.5 sm:mb-1 flex flex-col gap-1">
-                                  <span className="truncate">
-                                    {formatTime(slot.slot_time)}
-                                  </span>
-                                  <span className="text-[10px] sm:text-xs text-gray-600 truncate">
-                                    {slot.tour_type}
-                                  </span>
-                                  <div className="flex flex-wrap gap-1">
-                                    {isFullyBooked(slot) && (
-                                      <span className="text-[10px] sm:text-xs font-medium text-red-600 bg-red-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                        Fully Booked
+                          <>
+                            {getDaySlots(dateKey)
+                              .slice(
+                                0,
+                                expandedDates.has(dateKey) ? undefined : 2
+                              )
+                              .map((slot, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
+                                    isFullyBooked(slot)
+                                      ? "bg-red-50 border-red-200"
+                                      : isPartiallyBooked(slot)
+                                      ? "bg-amber-50 border-amber-200"
+                                      : isPastDate(dateKey)
+                                      ? "bg-gray-50 border-gray-200"
+                                      : "bg-fill border-gray-200"
+                                  } hover:shadow-sm`}
+                                  onClick={() =>
+                                    handleDateCardClick(
+                                      dateKey,
+                                      slot.slot_time || "",
+                                      slot.tour_type || ""
+                                    )
+                                  }
+                                >
+                                  {slot.slot_time && (
+                                    <div className="font-medium text-strong text-[10px] xs:text-xs sm:text-sm mb-0.5 sm:mb-1 flex flex-col gap-0.5 sm:gap-1">
+                                      <span className="truncate">
+                                        {formatTime(slot.slot_time)}
                                       </span>
-                                    )}
-                                    {isPartiallyBooked(slot) && (
-                                      <span className="text-[10px] sm:text-xs font-medium text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                        Partially Booked
+                                      <span className="text-[9px] xs:text-[10px] sm:text-xs text-gray-600 truncate">
+                                        {slot.tour_type}
                                       </span>
-                                    )}
-                                    {isPastDate(dateKey) && (
-                                      <span className="text-[10px] sm:text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-                                        Past Date
+                                      <div className="flex flex-wrap gap-0.5 sm:gap-1">
+                                        {isFullyBooked(slot) && (
+                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-red-600 bg-red-100 px-1 py-0.5 rounded-full whitespace-nowrap">
+                                            Fully Booked
+                                          </span>
+                                        )}
+                                        {isPartiallyBooked(slot) && (
+                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-amber-600 bg-amber-100 px-1 py-0.5 rounded-full whitespace-nowrap">
+                                            Partially Booked
+                                          </span>
+                                        )}
+                                        {isPastDate(dateKey) && (
+                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-500 bg-gray-100 px-1 py-0.5 rounded-full whitespace-nowrap">
+                                            Past Date
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  <div className="flex flex-col justify-between text-[9px] xs:text-[10px] sm:text-xs text-weak">
+                                    <span className="flex items-center">
+                                      <span
+                                        className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
+                                          isFullyBooked(slot)
+                                            ? "bg-red-500"
+                                            : isPastDate(dateKey)
+                                            ? "bg-gray-400"
+                                            : "bg-emerald-500"
+                                        }`}
+                                      ></span>
+                                      <span
+                                        className={
+                                          isFullyBooked(slot)
+                                            ? "text-red-600 font-medium"
+                                            : isPastDate(dateKey)
+                                            ? "text-gray-500"
+                                            : "text-emerald-600"
+                                        }
+                                      >
+                                        Booked: {slot.booked}
                                       </span>
-                                    )}
+                                    </span>
+                                    <span className="flex items-center">
+                                      <span
+                                        className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
+                                          isFullyBooked(slot)
+                                            ? "bg-red-300"
+                                            : isPastDate(dateKey)
+                                            ? "bg-gray-300"
+                                            : "bg-blue-400"
+                                        }`}
+                                      ></span>
+                                      <span
+                                        className={
+                                          isFullyBooked(slot)
+                                            ? "text-red-500"
+                                            : isPastDate(dateKey)
+                                            ? "text-gray-500"
+                                            : "text-blue-600"
+                                        }
+                                      >
+                                        Available: {slot.available}
+                                      </span>
+                                    </span>
                                   </div>
                                 </div>
-                              )}
-                              <div className="flex flex-col justify-between text-[10px] sm:text-xs text-weak">
-                                <span className="flex items-center">
-                                  <span
-                                    className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
-                                      isFullyBooked(slot)
-                                        ? "bg-red-500"
-                                        : isPastDate(dateKey)
-                                        ? "bg-gray-400"
-                                        : "bg-emerald-500"
-                                    }`}
-                                  ></span>
-                                  <span
-                                    className={
-                                      isFullyBooked(slot)
-                                        ? "text-red-600 font-medium"
-                                        : isPastDate(dateKey)
-                                        ? "text-gray-500"
-                                        : "text-emerald-600"
-                                    }
-                                  >
-                                    Booked: {slot.booked}
-                                  </span>
-                                </span>
-                                <span className="flex items-center">
-                                  <span
-                                    className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
-                                      isFullyBooked(slot)
-                                        ? "bg-red-300"
-                                        : isPastDate(dateKey)
-                                        ? "bg-gray-300"
-                                        : "bg-blue-400"
-                                    }`}
-                                  ></span>
-                                  <span
-                                    className={
-                                      isFullyBooked(slot)
-                                        ? "text-red-500"
-                                        : isPastDate(dateKey)
-                                        ? "text-gray-500"
-                                        : "text-blue-600"
-                                    }
-                                  >
-                                    Available: {slot.available}
-                                  </span>
-                                </span>
-                              </div>
-                            </div>
-                          ))
+                              ))}
+                            {getDaySlots(dateKey).length > 2 && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleDateExpansion(dateKey);
+                                }}
+                                className="w-full text-[9px] xs:text-[10px] sm:text-xs text-brand hover:text-brand/80 font-medium py-0.5 sm:py-1 hover:bg-brand/5 rounded-lg transition-colors"
+                              >
+                                {expandedDates.has(dateKey)
+                                  ? "Show Less"
+                                  : `Show ${
+                                      getDaySlots(dateKey).length - 2
+                                    } More`}
+                              </button>
+                            )}
+                          </>
                         ) : (
-                          <div className="text-[11px] sm:text-xs text-gray-400 italic">
+                          <div className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 italic">
                             No bookings
                           </div>
                         )}
@@ -717,24 +768,10 @@ const CalendarBookingPage: React.FC = () => {
                               </p>
                             </div>
                             <div className="flex flex-col items-end gap-2">
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs uppercase font-bold ${
-                                  booking.status === "confirmed"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-yellow-100 text-yellow-800"
-                                }`}
-                              >
-                                {booking.status}
-                              </span>
-                              {/* <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  booking.payments[0].status === "paid"
-                                    ? "bg-green-100 text-green-800"
-                                    : "bg-red-100 text-red-800"
-                                }`}
-                              >
-                                {booking.payments[0].status}
-                              </span> */}
+                              <StatusBadge
+                                status={booking.status.toLowerCase() as any}
+                                type="booking"
+                              />
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-4 text-sm">

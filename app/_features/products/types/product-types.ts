@@ -1,4 +1,5 @@
 export interface Product {
+  product_booking_id?: string;
   id: string;
   name: string;
   description: string | null;

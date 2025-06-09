@@ -1,3 +1,8 @@
+import {
+  CustomSlotField,
+  CustomSlotType,
+} from "../components/CreateBookingv2/booking-steps/SlotDetails";
+
 export interface BookingResponse {
   id: string;
   tour_id: string;
@@ -12,6 +17,7 @@ export interface BookingResponse {
   updated_at: string | null;
   reference_number: string;
   payment_link: string | null;
+
   tours: {
     title: string;
   };
@@ -48,21 +54,30 @@ export interface BookingTable {
   tour_title: string;
   payment_method?: string;
   transaction_id?: string;
-  additional_products?: AdditionalProduct[];
   booking_status: string;
   payment_status: string;
   reference_number: string;
   stripe_payment_id: string;
   payment_link: string;
   tour_rate: number;
+  slot_details: SlotDetail[];
+  custom_slot_types: CustomSlotType[];
+  custom_slot_fields: CustomSlotField[];
+  booked_products: AdditionalProduct[];
+  tour_featured_image: string;
+  tour_description: string;
+  amount_paid: number;
 }
 
 export interface AdditionalProduct {
+  product_booking_id?: string;
   id: string;
+  product_id?: string;
   name: string;
   quantity: number;
-  price: number;
-  total: number;
+  unit_price: number;
+  image_url?: string | null;
+  description?: string | null;
 }
 
 export interface CustomerInformation {
@@ -76,4 +91,15 @@ export interface PaymentInformation {
   payment_method: string;
   payment_id: string;
   total_price: number;
+  additional_products?: {
+    name: string;
+    quantity: number;
+    price: number;
+  }[];
+}
+
+export interface SlotDetail {
+  type: string;
+  price: number;
+  [key: string]: string | number; // Allow dynamic string properties
 }
