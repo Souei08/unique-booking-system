@@ -17,7 +17,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { StripePaymentFormV2 } from "./StripePaymentFormv2";
 import { getAssignedToursByTourId } from "@/app/_features/products/api/getAssignedToursByTourId";
 import { toast } from "sonner";
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 import SlotDetails, { CustomSlotType, CustomSlotField } from "./SlotDetails";
 import PersonalInformation from "./PersonalInformation";
 import AdditionalProducts from "./AdditionalProducts";
@@ -62,7 +62,10 @@ const CheckForm = ({
       | CustomerInformation
       | ((prev: CustomerInformation) => CustomerInformation)
   ) => void;
-  handleCompleteBooking: (paymentId: string | null) => void;
+  handleCompleteBooking: (
+    paymentId: string | null,
+    existingBookingId: string | null
+  ) => void;
   selectedProducts: string[];
   setSelectedProducts: (
     products: string[] | ((prev: string[]) => string[])
@@ -262,7 +265,7 @@ const CheckForm = ({
     // If admin, proceed with booking
     if (isAdmin) {
       try {
-        await handleCompleteBooking(paymentId);
+        await handleCompleteBooking(paymentId, null);
         return true;
       } catch (error) {
         console.error("Error completing booking:", error);

@@ -14,7 +14,7 @@ import {
   CustomSlotField,
 } from "../CreateBookingv2/booking-steps/SlotDetails";
 import { toast } from "sonner";
-import { updateBookingSlots } from "../../api/UpdateBookingSlots";
+import { updateBookingSlots } from "../../api/update-booking/UpdateBookingSlots";
 import {
   AdditionalProduct,
   CustomerInformation,

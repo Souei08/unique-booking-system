@@ -3,15 +3,20 @@ import { useState } from "react";
 import { useElements } from "@stripe/react-stripe-js";
 import { useStripe } from "@stripe/react-stripe-js";
 import { toast } from "sonner";
+import { sendBookingConfirmationEmail } from "../../../api/email-booking/send-booking-email";
 
 export const StripePaymentFormV2 = ({
   onPaymentSuccess,
   handleCompleteBooking,
 }: {
   onPaymentSuccess: (paymentId: string, bookingId: string) => void;
-  handleCompleteBooking: (paymentId: string | null) => Promise<{
+  handleCompleteBooking: (
+    paymentId: string | null,
+    existingBookingId: string | null
+  ) => Promise<{
     success: boolean;
     bookingId: string | null;
+    email_response: any;
   }>;
 }) => {
   const stripe = useStripe();
@@ -19,6 +24,9 @@ export const StripePaymentFormV2 = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [existingBookingId, setExistingBookingId] = useState<string | null>(
+    null
+  );
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -45,13 +53,17 @@ export const StripePaymentFormV2 = ({
 
       // 2. Create booking and update metadata before confirming payment
 
-      const bookingResult = await handleCompleteBooking(null);
-      if (!bookingResult.success || !bookingResult.bookingId) {
+      const { success, bookingId, email_response } =
+        await handleCompleteBooking(null, existingBookingId);
+
+      if (!success || !bookingId) {
         toast.error("Booking Failed", {
           description: "We couldn't finalize your booking before payment.",
         });
         setIsLoading(false);
         return;
+      } else {
+        setExistingBookingId(bookingId);
       }
 
       // 3. Confirm the payment AFTER booking is fully processed and metadata updated
@@ -68,10 +80,33 @@ export const StripePaymentFormV2 = ({
         });
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         // Payment successful, update booking status
-        onPaymentSuccess(paymentIntent.id, bookingResult.bookingId);
-        toast.success("Payment Successful", {
-          description: "Your booking has been confirmed.",
+        onPaymentSuccess(paymentIntent.id, bookingId);
+
+        const emailResponse = await sendBookingConfirmationEmail({
+          full_name: email_response.full_name,
+          email: email_response.email,
+          booking_date: email_response.booking_date,
+          selected_time: email_response.selected_time,
+          slots: email_response.slots,
+          total_price: email_response.total_price,
+          booking_reference_id: email_response.booking_reference_id,
+          tour_name: email_response.tour_name,
+          tour_rate: email_response.tour_rate,
+          products: email_response.products,
+          slot_details: email_response.slot_details,
+          waiver_link: "https://your-waiver-link.com",
         });
+
+        if (emailResponse.success) {
+          toast.success("Payment Successful", {
+            description:
+              "Your booking has been confirmed and email has been sent.",
+          });
+        } else {
+          toast.error("Email sending failed", {
+            description: "We couldn't send your booking confirmation email.",
+          });
+        }
       } else {
         // Handle other payment statuses
         setErrorMessage("Payment is still processing. Please wait...");

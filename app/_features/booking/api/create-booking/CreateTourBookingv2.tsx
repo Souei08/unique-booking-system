@@ -1,4 +1,5 @@
 import { createClient } from "@/supabase/client";
+import { sendBookingConfirmationEmail } from "../email-booking/send-booking-email";
 
 interface BookingData {
   first_name: string;
@@ -14,6 +15,7 @@ interface BookingData {
   payment_id: string | null;
   products: Array<{
     product_id: string;
+    product_name: string;
     quantity: number;
     unit_price: number;
   }>;
@@ -26,6 +28,7 @@ interface BookingData {
 export async function createTourBookingv2(data: BookingData): Promise<{
   success: boolean;
   booking_id: string;
+  email_response: any;
   //   manage_link: string;
 }> {
   const supabase = await createClient();
@@ -99,6 +102,20 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     return {
       success: true,
       booking_id: booking.booking_id,
+      email_response: {
+        full_name: `${first_name} ${last_name}`,
+        email,
+        booking_date,
+        selected_time,
+        slots,
+        total_price,
+        booking_reference_id: booking.reference_number,
+        tour_name: booking?.tour_title,
+        tour_rate: booking?.tour_rate,
+        products,
+        slot_details,
+        waiver_link: "https://your-waiver-link.com",
+      },
     };
   } catch (err: any) {
     console.error("Unhandled Error:", err);

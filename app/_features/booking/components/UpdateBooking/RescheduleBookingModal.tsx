@@ -16,9 +16,9 @@ import { getLocalTimeZone, parseDate } from "@internationalized/date";
 import { RenderCalendar } from "@/app/_components/calendar-v2/RenderCalendar";
 import { getTourSchedule } from "@/app/_features/tours/api/tour-schedule/client/getTourSchedule";
 import { DateValue } from "@internationalized/date";
-import { getRemainingSlots } from "@/app/_features/booking/api/getRemainingSlots";
+import { getRemainingSlots } from "@/app/_features/booking/api/get-booking/getRemainingSlots";
 import { Badge } from "@/components/ui/badge";
-import { getFullyBookedDatesFromList } from "@/app/_features/booking/api/getFullyBookedDatesFromList";
+import { getFullyBookedDatesFromList } from "@/app/_features/booking/api/get-booking/getFullyBookedDatesFromList";
 import { CalendarDays, Clock, RefreshCw } from "lucide-react";
 
 interface TimeSlot {
@@ -315,7 +315,6 @@ const RescheduleBookingModal: React.FC<RescheduleBookingModalProps> = ({
                   <RadioGroup
                     value={selectedTime || ""}
                     onValueChange={setSelectedTime}
-                    className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                   >
                     {availableTimes.map((timeSlot, index) => {
                       const timeDate = new Date(

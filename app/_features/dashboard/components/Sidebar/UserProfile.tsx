@@ -14,14 +14,15 @@ export const UserProfile = ({ user }: { user: any }) => {
             <span className="flex min-w-0 items-center justify-between space-x-3">
               <Image
                 alt={user.email}
-                src={user.user_metadata.avatar_url}
+                src={"/auth/photo-1522075469751-3a6694fb2f61 (1).avif"}
                 className="size-10 shrink-0 rounded-full bg-gray-300"
                 width={40}
                 height={40}
               />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-small font-medium text-strong">
-                  {user.user_metadata.name}
+                  {/* {user.user_metadata.name} */}
+                  Web Developer
                 </span>
                 <span className="truncate text-small text-weak capitalize">
                   {user.role}

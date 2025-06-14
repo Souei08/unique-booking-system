@@ -28,7 +28,7 @@ import BookingSuccess from "./booking-steps/BookingSuccess";
 import PaymentStep from "./booking-steps/PaymentStep";
 
 // Types
-import { DateValue, parseDate, CalendarDate } from "@internationalized/date";
+import { DateValue, parseDate } from "@internationalized/date";
 import { Tour } from "@/app/_features/tours/tour-types";
 import { Product } from "@/app/_features/products/types/product-types";
 
@@ -39,8 +39,7 @@ import {
 } from "@/app/_features/booking/types/booking-types";
 
 // Api
-import { createTourBookingv2 } from "../../api/CreateTourBookingv2";
-import { updateBookingPaymentStatus } from "../../api/updateBookingPaymentStatus";
+import { createTourBookingv2 } from "../../api/create-booking/CreateTourBookingv2";
 
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
@@ -74,20 +73,7 @@ const CreateBookingv2 = ({
   );
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
-  const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([
-    {
-      type:
-        selectedTour.custom_slot_types &&
-        selectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(selectedTour.custom_slot_types)[0].name
-          : "",
-      price:
-        selectedTour.custom_slot_types &&
-        selectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(selectedTour.custom_slot_types)[0].price
-          : 0,
-    },
-  ]);
+  const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([]);
 
   // Add handler for date changes
   const handleDateChange = (newDate: DateValue) => {
@@ -199,8 +185,21 @@ const CreateBookingv2 = ({
       : [];
 
   const handleCompleteBooking = async (
-    paymentId: string | null
-  ): Promise<{ success: boolean; bookingId: string | null }> => {
+    paymentId: string | null,
+    existingBookingId: string | null
+  ): Promise<{
+    success: boolean;
+    bookingId: string | null;
+    email_response: any;
+  }> => {
+    if (existingBookingId) {
+      return {
+        success: true,
+        bookingId: existingBookingId,
+        email_response: null,
+      };
+    }
+
     if (!selectedTour?.id || !selectedDate) {
       throw new Error("Missing required tour or date information");
     }
@@ -210,9 +209,9 @@ const CreateBookingv2 = ({
       const product = availableProducts.find((p) => p.id === productId);
       const quantity = productQuantities[productId] || 1;
       const bookingProductId = product?.product_booking_id || "";
-      console.log(bookingProductId);
       return {
         product_id: productId,
+        product_name: product?.name || "",
         quantity: quantity,
         unit_price: product?.price || 0,
         product_booking_id: bookingProductId,
@@ -228,7 +227,7 @@ const CreateBookingv2 = ({
       booking_date: formatToDateString(selectedDate) || "",
       selected_time: selectedTime,
       slots: numberOfPeople,
-      total_price: paymentInformation.total_price,
+      total_price: calculateTotal(),
       payment_method: paymentInformation.payment_method,
       payment_id: paymentId,
       products: productsData,
@@ -250,16 +249,20 @@ const CreateBookingv2 = ({
           }),
         });
 
-        return { success: true, bookingId: response.booking_id };
+        return {
+          success: true,
+          bookingId: response.booking_id,
+          email_response: response.email_response,
+        };
       }
-      return { success: false, bookingId: null };
+      return { success: false, bookingId: null, email_response: null };
     } catch (error) {
       console.error("Booking Error:", error);
       toast.error("Booking Failed", {
         description:
           "There was an error processing your booking. Please try again.",
       });
-      return { success: false, bookingId: null };
+      return { success: false, bookingId: null, email_response: null };
     }
   };
 

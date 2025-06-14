@@ -21,9 +21,13 @@ interface PaymentStepProps {
   fetchClientSecret: (bookingId: string | null) => void;
   clientSecret: string;
   paymentInformation: PaymentInformation;
-  handleCompleteBooking: (paymentId: string | null) => Promise<{
+  handleCompleteBooking: (
+    paymentId: string | null,
+    existingBookingId: string | null
+  ) => Promise<{
     success: boolean;
     bookingId: string | null;
+    email_response: any;
   }>;
   handleNext: () => void;
   handleBack: () => void;
@@ -114,8 +118,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                 >
                   <StripePaymentFormV2
                     onPaymentSuccess={async (paymentId, bookingId) => {
-                      // await handleCompleteBooking(paymentId);
-
                       setBookingId(bookingId);
                       setIsBookingComplete(true);
                     }}

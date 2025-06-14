@@ -311,8 +311,14 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
         field,
         newValue.length > 0 ? newValue : [{ question: "", answer: "" }]
       );
-    } else {
+    } else if (
+      field === "languages" ||
+      field === "trip_highlights" ||
+      field === "includes"
+    ) {
       form.setValue(field, newValue.length > 0 ? newValue : [""]);
+    } else {
+      form.setValue(field, newValue);
     }
   };
 

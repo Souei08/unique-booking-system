@@ -15,7 +15,7 @@ import {
 } from "@internationalized/date";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -27,9 +27,9 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { getTourSchedule } from "@/app/_features/tours/api/tour-schedule/client/getTourSchedule";
-import { getRemainingSlots } from "@/app/_features/booking/api/getRemainingSlots";
+import { getRemainingSlots } from "@/app/_features/booking/api/get-booking/getRemainingSlots";
 import { RenderCalendar } from "@/app/_components/calendar-v2/RenderCalendar";
-import { getFullyBookedDatesFromList } from "../../../api/getFullyBookedDatesFromList";
+import { getFullyBookedDatesFromList } from "../../../api/get-booking/getFullyBookedDatesFromList";
 import {
   Collapsible,
   CollapsibleContent,

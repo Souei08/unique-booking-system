@@ -11,7 +11,6 @@ import { RefreshCw, Package } from "lucide-react";
 import AdditionalProducts from "../CreateBookingv2/booking-steps/AdditionalProducts";
 import { toast } from "sonner";
 import { updateBookingProducts } from "../../api/update-booking/UpdateBookingProducts";
-import { updatePayment } from "../../api/updatePayment";
 import { Product } from "@/app/_features/products/types/product-types";
 import {
   AdditionalProduct,

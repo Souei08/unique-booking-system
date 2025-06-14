@@ -39,8 +39,7 @@ import {
 } from "@/app/_features/booking/types/booking-types";
 
 // Api
-import { createTourBookingv2 } from "../../api/CreateTourBookingv2";
-import { updateBookingPaymentStatus } from "../../api/updateBookingPaymentStatus";
+import { createTourBookingv2 } from "../../api/create-booking/CreateTourBookingv2";
 
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
@@ -86,20 +85,7 @@ const QuickBooking = ({
   const [selectedTour, setSelectedTour] = useState<Tour | null>(
     initialSelectedTour
   );
-  const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([
-    {
-      type:
-        initialSelectedTour?.custom_slot_types &&
-        initialSelectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(initialSelectedTour.custom_slot_types)[0].name
-          : "",
-      price:
-        initialSelectedTour?.custom_slot_types &&
-        initialSelectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(initialSelectedTour.custom_slot_types)[0].price
-          : 0,
-    },
-  ]);
+  const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([]);
 
   // Customer and Payment Information
   const [customerInformation, setCustomerInformation] =
@@ -141,6 +127,7 @@ const QuickBooking = ({
       selectedTour.custom_slot_types !== "[]"
     ) {
       const customTypes = JSON.parse(selectedTour.custom_slot_types);
+
       if (customTypes.length > 0) {
         setSlotDetails([
           {
@@ -251,7 +238,6 @@ const QuickBooking = ({
       setBookingId(bookingId);
 
       // Create payment link
-      console.log("Creating payment link");
       const paymentLinkResponse = await fetch("/api/create-payment-link", {
         method: "POST",
         headers: {
@@ -264,7 +250,7 @@ const QuickBooking = ({
           phone: customerInformation.phone_number,
           booking_id: bookingId,
           slots: numberOfPeople,
-          booking_price: calculateTotal() * 100, // Convert to cents and ensure integer
+          booking_price: selectedTour.rate, // Convert to cents and ensure integer
           tourProducts: productsData.map((product) => ({
             name:
               availableProducts.find((p) => p.id === product.product_id)

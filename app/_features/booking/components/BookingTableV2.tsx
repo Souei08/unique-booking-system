@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
+import { sendBookingConfirmationEmail } from "../api/email-booking/send-booking-email";
 
 interface BookingTableV2Props {
   bookings: BookingTable[];
@@ -39,6 +40,7 @@ interface BookingTableV2Props {
   onDelete?: (booking: BookingTable) => void;
   onSendEmail?: (booking: BookingTable) => void;
   onUpdateStatus?: (booking: BookingTable) => void;
+  onRefresh?: () => void;
 }
 
 export function BookingTableV2({
@@ -48,6 +50,7 @@ export function BookingTableV2({
   onDelete,
   onSendEmail,
   onUpdateStatus,
+  onRefresh,
 }: BookingTableV2Props) {
   const [isUpdateBookingDialogOpen, setIsUpdateBookingDialogOpen] =
     useState(false);
@@ -139,22 +142,27 @@ export function BookingTableV2({
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
-                onClick={() => onSendEmail?.(booking)}
-                className={`cursor-pointer ${
-                  !onSendEmail ? "text-gray-400" : ""
-                }`}
-                disabled={!onSendEmail}
+                onClick={async () => {
+                  const response = await sendBookingConfirmationEmail({
+                    full_name: booking?.full_name || "",
+                    email: booking?.email || "",
+                    booking_date: booking?.booking_date || "",
+                    selected_time: booking?.selected_time || "",
+                    slots: booking?.slots || 0,
+                    total_price: booking?.amount_paid || 0,
+                    booking_id: booking?.reference_number || "",
+                    tour_name: booking?.tour_title || "",
+                    products: [],
+                    slot_details: booking?.slot_details || [],
+                    waiver_link: "https://your-waiver-link.com",
+                  });
+
+                  console.log(response);
+                }}
+                className={`cursor-pointer`}
               >
                 <Mail className="mr-2 h-4 w-4" />
-                Send Email
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {}}
-                className="cursor-pointer text-gray-400"
-                disabled={true}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Update Status
+                Resend Confirmation Email
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -198,10 +206,10 @@ export function BookingTableV2({
                 bookingId={selectedBooking.booking_id}
                 manageToken={selectedBooking.manage_token}
                 onClose={() => setIsUpdateBookingDialogOpen(false)}
-                // onUpdate={async (updatedBooking) => {
-                //   // await onUpdateStatus?.(updatedBooking);
-                //   // setIsUpdateBookingDialogOpen(false);
-                // }}
+                onSuccess={() => {
+                  onRefresh?.();
+                  setIsUpdateBookingDialogOpen(false);
+                }}
               />
             )}
           </div>

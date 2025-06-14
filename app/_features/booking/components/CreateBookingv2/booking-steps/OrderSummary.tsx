@@ -3,7 +3,7 @@ import { Tour } from "@/app/_features/tours/tour-types";
 import { Product } from "@/app/_features/products/types/product-types";
 import { SlotDetail } from "@/app/_features/booking/types/booking-types";
 import { CustomSlotType, CustomSlotField } from "./SlotDetails";
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 import { format } from "date-fns";
 import { DateValue } from "@internationalized/date";
 
@@ -205,22 +205,25 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                   <div className="space-y-2 mt-2">
                     {(() => {
                       // Group slots by type and count occurrences
-                      const groupedSlots = slotDetails.reduce((acc, slot) => {
-                        const slotType = customSlotTypes.find(
-                          (type) => type.name === slot.type
-                        );
-                        const typeName = slotType?.name || "Default";
-                        const price = slotType?.price || 0;
+                      const groupedSlots = slotDetails.reduce(
+                        (acc, slot) => {
+                          const slotType = customSlotTypes.find(
+                            (type) => type.name === slot.type
+                          );
+                          const typeName = slotType?.name || "Default";
+                          const price = slotType?.price || 0;
 
-                        if (!acc[typeName]) {
-                          acc[typeName] = {
-                            count: 0,
-                            price: price,
-                          };
-                        }
-                        acc[typeName].count++;
-                        return acc;
-                      }, {} as Record<string, { count: number; price: number }>);
+                          if (!acc[typeName]) {
+                            acc[typeName] = {
+                              count: 0,
+                              price: price,
+                            };
+                          }
+                          acc[typeName].count++;
+                          return acc;
+                        },
+                        {} as Record<string, { count: number; price: number }>
+                      );
 
                       return Object.entries(groupedSlots).map(
                         ([typeName, { count, price }], index) => (

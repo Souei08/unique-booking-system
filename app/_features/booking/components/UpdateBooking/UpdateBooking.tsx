@@ -6,8 +6,8 @@ import {
   AdditionalProduct,
   CustomerInformation,
 } from "../../types/booking-types";
-import { getOneBooking } from "../../api/getOneBooking";
-import { rescheduleBooking } from "../../api/RescheduleBooking";
+import { getOneBooking } from "../../api/get-booking/getOneBooking";
+import { rescheduleBooking } from "../../api/update-booking/RescheduleBooking";
 import { updateBookingPayment } from "../../api/updateBookingPayment";
 import {
   CustomSlotType,
@@ -39,17 +39,18 @@ import {
   List,
 } from "lucide-react";
 
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 
 import AdditionalProducts from "../CreateBookingv2/booking-steps/AdditionalProducts";
 import { getAssignedToursByTourId } from "@/app/_features/products/api/getAssignedToursByTourId";
 import { Product } from "@/app/_features/products/types/product-types";
-import { cancelBooking } from "../../api/cancelBooking";
+import { cancelBooking } from "../../api/update-booking/cancelBooking";
 import RefundAmountModal from "./RefundAmountModal";
 import { StatusBadge } from "@/components/ui/status-badge";
 import SlotDetailsModal from "./SlotDetailsModal";
 import ProductsModal from "./ProductsModal";
 import PersonalInfoModal from "./PersonalInfoModal";
+import UpdateSlotsModal from "./UpdateSlotsModal";
 
 // Format date to be more readable
 const formatDate = (dateString: string | undefined) => {
@@ -84,6 +85,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
   const [isPersonalInfoModalOpen, setIsPersonalInfoModalOpen] = useState(false);
   const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [isUpdateSlotsModalOpen, setIsUpdateSlotsModalOpen] = useState(false);
   const [slotDetails, setSlotDetails] = useState<any[]>([]);
   const [customSlotTypes, setCustomSlotTypes] = useState<
     CustomSlotType[] | null
@@ -158,7 +160,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
     if (!booking) return false;
 
     let customerInfoInsert;
-    let customerProductsInsert;
+    let customerProductsInsert: any[] = [];
     let customerSlotsInsert;
 
     if (currentCustomerInfo) {
@@ -189,17 +191,32 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         unit_price: Math.round(product.unit_price * 100),
       }));
     } else {
-      customerProductsInsert = booking.booked_products.map((product) => ({
-        name: product.name,
-        quantity: product.quantity,
-        unit_price: Math.round(product.unit_price * 100),
-      }));
+      if (
+        booking.booked_products?.length === 0 ||
+        booking.booked_products === null
+      ) {
+        customerProductsInsert = [];
+      } else {
+        customerProductsInsert = booking.booked_products.map((product) => ({
+          name: product.name,
+          quantity: product.quantity,
+          unit_price: Math.round(product.unit_price * 100),
+        }));
+      }
     }
 
-    console.log("customerProductsInsert", customerProductsInsert);
-    console.log("customerSlotsInsert", customerSlotsInsert);
-
     try {
+      // const payload = {
+      //   booking_id: bookingId,
+      //   slots: customerInfoInsert,
+      //   products: customerProductsInsert || null,
+      //   customer_info: customerSlotsInsert || null,
+      //   ...(isUpdate &&
+      //     booking.payment_link && {
+      //       previousSessionId: booking.payment_link,
+      //     }),
+      // };
+
       const response = await fetch("/api/create-payment-link", {
         method: isUpdate ? "PUT" : "POST",
         headers: {
@@ -326,6 +343,11 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         const bookedProducts = bookingDetails?.booked_products || [];
         if (!Array.isArray(bookedProducts)) {
           throw new Error("Invalid booked_products format");
+        }
+
+        if (bookedProducts.length === 0 || bookedProducts === null) {
+          setEditedProducts([]);
+          return;
         }
 
         const mappedProducts = bookedProducts.map((product) => {
@@ -829,76 +851,82 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                 </div>
               </div>
 
-              {/* Payment Link Section */}
-              <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                <div className="mb-3">
-                  <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
-                    <Link className="w-3 h-3" />
-                    Payment Link
-                  </p>
-                </div>
-                {booking?.payment_link ? (
-                  <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 truncate">
-                        {booking.payment_link}
+              {booking?.payment_status.toLowerCase() !== "paid" && (
+                <>
+                  {/* Payment Link Section */}
+                  <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
+                        <Link className="w-3 h-3" />
+                        Payment Link
                       </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 hover:bg-gray-100"
-                        onClick={() => {
-                          navigator.clipboard.writeText(booking.payment_link);
-                          toast.success("Payment link copied to clipboard");
-                        }}
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 hover:bg-gray-100"
-                        onClick={() =>
-                          window.open(booking.payment_link, "_blank")
-                        }
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <div className="flex-1">
-                        <p className="text-sm text-yellow-800">
-                          No payment link available
+                    {booking?.payment_link ? (
+                      <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900 truncate">
+                            {booking.payment_link}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-gray-100"
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                booking.payment_link
+                              );
+                              toast.success("Payment link copied to clipboard");
+                            }}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-gray-100"
+                            onClick={() =>
+                              window.open(booking.payment_link, "_blank")
+                            }
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <div className="flex-1">
+                            <p className="text-sm text-yellow-800">
+                              No payment link available
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 border-yellow-200 hover:bg-yellow-100 hover:text-yellow-900"
+                            onClick={() =>
+                              handlePaymentLinkUpdate(false, null, null, null)
+                            }
+                            disabled={isLoading}
+                          >
+                            {isLoading ? (
+                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Link className="w-4 h-4 mr-2" />
+                            )}
+                            Create Payment Link
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          Generate a payment link to share with the customer
                         </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 border-yellow-200 hover:bg-yellow-100 hover:text-yellow-900"
-                        onClick={() =>
-                          handlePaymentLinkUpdate(false, null, null, null)
-                        }
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Link className="w-4 h-4 mr-2" />
-                        )}
-                        Create Payment Link
-                      </Button>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Generate a payment link to share with the customer
-                    </p>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
 
               {/* Pricing Breakdown */}
               <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
@@ -925,27 +953,30 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                   ) : (
                     <>
                       {(() => {
-                        const groupedSlots = slotDetails.reduce((acc, slot) => {
-                          const slotType = customSlotTypes.find(
-                            (type) => type.name === slot.type
-                          );
-                          const typeName = slotType?.name || "Default";
-                          const price = slotType?.price || 0;
+                        const groupedSlots = slotDetails.reduce(
+                          (acc, slot) => {
+                            const slotType = customSlotTypes.find(
+                              (type) => type.name === slot.type
+                            );
+                            const typeName = slotType?.name || "Default";
+                            const price = slotType?.price || 0;
 
-                          if (!acc[typeName]) {
-                            acc[typeName] = {
-                              count: 0,
-                              price: price,
-                            };
-                          }
-                          acc[typeName].count++;
-                          return acc;
-                        }, {} as Record<string, { count: number; price: number }>);
+                            if (!acc[typeName]) {
+                              acc[typeName] = {
+                                count: 0,
+                                price: price,
+                              };
+                            }
+                            acc[typeName].count++;
+                            return acc;
+                          },
+                          {} as Record<string, { count: number; price: number }>
+                        );
 
                         return (
                           Object.entries(groupedSlots) as [
                             string,
-                            { count: number; price: number }
+                            { count: number; price: number },
                           ][]
                         ).map(([typeName, details]) => (
                           <div
@@ -1070,6 +1101,20 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                   <RefreshCw className="w-5 h-5 text-purple-600" />
                   <span>Reschedule Booking</span>
                 </Button>
+
+                {(!customSlotTypes || customSlotTypes.length === 0) && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-12 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-3 px-4"
+                    onClick={() => setIsUpdateSlotsModalOpen(true)}
+                    disabled={
+                      isLoading || booking?.payment_status !== "pending"
+                    }
+                  >
+                    <Users className="w-5 h-5 text-indigo-600" />
+                    <span>Update Number of Slots</span>
+                  </Button>
+                )}
 
                 {customSlotTypes &&
                   customSlotTypes.length > 0 &&
@@ -1217,6 +1262,24 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         }}
         totalAmount={booking?.amount_paid || 0}
         isLoading={isLoading}
+      />
+
+      {/* Update Slots Modal */}
+      <UpdateSlotsModal
+        isOpen={isUpdateSlotsModalOpen}
+        onClose={() => setIsUpdateSlotsModalOpen(false)}
+        onSuccess={() => {
+          fetchBooking();
+          onSuccess?.();
+        }}
+        bookingId={bookingId}
+        currentSlots={booking?.slots || 0}
+        slotDetails={slotDetails}
+        paymentStatus={booking?.payment_status || ""}
+        paymentLink={booking?.payment_link}
+        handlePaymentLinkUpdate={handlePaymentLinkUpdate}
+        booking={booking}
+        editedProducts={editedProducts}
       />
     </div>
   );

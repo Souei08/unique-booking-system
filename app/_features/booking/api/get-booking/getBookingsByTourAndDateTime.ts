@@ -1,5 +1,5 @@
 import { createClient } from "@/supabase/client";
-import { BookingResponse } from "../types/booking-types";
+import { BookingResponse } from "../../types/booking-types";
 
 interface GetBookingsByTourAndDateTimeParams {
   tourTitle: string;

@@ -112,7 +112,7 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => {
                   redirect(`/tours/${tour.id}`);
                 }}
@@ -120,10 +120,10 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
               >
                 <Eye className="mr-2 h-4 w-4" />
                 View Tour
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem
                 onClick={() => {
-                  redirect(`/widget?booking_id=${tour.id}`);
+                  window.open(`/widget?booking_id=${tour.id}`, "_blank");
                 }}
                 className="cursor-pointer"
               >

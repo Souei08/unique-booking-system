@@ -46,7 +46,7 @@ export default function TourBookingsClient() {
 
   if (loading) {
     return (
-      <div className="w-7/12 mx-auto pt-10">
+      <div className="pt-10">
         <div className="text-center">Loading...</div>
       </div>
     );
@@ -54,14 +54,14 @@ export default function TourBookingsClient() {
 
   if (!tour) {
     return (
-      <div className="w-7/12 mx-auto pt-10">
+      <div className="pt-10">
         <div className="text-center">Tour not found</div>
       </div>
     );
   }
 
   return (
-    <div className="w-7/12 mx-auto pt-10">
+    <div className="pt-10">
       <CreateBookingv2 onClose={() => {}} customerSelectedTour={tour} />
     </div>
   );

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getOneBooking } from "@/app/_features/booking/api/getOneBooking";
-import { formatTime } from "@/app/_utils/formatTime";
+import { getOneBooking } from "@/app/_features/booking/api/get-booking/getOneBooking";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 import { format } from "date-fns";
 import Link from "next/link";
 import { XCircle } from "lucide-react";

@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchCalendarSlotSummary } from "@/app/_features/calendar/api/fetchCalendarSlotSummary";
-import { getAllBookings } from "@/app/_features/booking/api/getAllBookings";
-import { getBookingsByTourAndDateTime } from "@/app/_features/booking/api/getBookingsByTourAndDateTime";
+import { getAllBookings } from "@/app/_features/booking/api/get-booking/getAllBookings";
+import { getBookingsByTourAndDateTime } from "@/app/_features/booking/api/get-booking/getBookingsByTourAndDateTime";
 import {
   BookingTable,
   BookingResponse,
@@ -40,7 +40,7 @@ import {
 import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickBooking";
 import { parseDate } from "@internationalized/date";
 import { toast } from "sonner";
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
 import { StatusBadge } from "@/components/ui/status-badge";
 
@@ -552,10 +552,10 @@ const CalendarBookingPage: React.FC = () => {
                                     isFullyBooked(slot)
                                       ? "bg-red-50 border-red-200"
                                       : isPartiallyBooked(slot)
-                                      ? "bg-amber-50 border-amber-200"
-                                      : isPastDate(dateKey)
-                                      ? "bg-gray-50 border-gray-200"
-                                      : "bg-fill border-gray-200"
+                                        ? "bg-amber-50 border-amber-200"
+                                        : isPastDate(dateKey)
+                                          ? "bg-gray-50 border-gray-200"
+                                          : "bg-fill border-gray-200"
                                   } hover:shadow-sm`}
                                   onClick={() =>
                                     handleDateCardClick(
@@ -599,8 +599,8 @@ const CalendarBookingPage: React.FC = () => {
                                           isFullyBooked(slot)
                                             ? "bg-red-500"
                                             : isPastDate(dateKey)
-                                            ? "bg-gray-400"
-                                            : "bg-emerald-500"
+                                              ? "bg-gray-400"
+                                              : "bg-emerald-500"
                                         }`}
                                       ></span>
                                       <span
@@ -608,8 +608,8 @@ const CalendarBookingPage: React.FC = () => {
                                           isFullyBooked(slot)
                                             ? "text-red-600 font-medium"
                                             : isPastDate(dateKey)
-                                            ? "text-gray-500"
-                                            : "text-emerald-600"
+                                              ? "text-gray-500"
+                                              : "text-emerald-600"
                                         }
                                       >
                                         Booked: {slot.booked}
@@ -621,8 +621,8 @@ const CalendarBookingPage: React.FC = () => {
                                           isFullyBooked(slot)
                                             ? "bg-red-300"
                                             : isPastDate(dateKey)
-                                            ? "bg-gray-300"
-                                            : "bg-blue-400"
+                                              ? "bg-gray-300"
+                                              : "bg-blue-400"
                                         }`}
                                       ></span>
                                       <span
@@ -630,8 +630,8 @@ const CalendarBookingPage: React.FC = () => {
                                           isFullyBooked(slot)
                                             ? "text-red-500"
                                             : isPastDate(dateKey)
-                                            ? "text-gray-500"
-                                            : "text-blue-600"
+                                              ? "text-gray-500"
+                                              : "text-blue-600"
                                         }
                                       >
                                         Available: {slot.available}

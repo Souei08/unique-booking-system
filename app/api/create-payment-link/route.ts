@@ -67,7 +67,7 @@ async function preparePaymentSessionData(data: RequestPayload) {
   // 1. Normalize slot line items
   let normalizedSlots: LineItemInput[] = [];
 
-  if (customSlotTypes.length > 0 && slotDetails.length > 0) {
+  if (customSlotTypes?.length > 0 && slotDetails?.length > 0) {
     const groupedSlots = slotDetails.reduce((acc, slot) => {
       const type = slot.type;
       if (!acc[type]) {
