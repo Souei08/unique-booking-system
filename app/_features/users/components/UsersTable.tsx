@@ -22,6 +22,9 @@ import {
 import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UpsertUser } from "../form/UpsertUser";
+import { createServerClient } from "@supabase/ssr";
+import { inviteUserServerAction } from "../api/inviteUserRole";
+import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 
 interface User {
   id: string;
@@ -95,14 +98,46 @@ export function UsersTable({ users, onView }: UsersTableProps) {
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => {
+                onClick={async () => {
                   setSelectedUser(user);
-                  setIsUserDialogOpen(true);
+
+                  try {
+                    const res = await inviteUserServerAction({
+                      email: user.email,
+                      full_name: user.full_name,
+                      role: user.role,
+                    });
+
+                    console.log(res);
+
+                    if (res.success === false) {
+                      showErrorToast(res.error || "Failed to send invitation.");
+
+                      // Set form errors based on the response
+                      if (res.error) {
+                        // If there's a specific field error, you can set it like this:
+                        // form.setError("email", { message: res.error });
+
+                        showErrorToast(
+                          res.error || "Failed to send invitation."
+                        );
+                      }
+
+                      return false;
+                    }
+
+                    showSuccessToast("Invitation sent successfully!");
+                  } catch (error: any) {
+                    console.error("Error sending invite:", error);
+                    showErrorToast(
+                      error.message || "Failed to send invitation."
+                    );
+                  }
                 }}
                 className="cursor-pointer"
               >
                 <Pencil className="mr-2 h-4 w-4" />
-                Edit User
+                Resend Invite
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />

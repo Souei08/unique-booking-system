@@ -26,7 +26,7 @@ export default async function BookingSuccessPage(props: PageProps) {
   }
 
   try {
-    const booking = await getOneBooking(bookingId);
+    const booking = await getOneBooking(bookingId, null);
     if (!booking) {
       return notFound();
     }
@@ -61,7 +61,7 @@ export default async function BookingSuccessPage(props: PageProps) {
                   title="Number of People"
                   value={`${booking.slots} people`}
                 />
-                <Info title="Total Amount" value={`$${booking.total_price}`} />
+                <Info title="Total Amount" value={`$${booking.amount_paid}`} />
               </div>
 
               <div className="border-t pt-6">

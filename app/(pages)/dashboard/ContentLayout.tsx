@@ -25,6 +25,7 @@ import { UpsertUser } from "@/app/_features/users/form/UpsertUser";
 import CreateProduct from "@/app/_features/products/components/CreateProduct";
 import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickBooking";
 import CreatePromo from "@/app/_features/promos/components/CreatePromo";
+import UpsertTourV2Stepped from "@/app/_features/tours/forms/upsert-tour-v2/UpsertTourV2Stepped";
 
 interface ContentLayoutProps {
   title: string;
@@ -112,9 +113,13 @@ const ContentLayout = ({
         }}
       >
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle>{modalTitle}</DialogTitle>
-            <DialogDescription>{modalDescription}</DialogDescription>
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-lg font-bold">
+              {modalTitle}
+            </DialogTitle>
+            <DialogDescription className="text-weak text-sm">
+              {modalDescription}
+            </DialogDescription>
           </DialogHeader>
 
           <CreatePromo onSuccess={() => setIsPromoDialogOpen(false)} />
@@ -132,13 +137,17 @@ const ContentLayout = ({
         }}
       >
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle>{modalTitle}</DialogTitle>
-            <DialogDescription>{modalDescription}</DialogDescription>
+          <DialogHeader className="mb-5 text-center items-center border-b border-gray-200 pb-5">
+            <DialogTitle className="text-strong text-3xl font-bold">
+              {modalTitle}
+            </DialogTitle>
+            <DialogDescription className="text-weak text-sm">
+              {modalDescription}
+            </DialogDescription>
           </DialogHeader>
 
           {modalRoute === "tours" && (
-            <UpsertTourV2 onSuccess={() => setIsTourDialogOpen(false)} />
+            <UpsertTourV2Stepped onSuccess={() => setIsTourDialogOpen(false)} />
           )}
         </DialogContent>
       </Dialog>
@@ -154,9 +163,13 @@ const ContentLayout = ({
         }}
       >
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle>{modalTitle}</DialogTitle>
-            <DialogDescription>{modalDescription}</DialogDescription>
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-xl font-bold">
+              {modalTitle}
+            </DialogTitle>
+            <DialogDescription className="text-weak text-sm">
+              {modalDescription}
+            </DialogDescription>
           </DialogHeader>
 
           {modalRoute === "booking" && (
@@ -172,8 +185,10 @@ const ContentLayout = ({
 
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle>{modalTitle}</DialogTitle>
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-xl font-bold">
+              {modalTitle}
+            </DialogTitle>
 
             <UpsertUser onSuccess={() => setIsUserDialogOpen(false)} />
           </DialogHeader>
@@ -182,8 +197,8 @@ const ContentLayout = ({
 
       <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle className="text-h1 font-bold text-strong">
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-xl font-bold">
               {modalTitle}
             </DialogTitle>
           </DialogHeader>

@@ -11,6 +11,7 @@ import {
   ShoppingBagIcon,
   BookOpenIcon,
   ChartBarIcon,
+  TicketIcon,
 } from "@heroicons/react/24/outline";
 
 interface NavigationItem {
@@ -26,37 +27,43 @@ const navigationItems: NavigationItem[] = [
     name: "Dashboard",
     href: "/dashboard",
     icon: HomeIcon,
-    roles: ["admin", "staff", "customer"],
+    roles: ["admin", "staff", "customer", "reservation_agent"],
   },
   {
     name: "Calendar",
     href: "/dashboard/calendar",
     icon: CalendarIcon,
-    roles: ["admin", "staff", "customer"],
+    roles: ["admin", "staff", "customer", "reservation_agent"],
   },
   {
     name: "Bookings",
     href: "/dashboard/bookings",
     icon: BookOpenIcon,
-    roles: ["admin", "staff", "customer"],
+    roles: ["admin", "staff", "customer", "reservation_agent"],
   },
   {
     name: "Tours",
     href: "/dashboard/tours",
     icon: GlobeAmericasIcon,
-    roles: ["admin", "staff"],
+    roles: ["admin", "staff", "reservation_agent"],
   },
   {
     name: "Products",
     href: "/dashboard/products",
     icon: ShoppingBagIcon,
-    roles: ["admin", "staff"],
+    roles: ["admin", "staff", "reservation_agent"],
   },
   {
     name: "Users",
     href: "/dashboard/users",
     icon: UserGroupIcon,
-    roles: ["admin"],
+    roles: ["admin", "reservation_agent"],
+  },
+  {
+    name: "Promo Codes",
+    href: "/dashboard/promo-codes",
+    icon: TicketIcon, // TODO: Add promo code icon
+    roles: ["admin", "staff", "reservation_agent"],
   },
   {
     name: "Analytics",

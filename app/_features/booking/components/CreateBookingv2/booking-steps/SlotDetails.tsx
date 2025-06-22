@@ -173,8 +173,8 @@ const SlotDetails = ({
         }
       });
 
-      // Validate slot type if custom slot types exist
-      if (customSlotTypes) {
+      // Validate slot type if custom slot types exist and are not empty
+      if (customSlotTypes && customSlotTypes.length > 0) {
         if (!slot.type) {
           slotErrors.push("Type is required");
         } else if (!customSlotTypes.find((t) => t.name === slot.type)) {
@@ -310,10 +310,10 @@ const SlotDetails = ({
                 slotDetails.length === 2
                   ? "grid-cols-2"
                   : slotDetails.length === 3
-                  ? "grid-cols-1 sm:grid-cols-3"
-                  : slotDetails.length === 4
-                  ? "grid-cols-2 sm:grid-cols-4"
-                  : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+                    ? "grid-cols-1 sm:grid-cols-3"
+                    : slotDetails.length === 4
+                      ? "grid-cols-2 sm:grid-cols-4"
+                      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
               }`}
             >
               {slotDetails.map((slot, idx) => (
@@ -324,10 +324,10 @@ const SlotDetails = ({
                       activeSlot === idx
                         ? "bg-blue-50 text-brand border-blue-200 shadow-sm"
                         : isSlotComplete(slot)
-                        ? "bg-green-50/50 text-green-700 border-green-200 hover:bg-green-50"
-                        : slotErrors[`slot-${idx}`]?.length > 0
-                        ? "bg-red-50/50 text-red-600 border-red-200 hover:bg-red-50"
-                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                          ? "bg-green-50/50 text-green-700 border-green-200 hover:bg-green-50"
+                          : slotErrors[`slot-${idx}`]?.length > 0
+                            ? "bg-red-50/50 text-red-600 border-red-200 hover:bg-red-50"
+                            : "bg-gray-50 hover:bg-gray-100 border-gray-200"
                     } cursor-pointer`}
                   >
                     <div
@@ -335,10 +335,10 @@ const SlotDetails = ({
                         activeSlot === idx
                           ? "bg-brand/50 text-white"
                           : isSlotComplete(slot)
-                          ? "bg-green-100 text-green-700"
-                          : slotErrors[`slot-${idx}`]?.length > 0
-                          ? "bg-red-100 text-red-600"
-                          : "bg-gray-100 text-weak"
+                            ? "bg-green-100 text-green-700"
+                            : slotErrors[`slot-${idx}`]?.length > 0
+                              ? "bg-red-100 text-red-600"
+                              : "bg-gray-100 text-weak"
                       }`}
                     >
                       <span className="font-medium text-sm">{idx + 1}</span>
@@ -348,10 +348,10 @@ const SlotDetails = ({
                         activeSlot === idx
                           ? "text-brand"
                           : isSlotComplete(slot)
-                          ? "text-green-700"
-                          : slotErrors[`slot-${idx}`]?.length > 0
-                          ? "text-red-600"
-                          : "text-weak"
+                            ? "text-green-700"
+                            : slotErrors[`slot-${idx}`]?.length > 0
+                              ? "text-red-600"
+                              : "text-weak"
                       }`}
                     >
                       Slot {idx + 1}
@@ -362,10 +362,10 @@ const SlotDetails = ({
                           activeSlot === idx
                             ? "text-brand/80"
                             : isSlotComplete(slot)
-                            ? "text-green-600/80"
-                            : slotErrors[`slot-${idx}`]?.length > 0
-                            ? "text-red-500/80"
-                            : "text-weak/70"
+                              ? "text-green-600/80"
+                              : slotErrors[`slot-${idx}`]?.length > 0
+                                ? "text-red-500/80"
+                                : "text-weak/70"
                         } line-clamp-1`}
                       >
                         {slot.type}
@@ -406,7 +406,7 @@ const SlotDetails = ({
                 </div>
               </div>
 
-              {customSlotTypes && (
+              {customSlotTypes && customSlotTypes.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-2.5">
                     <label className="text-sm font-medium text-gray-800">
@@ -425,10 +425,10 @@ const SlotDetails = ({
                       customSlotTypes.length === 2
                         ? "grid-cols-1 sm:grid-cols-2"
                         : customSlotTypes.length === 3
-                        ? "grid-cols-1 sm:grid-cols-3"
-                        : customSlotTypes.length === 4
-                        ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4"
-                        : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
+                          ? "grid-cols-1 sm:grid-cols-3"
+                          : customSlotTypes.length === 4
+                            ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4"
+                            : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
                     }`}
                   >
                     {customSlotTypes.map((type) => (

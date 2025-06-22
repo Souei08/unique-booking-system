@@ -131,8 +131,8 @@ const SlotDetailsModal: React.FC<SlotDetailsModalProps> = ({
         }
       });
 
-      // Validate slot type if custom slot types exist
-      if (customSlotTypes) {
+      // Validate slot type if custom slot types exist and are not empty
+      if (customSlotTypes && customSlotTypes.length > 0) {
         if (!slot.type) {
           errors.push(`Slot ${index + 1}: Type is required`);
         } else if (!customSlotTypes.find((t) => t.name === slot.type)) {

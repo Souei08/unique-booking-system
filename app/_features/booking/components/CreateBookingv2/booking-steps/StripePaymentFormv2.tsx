@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useElements } from "@stripe/react-stripe-js";
 import { useStripe } from "@stripe/react-stripe-js";
 import { toast } from "sonner";
-import { sendBookingConfirmationEmail } from "../../../api/email-booking/send-booking-email";
+import { sendBookingConfirmationEmail } from "../../../api/email-booking/send-confirmation-email";
 
 export const StripePaymentFormV2 = ({
   onPaymentSuccess,
@@ -94,7 +94,11 @@ export const StripePaymentFormV2 = ({
           tour_rate: email_response.tour_rate,
           products: email_response.products,
           slot_details: email_response.slot_details,
+          manage_token: email_response.manage_token,
           waiver_link: "https://your-waiver-link.com",
+          sub_total: email_response.sub_total,
+          coupon_code: email_response.coupon_code,
+          discount_amount: email_response.discount_amount,
         });
 
         if (emailResponse.success) {

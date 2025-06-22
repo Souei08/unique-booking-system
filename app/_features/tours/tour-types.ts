@@ -23,7 +23,7 @@ export interface Tour {
   dropoff_point_address: string;
   languages: string[];
   trip_highlights: string[];
-  things_to_know: string;
+  // things_to_know: string;
   includes: string[];
   faq: string[]; // Array of JSON strings containing FAQ objects
   images: string; // Array of tour images with metadata

@@ -944,7 +944,7 @@ const TourTimeAndDate = ({
             </div>
           </section>
 
-          <section className="rounded-xl sm:rounded-2xl lg:rounded-3xl border bg-card p-3 sm:p-6 lg:p-8 shadow-lg">
+          {/* <section className="rounded-xl sm:rounded-2xl lg:rounded-3xl border bg-card p-3 sm:p-6 lg:p-8 shadow-lg">
             <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-strong mb-3 sm:mb-4 lg:mb-8">
               Things to Know
             </h3>
@@ -953,7 +953,7 @@ const TourTimeAndDate = ({
                 {selectedTour.things_to_know}
               </p>
             </div>
-          </section>
+          </section> */}
 
           <section className="rounded-xl sm:rounded-2xl lg:rounded-3xl border bg-card p-3 sm:p-6 lg:p-8 shadow-lg">
             <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-strong mb-3 sm:mb-4 lg:mb-8">

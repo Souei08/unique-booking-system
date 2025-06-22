@@ -21,6 +21,7 @@ import { formatTime } from "@/app/_lib/utils/formatTime";
 import SlotDetails, { CustomSlotType, CustomSlotField } from "./SlotDetails";
 import PersonalInformation from "./PersonalInformation";
 import AdditionalProducts from "./AdditionalProducts";
+import PromoCodeInput from "./PromoCodeInput";
 import { Card, CardContent } from "@/components/ui/card";
 
 const CheckForm = ({
@@ -48,6 +49,9 @@ const CheckForm = ({
   customSlotFields,
   handleNext,
   calculateTotal,
+  appliedPromo,
+  onPromoApplied,
+  onPromoRemoved,
 }: {
   selectedTour: Tour;
   selectedDate: DateValue;
@@ -88,6 +92,9 @@ const CheckForm = ({
   customSlotFields: CustomSlotField[];
   handleNext: () => void;
   calculateTotal: () => number;
+  appliedPromo?: any;
+  onPromoApplied?: (promoData: any) => void;
+  onPromoRemoved?: () => void;
 }) => {
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [validationErrors, setValidationErrors] = useState<{
@@ -325,77 +332,40 @@ const CheckForm = ({
   }[];
   const featuredImage = tourImages.find((image) => image.isFeature);
 
-  // const handleInputChange = (
-  //   e: React.ChangeEvent<HTMLInputElement>,
-  //   field: keyof CustomerInformation
-  // ) => {
-  //   const { name, value } = e.target;
-
-  //   setCustomerInformation((prev: CustomerInformation) => ({
-  //     ...prev,
-  //     [field]: value,
-  //   }));
-  // };
-
-  // const toggleProduct = (productId: string) => {
-  //   setSelectedProducts((prev) => {
-  //     if (prev.includes(productId)) {
-  //       // Remove product and its quantity when unselected
-  //       setProductQuantities((quantities) => {
-  //         const newQuantities = { ...quantities };
-  //         delete newQuantities[productId];
-  //         return newQuantities;
-  //       });
-  //       return prev.filter((id) => id !== productId);
-  //     } else {
-  //       // Add product with default quantity of 1
-  //       setProductQuantities((quantities) => ({
-  //         ...quantities,
-  //         [productId]: 1,
-  //       }));
-  //       return [...prev, productId];
-  //     }
-  //   });
-  // };
-
-  // const updateProductQuantity = (productId: string, quantity: number) => {
-  //   if (quantity < 1) return;
-  //   setProductQuantities((prev) => ({
-  //     ...prev,
-  //     [productId]: quantity,
-  //   }));
-  // };
-
   const formattedDate = format(
     new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day),
     "MMMM dd, yyyy"
   );
 
-  // const formattedTime = new Date(
-  //   `1970-01-01T${selectedTime}Z`
-  // ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const calculateSubtotal = () => {
+    let subtotal = 0;
 
-  // const handleSubmit = async (e: React.MouseEvent) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-  //   try {
-  //     await handleCompleteBooking();
-  //   } catch (error) {
-  //     // Error is already handled in the parent component
-  //     console.error("Error in CheckForm:", error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+    // Calculate tour price based on slot types if they exist
+    if (customSlotTypes && customSlotTypes.length > 0) {
+      // Sum up prices from slot details
+      subtotal = slotDetails.reduce((sum, slot) => {
+        const slotType = customSlotTypes.find(
+          (type: CustomSlotType) => type.name === slot.type
+        );
+        return sum + (slotType?.price || 0);
+      }, 0);
+    } else {
+      // Use regular tour rate if no custom slot types
+      subtotal = selectedTour.rate * numberOfPeople;
+    }
 
-  // Only fetch payment intent when shouldFetchPaymentIntent is true
-  // useEffect(() => {
-  //   if (shouldFetchPaymentIntent && !isAdmin) {
-  //     fetchClientSecret();
-  //   }
+    // Add product prices
+    selectedProducts.forEach((productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      if (product) {
+        const quantity = productQuantities[productId] || 1;
+        subtotal += product.price * quantity;
+      }
+    });
 
-  //   console.log("running");
-  // }, [shouldFetchPaymentIntent]);
+    // Round to 2 decimal places to avoid floating point issues
+    return Math.round(subtotal * 100) / 100;
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-12 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
@@ -661,7 +631,10 @@ const CheckForm = ({
                             </span>
                           </div>
                           <span className="text-sm font-medium text-strong ml-2">
-                            ${selectedTour.rate * numberOfPeople}
+                            $
+                            {parseFloat(
+                              (selectedTour.rate * numberOfPeople).toString()
+                            ).toFixed(2)}
                           </span>
                         </div>
                       )}
@@ -712,19 +685,46 @@ const CheckForm = ({
                   )}
                 </div>
 
+                {/* Promo Code Section */}
                 <div className="border-t border-stroke-weak pt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-base sm:text-lg font-semibold text-strong">
-                      Total Amount
+                  <PromoCodeInput
+                    totalAmount={calculateSubtotal()}
+                    onPromoApplied={onPromoApplied || (() => {})}
+                    onPromoRemoved={onPromoRemoved || (() => {})}
+                    appliedPromo={appliedPromo}
+                  />
+                </div>
+
+                <div className="border-t border-stroke-weak pt-4">
+                  <span className="text-base sm:text-lg font-semibold text-strong">
+                    Total Amount
+                  </span>
+                  <div className="text-right flex flex-col gap-2 mt-2">
+                    {appliedPromo && (
+                      <div className="mb-2">
+                        <div className="flex items-center justify-between text-sm mb-2">
+                          <span className="text-muted-foreground">
+                            Subtotal Amount
+                          </span>
+                          <span className="text-strong">
+                            ${calculateSubtotal().toFixed(2)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm text-green-600">
+                          <span>Discount Amount</span>
+                          <span>
+                            -${appliedPromo.discount_amount.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <span className="text-xl sm:text-2xl font-bold text-brand">
+                      ${calculateTotal().toFixed(2)}
                     </span>
-                    <div className="text-right">
-                      <span className="text-xl sm:text-2xl font-bold text-brand">
-                        ${calculateTotal().toFixed(2)}
-                      </span>
-                      <p className="text-xs text-weak mt-1">
-                        Including all taxes and fees
-                      </p>
-                    </div>
+                    <p className="text-xs text-weak">
+                      Including all taxes and fees
+                    </p>
                   </div>
 
                   {/* Continue to Payment Button */}

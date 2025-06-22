@@ -37,7 +37,7 @@ const BookingSuccess = ({
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        const booking = await getOneBooking(bookingId);
+        const booking = await getOneBooking(bookingId, null);
 
         if (!booking) {
           console.error("No booking found with ID:", bookingId);

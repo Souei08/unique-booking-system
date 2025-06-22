@@ -1,5 +1,4 @@
 import { createClient } from "@/supabase/client";
-import { sendBookingConfirmationEmail } from "../email-booking/send-booking-email";
 
 interface BookingData {
   first_name: string;
@@ -23,6 +22,10 @@ interface BookingData {
     type: string;
     price: number;
   }>;
+  promo_code_id?: string | null;
+  promo_code?: string | null;
+  sub_total: number;
+  discount_amount?: number | null;
 }
 
 export async function createTourBookingv2(data: BookingData): Promise<{
@@ -47,6 +50,10 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     payment_id,
     products,
     slot_details,
+    promo_code_id,
+    promo_code,
+    sub_total,
+    discount_amount,
   } = data;
 
   // ✅ Input Validation
@@ -80,11 +87,14 @@ export async function createTourBookingv2(data: BookingData): Promise<{
         _booking_date: booking_date,
         _selected_time: selected_time,
         _slots: slots,
+        _sub_total: sub_total,
         _total_price: total_price,
         _payment_method: payment_method,
         _payment_id: payment_id,
         _products: products,
         _slot_details: slot_details,
+        _promo_code_id: promo_code_id,
+        _promo_code: promo_code,
       }
     );
 
@@ -114,7 +124,11 @@ export async function createTourBookingv2(data: BookingData): Promise<{
         tour_rate: booking?.tour_rate,
         products,
         slot_details,
+        manage_token: booking.manage_token,
         waiver_link: "https://your-waiver-link.com",
+        promo_code: promo_code || null,
+        sub_total: sub_total || null,
+        discount_amount: discount_amount || null,
       },
     };
   } catch (err: any) {

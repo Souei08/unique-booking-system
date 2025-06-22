@@ -200,8 +200,8 @@ export default function ResetPasswordPage() {
                 ? "Resetting..."
                 : "Sending..."
               : isAuthenticated
-              ? "Reset Password"
-              : "Send Reset Instructions"}
+                ? "Reset Password"
+                : "Send Reset Instructions"}
           </button>
         </div>
       </div>

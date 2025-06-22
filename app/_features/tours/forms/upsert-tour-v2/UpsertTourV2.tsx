@@ -59,7 +59,7 @@ const tourFormSchema = z.object({
   trip_highlights: z
     .array(z.string())
     .min(1, "At least one highlight is required"),
-  things_to_know: z.string().min(1, "Things to know is required"),
+  // things_to_know: z.string().min(1, "Things to know is required"),
   includes: z.array(z.string()).min(1, "At least one inclusion is required"),
   faq: z
     .array(
@@ -141,7 +141,7 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
       trip_highlights: Array.isArray(initialData?.trip_highlights)
         ? initialData.trip_highlights
         : [""],
-      things_to_know: initialData?.things_to_know || "",
+      // things_to_know: initialData?.things_to_know || "",
       includes: Array.isArray(initialData?.includes)
         ? initialData.includes
         : [""],
@@ -1195,7 +1195,7 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
               </p>
             </CardHeader>
             <CardContent className="space-y-6">
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="things_to_know"
                 render={({ field }) => (
@@ -1214,7 +1214,7 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
 
               <FormField
                 control={form.control}
@@ -1336,8 +1336,8 @@ const UpsertTourV2: React.FC<UpsertTourV2Props> = ({
               {form.formState.isSubmitting
                 ? "Saving..."
                 : initialData
-                ? "Update Tour"
-                : "Create Tour"}
+                  ? "Update Tour"
+                  : "Create Tour"}
             </Button>
           </div>
         </form>

@@ -77,7 +77,7 @@ export function ImageUploadInput({
 
   return (
     <div className={cn("space-y-2", className)}>
-      <Label>{label}</Label>
+      <Label className="text-strong font-semibold">{label}</Label>
       <div
         {...getRootProps()}
         className={cn(

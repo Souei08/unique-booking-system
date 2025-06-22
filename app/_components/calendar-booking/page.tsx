@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { formatTime } from "@/app/_lib/utils/formatTime";
 import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { CalendarSkeleton } from "./CalendarSkeleton";
 
 interface Slot {
   tour_type: string;
@@ -383,19 +384,32 @@ const CalendarBookingPage: React.FC = () => {
                 size="icon"
                 onClick={handlePrevMonth}
                 className="h-10 w-10 shrink-0"
+                disabled={isLoading || isRefreshing}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <select
                 value={month}
                 onChange={(e) => setMonth(parseInt(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-background text-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all"
+                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 bg-background text-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all"
+                disabled={isLoading || isRefreshing}
               >
-                {[...Array(12)].map((_, i) => (
+                {[
+                  "January",
+                  "February",
+                  "March",
+                  "April",
+                  "May",
+                  "June",
+                  "July",
+                  "August",
+                  "September",
+                  "October",
+                  "November",
+                  "December",
+                ].map((m, i) => (
                   <option key={i + 1} value={i + 1}>
-                    {new Date(0, i).toLocaleString("default", {
-                      month: "long",
-                    })}
+                    {m}
                   </option>
                 ))}
               </select>
@@ -404,6 +418,7 @@ const CalendarBookingPage: React.FC = () => {
                 size="icon"
                 onClick={handleNextMonth}
                 className="h-10 w-10 shrink-0"
+                disabled={isLoading || isRefreshing}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -418,6 +433,7 @@ const CalendarBookingPage: React.FC = () => {
               value={year}
               onChange={(e) => setYear(parseInt(e.target.value))}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-background text-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all"
+              disabled={isLoading || isRefreshing}
             >
               {[2024, 2025, 2026].map((y) => (
                 <option key={y} value={y}>
@@ -435,6 +451,7 @@ const CalendarBookingPage: React.FC = () => {
               value={selectedTour}
               onChange={(e) => setSelectedTour(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-background text-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all"
+              disabled={isLoading || isRefreshing}
             >
               {tourOptions.map((tour) => (
                 <option key={tour} value={tour}>
@@ -451,8 +468,9 @@ const CalendarBookingPage: React.FC = () => {
                 checked={onlyAvailable}
                 onChange={() => setOnlyAvailable(!onlyAvailable)}
                 className="sr-only peer"
+                disabled={isLoading || isRefreshing}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand disabled:opacity-50 disabled:cursor-not-allowed"></div>
               <span className="ml-3 text-sm font-medium text-strong">
                 Show only available
               </span>
@@ -461,13 +479,13 @@ const CalendarBookingPage: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isRefreshing}
+              disabled={isRefreshing || isLoading}
               className="ml-2"
             >
               <RefreshCw
                 className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
               />
-              Refresh
+              {isRefreshing ? "Refreshing..." : "Refresh"}
             </Button>
           </div>
         </div>
@@ -488,184 +506,171 @@ const CalendarBookingPage: React.FC = () => {
             ))}
           </div>
 
-          {isLoading
-            ? // Skeleton loading state
-              Array.from({ length: 35 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="min-h-[80px] sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 bg-background animate-pulse"
-                >
-                  <div className="h-4 bg-gray-200 rounded w-16 mb-2"></div>
-                  <div className="space-y-2">
-                    <div className="h-8 bg-gray-200 rounded"></div>
-                    <div className="h-8 bg-gray-200 rounded"></div>
-                    <div className="h-8 bg-gray-200 rounded"></div>
-                  </div>
-                </div>
-              ))
-            : monthMatrix.flat().map((dateKey, i) => (
-                <div
-                  key={i}
-                  className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all bg-background cursor-pointer ${
-                    dateKey
-                      ? "hover:shadow-md"
-                      : "opacity-0 pointer-events-none"
-                  }`}
-                >
-                  {dateKey ? (
-                    <>
-                      <div
-                        className={`font-semibold mb-1 sm:mb-2 text-xs sm:text-sm flex items-center gap-1 ${
-                          isPastDate(dateKey) ? "text-gray-500" : "text-strong"
-                        }`}
-                      >
-                        <span className="hidden lg:inline">
-                          {new Date(dateKey).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
+          {isLoading ? (
+            <CalendarSkeleton />
+          ) : (
+            monthMatrix.flat().map((dateKey, i) => (
+              <div
+                key={i}
+                className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all bg-background cursor-pointer ${
+                  dateKey ? "hover:shadow-md" : "opacity-0 pointer-events-none"
+                }`}
+              >
+                {dateKey ? (
+                  <>
+                    <div
+                      className={`font-semibold mb-1 sm:mb-2 text-xs sm:text-sm flex items-center gap-1 ${
+                        isPastDate(dateKey) ? "text-gray-500" : "text-strong"
+                      }`}
+                    >
+                      <span className="hidden lg:inline">
+                        {new Date(dateKey).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                      <span className="lg:hidden">
+                        {new Date(dateKey).toLocaleDateString("en-US", {
+                          month: "numeric",
+                          day: "numeric",
+                        })}
+                      </span>
+                      {isPastDate(dateKey) && (
+                        <span className="ml-1 text-[10px] font-normal text-gray-400">
+                          (Past)
                         </span>
-                        <span className="lg:hidden">
-                          {new Date(dateKey).toLocaleDateString("en-US", {
-                            month: "numeric",
-                            day: "numeric",
-                          })}
-                        </span>
-                        {isPastDate(dateKey) && (
-                          <span className="ml-1 text-[10px] font-normal text-gray-400">
-                            (Past)
-                          </span>
-                        )}
-                      </div>
-                      <div className="space-y-1 sm:space-y-2">
-                        {getDaySlots(dateKey).length > 0 ? (
-                          <>
-                            {getDaySlots(dateKey)
-                              .slice(
-                                0,
-                                expandedDates.has(dateKey) ? undefined : 2
-                              )
-                              .map((slot, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
-                                    isFullyBooked(slot)
-                                      ? "bg-red-50 border-red-200"
-                                      : isPartiallyBooked(slot)
-                                        ? "bg-amber-50 border-amber-200"
-                                        : isPastDate(dateKey)
-                                          ? "bg-gray-50 border-gray-200"
-                                          : "bg-fill border-gray-200"
-                                  } hover:shadow-sm`}
-                                  onClick={() =>
-                                    handleDateCardClick(
-                                      dateKey,
-                                      slot.slot_time || "",
-                                      slot.tour_type || ""
-                                    )
-                                  }
-                                >
-                                  {slot.slot_time && (
-                                    <div className="font-medium text-strong text-[10px] xs:text-xs sm:text-sm mb-0.5 sm:mb-1 flex flex-col gap-0.5 sm:gap-1">
-                                      <span className="truncate">
-                                        {formatTime(slot.slot_time)}
-                                      </span>
-                                      <span className="text-[9px] xs:text-[10px] sm:text-xs text-gray-600 truncate">
-                                        {slot.tour_type}
-                                      </span>
-                                      <div className="flex flex-wrap gap-0.5 sm:gap-1">
-                                        {isFullyBooked(slot) && (
-                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-red-600 bg-red-100 px-1 py-0.5 rounded-full whitespace-nowrap">
-                                            Fully Booked
-                                          </span>
-                                        )}
-                                        {isPartiallyBooked(slot) && (
-                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-amber-600 bg-amber-100 px-1 py-0.5 rounded-full whitespace-nowrap">
-                                            Partially Booked
-                                          </span>
-                                        )}
-                                        {isPastDate(dateKey) && (
-                                          <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-500 bg-gray-100 px-1 py-0.5 rounded-full whitespace-nowrap">
-                                            Past Date
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                  <div className="flex flex-col justify-between text-[9px] xs:text-[10px] sm:text-xs text-weak">
-                                    <span className="flex items-center">
-                                      <span
-                                        className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
-                                          isFullyBooked(slot)
-                                            ? "bg-red-500"
-                                            : isPastDate(dateKey)
-                                              ? "bg-gray-400"
-                                              : "bg-emerald-500"
-                                        }`}
-                                      ></span>
-                                      <span
-                                        className={
-                                          isFullyBooked(slot)
-                                            ? "text-red-600 font-medium"
-                                            : isPastDate(dateKey)
-                                              ? "text-gray-500"
-                                              : "text-emerald-600"
-                                        }
-                                      >
-                                        Booked: {slot.booked}
-                                      </span>
-                                    </span>
-                                    <span className="flex items-center">
-                                      <span
-                                        className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
-                                          isFullyBooked(slot)
-                                            ? "bg-red-300"
-                                            : isPastDate(dateKey)
-                                              ? "bg-gray-300"
-                                              : "bg-blue-400"
-                                        }`}
-                                      ></span>
-                                      <span
-                                        className={
-                                          isFullyBooked(slot)
-                                            ? "text-red-500"
-                                            : isPastDate(dateKey)
-                                              ? "text-gray-500"
-                                              : "text-blue-600"
-                                        }
-                                      >
-                                        Available: {slot.available}
-                                      </span>
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
-                            {getDaySlots(dateKey).length > 2 && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleDateExpansion(dateKey);
-                                }}
-                                className="w-full text-[9px] xs:text-[10px] sm:text-xs text-brand hover:text-brand/80 font-medium py-0.5 sm:py-1 hover:bg-brand/5 rounded-lg transition-colors"
+                      )}
+                    </div>
+                    <div className="space-y-1 sm:space-y-2">
+                      {getDaySlots(dateKey).length > 0 ? (
+                        <>
+                          {getDaySlots(dateKey)
+                            .slice(
+                              0,
+                              expandedDates.has(dateKey) ? undefined : 2
+                            )
+                            .map((slot, idx) => (
+                              <div
+                                key={idx}
+                                className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
+                                  isFullyBooked(slot)
+                                    ? "bg-red-50 border-red-200"
+                                    : isPartiallyBooked(slot)
+                                      ? "bg-amber-50 border-amber-200"
+                                      : isPastDate(dateKey)
+                                        ? "bg-gray-50 border-gray-200"
+                                        : "bg-fill border-gray-200"
+                                } hover:shadow-sm`}
+                                onClick={() =>
+                                  handleDateCardClick(
+                                    dateKey,
+                                    slot.slot_time || "",
+                                    slot.tour_type || ""
+                                  )
+                                }
                               >
-                                {expandedDates.has(dateKey)
-                                  ? "Show Less"
-                                  : `Show ${
-                                      getDaySlots(dateKey).length - 2
-                                    } More`}
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          <div className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 italic">
-                            No bookings
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  ) : null}
-                </div>
-              ))}
+                                {slot.slot_time && (
+                                  <div className="font-medium text-strong text-[10px] xs:text-xs sm:text-sm mb-0.5 sm:mb-1 flex flex-col gap-0.5 sm:gap-1">
+                                    <span className="truncate">
+                                      {formatTime(slot.slot_time)}
+                                    </span>
+                                    <span className="text-[9px] xs:text-[10px] sm:text-xs text-gray-600 truncate">
+                                      {slot.tour_type}
+                                    </span>
+                                    <div className="flex flex-wrap gap-0.5 sm:gap-1">
+                                      {isFullyBooked(slot) && (
+                                        <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-red-600 bg-red-100 px-1 py-0.5 rounded-full whitespace-nowrap">
+                                          Fully Booked
+                                        </span>
+                                      )}
+                                      {isPartiallyBooked(slot) && (
+                                        <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-amber-600 bg-amber-100 px-1 py-0.5 rounded-full whitespace-nowrap">
+                                          Partially Booked
+                                        </span>
+                                      )}
+                                      {isPastDate(dateKey) && (
+                                        <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-500 bg-gray-100 px-1 py-0.5 rounded-full whitespace-nowrap">
+                                          Past Date
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                <div className="flex flex-col justify-between text-[9px] xs:text-[10px] sm:text-xs text-weak">
+                                  <span className="flex items-center">
+                                    <span
+                                      className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
+                                        isFullyBooked(slot)
+                                          ? "bg-red-500"
+                                          : isPastDate(dateKey)
+                                            ? "bg-gray-400"
+                                            : "bg-emerald-500"
+                                      }`}
+                                    ></span>
+                                    <span
+                                      className={
+                                        isFullyBooked(slot)
+                                          ? "text-red-600 font-medium"
+                                          : isPastDate(dateKey)
+                                            ? "text-gray-500"
+                                            : "text-emerald-600"
+                                      }
+                                    >
+                                      Booked: {slot.booked}
+                                    </span>
+                                  </span>
+                                  <span className="flex items-center">
+                                    <span
+                                      className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
+                                        isFullyBooked(slot)
+                                          ? "bg-red-300"
+                                          : isPastDate(dateKey)
+                                            ? "bg-gray-300"
+                                            : "bg-blue-400"
+                                      }`}
+                                    ></span>
+                                    <span
+                                      className={
+                                        isFullyBooked(slot)
+                                          ? "text-red-500"
+                                          : isPastDate(dateKey)
+                                            ? "text-gray-500"
+                                            : "text-blue-600"
+                                      }
+                                    >
+                                      Available: {slot.available}
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          {getDaySlots(dateKey).length > 2 && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDateExpansion(dateKey);
+                              }}
+                              className="w-full text-[9px] xs:text-[10px] sm:text-xs text-brand hover:text-brand/80 font-medium py-0.5 sm:py-1 hover:bg-brand/5 rounded-lg transition-colors"
+                            >
+                              {expandedDates.has(dateKey)
+                                ? "Show Less"
+                                : `Show ${
+                                    getDaySlots(dateKey).length - 2
+                                  } More`}
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 italic">
+                          No bookings
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : null}
+              </div>
+            ))
+          )}
         </div>
       </div>
 

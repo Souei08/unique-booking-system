@@ -49,6 +49,7 @@ interface PaymentStepProps {
   isLoadingPayment: boolean;
   setBookingId: (id: string) => void;
   setIsBookingComplete: (complete: boolean) => void;
+  appliedPromo?: any;
 }
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
@@ -76,6 +77,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   isLoadingPayment,
   setBookingId,
   setIsBookingComplete,
+  appliedPromo,
 }) => {
   const hasFetchedRef = useRef(false);
   const [stripeLoaded, setStripeLoaded] = useState(false);
@@ -169,6 +171,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             customSlotFields={customSlotFields}
             totalAmount={calculateTotal()}
             showGroupSizeControls={false}
+            appliedPromo={appliedPromo}
           />
         </div>
       </div>

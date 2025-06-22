@@ -4,12 +4,11 @@ import { createClient } from "@/supabase/server";
 
 // Define protected routes & required roles
 const protectedRoutes = {
-  "/dashboard": ["admin", "staff"], // Only Admins can access
-  "/api/users": ["admin"], // Only Admins can manage users
-  "/api/bookings": ["customer", "staff", "admin"], // Customers book, staff/admin manage
-  "/api/reviews": ["customer", "admin"], // Customers review, Admins moderate
-  "/api/tours/manage": ["staff", "admin"], // Staff/Admins manage tours
-  "/api/rentals/manage": ["staff", "admin"], // Staff/Admins manage rentals
+  "/dashboard": ["admin", "staff", "reservation_agent"], // Only Admins can access
+  "/api/users": ["admin", "reservation_agent"], // Only Admins can manage users
+  "/api/bookings": ["customer", "staff", "admin", "reservation_agent"], // Customers book, staff/admin manage
+  "/api/reviews": ["customer", "admin", "reservation_agent"], // Customers review, Admins moderate
+  "/api/tours/manage": ["staff", "admin", "reservation_agent"], // Staff/Admins manage tours
   "/api/admin": ["admin"], // Admin-only routes
 };
 

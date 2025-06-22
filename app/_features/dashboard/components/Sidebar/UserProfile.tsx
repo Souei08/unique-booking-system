@@ -24,8 +24,12 @@ export const UserProfile = ({ user }: { user: any }) => {
                   {/* {user.user_metadata.name} */}
                   Web Developer
                 </span>
-                <span className="truncate text-small text-weak capitalize">
-                  {user.role}
+                <span className="truncate text-xs text-weak capitalize">
+                  {user.role === "reservation_agent"
+                    ? "Reservation Agent"
+                    : user.role === "reseller"
+                      ? "Reseller"
+                      : user.role}
                 </span>
               </span>
             </span>

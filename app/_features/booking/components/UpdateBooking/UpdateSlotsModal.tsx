@@ -76,6 +76,8 @@ const UpdateSlotsModal: React.FC<UpdateSlotsModalProps> = ({
         updatedSlotDetails.pop();
       }
 
+      console.log(newSlots);
+
       await updateRegularSlots(bookingId, newSlots);
 
       // If there's a payment link, update it

@@ -376,7 +376,7 @@ export default function TourDetailsClient({ tour }: TourDetailsClientProps) {
               </div>
             </div>
 
-            <section aria-labelledby="things-to-know-heading" className="mt-10">
+            {/* <section aria-labelledby="things-to-know-heading" className="mt-10">
               <h2
                 id="things-to-know-heading"
                 className="text-body-lg font-bold text-strong"
@@ -387,7 +387,7 @@ export default function TourDetailsClient({ tour }: TourDetailsClientProps) {
               <div className="mt-4 space-y-6">
                 <p className="text-small text-weak">{tour.things_to_know}</p>
               </div>
-            </section>
+            </section> */}
 
             <section aria-labelledby="faq-heading" className="mt-10">
               <h2

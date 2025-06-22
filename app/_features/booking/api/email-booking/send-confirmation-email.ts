@@ -1,6 +1,6 @@
 "use server";
 
-import BookingConfirmationEmail from "../../../../_components/emails/BookingConfirmationEmail";
+import ConfirmationEmailTemplate from "../../../../_components/emails/ConfirmationEmailTemplate";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -22,14 +22,18 @@ export async function sendBookingConfirmationEmail(bookingData: {
     unit_price: number;
   }>;
   slot_details: Array<{ type: string; price: number }>;
+  manage_token: string;
   waiver_link: string;
+  sub_total: number;
+  coupon_code: string;
+  discount_amount: number;
 }) {
   try {
     const data = await resend.emails.send({
-      from: "Unique Tours <onboarding@resend.dev>", // ✅ Use a verified sender domain
+      from: "Unique Tours And Rentals <onboarding@resend.dev>", // ✅ Use a verified sender domain
       to: "jubet.sode.5@gmail.com",
       subject: `Booking Confirmation - ${bookingData.tour_name}`,
-      react: BookingConfirmationEmail({ bookingData }),
+      react: ConfirmationEmailTemplate({ bookingData }),
     });
 
     return { success: true, data };

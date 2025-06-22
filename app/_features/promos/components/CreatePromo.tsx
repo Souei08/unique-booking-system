@@ -56,12 +56,28 @@ export default function CreatePromo({ onSuccess }: CreatePromoProps) {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await createPromo({
+      // ✅ Fix: map discount_type to match Stripe's expected values
+      const payload = {
         ...values,
+        discount_type:
+          values.discount_type === "fixed"
+            ? "fixed_amount"
+            : values.discount_type,
         discount_value: parseFloat(values.discount_value),
         max_uses: parseInt(values.max_uses),
+      };
+
+      const res = await fetch("/api/create-promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
 
+      if (!res.ok) {
+        throw new Error((await res.json()).error || "Failed to create promo");
+      }
+
+      // ✅ Success actions: show toast, reset form, refresh page, call callback
       toast.success("Promo created successfully");
       form.reset();
       router.refresh();
@@ -71,7 +87,6 @@ export default function CreatePromo({ onSuccess }: CreatePromoProps) {
       toast.error("Failed to create promo");
     }
   };
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

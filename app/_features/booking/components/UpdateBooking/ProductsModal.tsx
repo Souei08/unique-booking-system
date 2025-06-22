@@ -101,18 +101,28 @@ const ProductsModal: React.FC<ProductsModalProps> = ({
         const quantity = productQuantities[productId] || 1;
 
         return {
+          name: product?.name,
           product_id: productId,
           quantity: quantity,
           unit_price: product?.price || 0,
         };
       });
 
+      console.log("productsData", productsData);
+      console.log("selectedProducts", selectedProducts);
+      console.log("productQuantities", productQuantities);
+
       // Update products
       await updateBookingProducts(bookingId, productsData);
 
       // If there's a payment link, update it
       if (paymentLink) {
-        await handlePaymentLinkUpdate(true, [], editedProducts, null);
+        await handlePaymentLinkUpdate(
+          true,
+          [],
+          productsData as AdditionalProduct[],
+          null
+        );
       }
 
       toast.success("Products updated successfully");

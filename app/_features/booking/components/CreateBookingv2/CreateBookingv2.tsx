@@ -145,12 +145,21 @@ const CreateBookingv2 = ({
     Record<string, number>
   >({});
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
 
   useEffect(() => {
     if (selectedTour && selectedTour.id) {
       setCurrentStep(2);
     }
   }, [selectedTour]);
+
+  const handlePromoApplied = (promoData: any) => {
+    setAppliedPromo(promoData);
+  };
+
+  const handlePromoRemoved = () => {
+    setAppliedPromo(null);
+  };
 
   const handleBack = () => {
     if (currentStep > 1) {
@@ -232,6 +241,10 @@ const CreateBookingv2 = ({
       payment_id: paymentId,
       products: productsData,
       slot_details: slotDetails,
+      promo_code_id: appliedPromo?.id || null,
+      promo_code: appliedPromo?.code || null,
+      sub_total: calculateTotal(),
+      discount_amount: appliedPromo?.discount_amount || null,
     };
 
     try {
@@ -291,6 +304,11 @@ const CreateBookingv2 = ({
         total += product.price * quantity;
       }
     });
+
+    // Apply promo code discount if available
+    if (appliedPromo) {
+      total = appliedPromo.final_amount;
+    }
 
     // Round to 2 decimal places to avoid floating point issues
     return Math.round(total * 100) / 100;
@@ -406,6 +424,9 @@ const CreateBookingv2 = ({
             customSlotFields={customSlotFields}
             handleNext={handleNext}
             calculateTotal={calculateTotal}
+            appliedPromo={appliedPromo}
+            onPromoApplied={handlePromoApplied}
+            onPromoRemoved={handlePromoRemoved}
           />
         );
       case 4:
@@ -435,6 +456,7 @@ const CreateBookingv2 = ({
             isLoadingPayment={isLoadingPayment}
             setBookingId={setBookingId}
             setIsBookingComplete={setIsBookingComplete}
+            appliedPromo={appliedPromo}
           />
         );
       default:
@@ -488,12 +510,6 @@ const CreateBookingv2 = ({
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-2xl sm:rounded-3xl" />
           <div className="relative p-4 sm:p-6">{renderStep()}</div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 sm:mt-12 text-center text-xs sm:text-sm text-muted-foreground">
-          <p>Need help? Contact our support team at support@example.com</p>
-          <p className="mt-2">Secure booking powered by Stripe</p>
         </div>
       </div>
 

@@ -52,17 +52,9 @@ export default function TourBookingsClient() {
     );
   }
 
-  if (!tour) {
-    return (
-      <div className="pt-10">
-        <div className="text-center">Tour not found</div>
-      </div>
-    );
-  }
-
   return (
     <div className="pt-10">
-      <CreateBookingv2 onClose={() => {}} customerSelectedTour={tour} />
+      <CreateBookingv2 onClose={() => {}} customerSelectedTour={tour as Tour} />
     </div>
   );
 }
