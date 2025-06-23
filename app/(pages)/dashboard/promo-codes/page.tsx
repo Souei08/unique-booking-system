@@ -9,7 +9,7 @@ const PromosPage = async () => {
 
   return (
     <ContentLayout
-      title="List of Promos"
+      title="Promos Codes"
       buttonText="Create Promo"
       description="View and manage all current promos."
       modalTitle="Create a new promo"

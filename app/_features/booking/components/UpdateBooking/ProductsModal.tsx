@@ -108,10 +108,6 @@ const ProductsModal: React.FC<ProductsModalProps> = ({
         };
       });
 
-      console.log("productsData", productsData);
-      console.log("selectedProducts", selectedProducts);
-      console.log("productQuantities", productQuantities);
-
       // Update products
       await updateBookingProducts(bookingId, productsData);
 

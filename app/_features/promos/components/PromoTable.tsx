@@ -136,7 +136,7 @@ export default function PromoTable({ initialPromos }: PromoTableProps) {
   };
 
   return (
-    <>
+    <div className="mt-7">
       <TableV2 columns={columns} data={promos} />
       <Dialog open={isUpdateDialogOpen} onOpenChange={setIsUpdateDialogOpen}>
         <DialogContent>
@@ -154,6 +154,6 @@ export default function PromoTable({ initialPromos }: PromoTableProps) {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

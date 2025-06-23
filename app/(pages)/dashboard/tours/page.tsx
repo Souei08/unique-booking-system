@@ -12,7 +12,7 @@ export default async function ToursPage() {
 
   return (
     <ContentLayout
-      title="List of Tours"
+      title="Tours"
       buttonText="Create Tour"
       description="View and manage all current tours."
       modalTitle="Create a new tour"

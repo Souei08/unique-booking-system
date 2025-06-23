@@ -159,17 +159,14 @@ const UpdateProduct: React.FC<UpdateProductProps> = ({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           <div className="space-y-4">
             <div>
-              <Label
-                htmlFor="name"
-                className="text-sm font-medium text-gray-700"
-              >
+              <Label htmlFor="name" className="text-sm font-medium text-strong">
                 Product Name
               </Label>
               <Input
                 type="text"
                 id="name"
                 {...register("name")}
-                className="mt-1.5"
+                className="mt-1.5 text-weak"
                 placeholder="Enter product name"
               />
               {errors.name && (
@@ -182,7 +179,7 @@ const UpdateProduct: React.FC<UpdateProductProps> = ({
             <div>
               <Label
                 htmlFor="description"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-strong"
               >
                 Description
               </Label>
@@ -190,7 +187,7 @@ const UpdateProduct: React.FC<UpdateProductProps> = ({
                 id="description"
                 {...register("description")}
                 rows={4}
-                className="mt-1.5 resize-none"
+                className="mt-1.5 resize-none text-weak"
                 placeholder="Enter product description"
               />
               {errors.description && (
@@ -203,7 +200,7 @@ const UpdateProduct: React.FC<UpdateProductProps> = ({
             <div>
               <Label
                 htmlFor="price"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-strong"
               >
                 Price
               </Label>
@@ -216,7 +213,7 @@ const UpdateProduct: React.FC<UpdateProductProps> = ({
                   id="price"
                   step="0.01"
                   {...register("price", { valueAsNumber: true })}
-                  className="pl-7"
+                  className="pl-7 text-weak"
                   placeholder="0.00"
                 />
               </div>
@@ -230,7 +227,7 @@ const UpdateProduct: React.FC<UpdateProductProps> = ({
             <div>
               <Label
                 htmlFor="image"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-strong"
               >
                 Product Image
               </Label>

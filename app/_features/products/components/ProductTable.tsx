@@ -7,19 +7,18 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Pencil, Trash2, X, ZoomIn } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { deleteProduct } from "../api/deleteProduct";
 import { useRouter } from "next/navigation";
 import UpdateProduct from "./UpdateProduct";
 import AssignProductToTour from "./AssignProductToTour";
+import { Tooltip } from "@/components/ui/tooltip";
+import MainModal, {
+  ImagePreviewModal,
+} from "@/app/_components/custom-modals/main-modal";
+import { DeleteAlertDialog } from "@/app/_components/custom-modals/alert-dialog";
 
 interface ProductTableProps {
   products: Product[];
@@ -31,18 +30,30 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setIsEditDialogOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+  const handleDeleteClick = (id: string) => {
+    setProductToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
 
     try {
       setIsDeleting(true);
-      await deleteProduct(id);
+      await deleteProduct(productToDelete);
       toast.success("Product deleted successfully");
       router.refresh();
     } catch (error) {
@@ -50,13 +61,62 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
       toast.error("Failed to delete product");
     } finally {
       setIsDeleting(false);
+      setProductToDelete(null);
     }
+  };
+
+  const handleImagePreview = (imageUrl: string, productName: string) => {
+    setPreviewImage({ url: imageUrl, name: productName });
+    setIsPreviewOpen(true);
   };
 
   const columns: ColumnDef<Product>[] = [
     {
+      accessorKey: "image_url",
+      header: "Product Image",
+      size: 120,
+      cell: ({ row }) => (
+        <div className="flex justify-center items-center w-full">
+          <div className="relative h-24 w-full flex items-center justify-center rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+            {row.original.image_url ? (
+              <>
+                <Image
+                  src={row.original.image_url}
+                  alt={`${row.original.name} product image`}
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-200"
+                  sizes="96px"
+                  priority={false}
+                />
+                <div
+                  className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center"
+                  onClick={() =>
+                    handleImagePreview(
+                      row.original.image_url!,
+                      row.original.name
+                    )
+                  }
+                >
+                  <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </div>
+              </>
+            ) : (
+              <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center">
+                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mb-1">
+                  <span className="text-gray-500 text-xs">📷</span>
+                </div>
+                <span className="text-gray-500 text-xs font-medium text-center px-2">
+                  No Image
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
       accessorKey: "name",
-      header: "Name",
+      header: "Product Name",
     },
     {
       accessorKey: "description",
@@ -74,26 +134,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
         <div className="font-medium">${row.original.price.toFixed(2)}</div>
       ),
     },
-    {
-      accessorKey: "image_url",
-      header: "Image",
-      cell: ({ row }) => (
-        <div className="relative h-10 w-10">
-          {row.original.image_url ? (
-            <Image
-              src={row.original.image_url}
-              alt={row.original.name}
-              fill
-              className="object-cover rounded-md"
-            />
-          ) : (
-            <div className="h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center">
-              <span className="text-gray-400 text-xs">No image</span>
-            </div>
-          )}
-        </div>
-      ),
-    },
+
     {
       accessorKey: "created_at",
       header: "Date Created",
@@ -106,50 +147,113 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleEdit(row.original)}
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Edit Product</DialogTitle>
-              </DialogHeader>
-              {editingProduct && (
-                <UpdateProduct
-                  product={editingProduct}
-                  onSuccess={() => setIsEditDialogOpen(false)}
-                  onCancel={() => setIsEditDialogOpen(false)}
-                />
-              )}
-            </DialogContent>
-          </Dialog>
-          <AssignProductToTour product={row.original} tours={tours as any} />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDelete(row.original.id)}
-            disabled={isDeleting}
+          <MainModal
+            isOpen={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            title="Edit Product"
+            description="Edit the product details"
+            maxWidth="2xl"
+            trigger={
+              <Tooltip content="Edit product details">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(row.original)}
+                  className="h-8 px-3 text-xs font-medium text-weak"
+                >
+                  <Pencil className="h-2 w-2 mr-1 text-weak" />
+                  Edit Product
+                </Button>
+              </Tooltip>
+            }
+            onClose={() => setIsEditDialogOpen(false)}
           >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
+            {editingProduct && (
+              <UpdateProduct
+                product={editingProduct}
+                onSuccess={() => setIsEditDialogOpen(false)}
+                onCancel={() => setIsEditDialogOpen(false)}
+              />
+            )}
+          </MainModal>
+          <div className="inline-block">
+            <AssignProductToTour product={row.original} tours={tours as any} />
+          </div>
+          <Tooltip content="Permanently delete this product">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleDeleteClick(row.original.id)}
+              disabled={isDeleting}
+              className="h-8 px-3 text-xs font-medium text-weak"
+            >
+              <Trash2 className="h-4 w-4 text-weak" />
+              Remove Product
+            </Button>
+          </Tooltip>
         </div>
       ),
     },
   ];
 
   return (
-    <TableV2
-      columns={columns}
-      data={products}
-      filterColumn="name"
-      filterPlaceholder="Filter products..."
-    />
+    <>
+      <TableV2
+        columns={columns}
+        data={products}
+        filterColumn="name"
+        filterPlaceholder="Filter products..."
+      />
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        imageSrc={previewImage?.url || ""}
+        imageAlt={previewImage?.name || "Product image"}
+      />
+      {/* <MainModal
+        isOpen={isPreviewOpen}
+        onOpenChange={setIsPreviewOpen}
+        title="Product Image Preview"
+        maxWidth="4xl"
+        showCloseButton={true}
+        className="p-0 overflow-hidden"
+      >
+        <div className="relative">
+          {previewImage && (
+            <div className="relative w-full flex items-center justify-center">
+              <div className="relative max-w-full max-h-[80vh]">
+                <Image
+                  src={previewImage.url}
+                  alt={`${previewImage.name} product image`}
+                  width={0}
+                  height={0}
+                  className="w-auto h-auto max-w-full max-h-[80vh] object-contain"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, (max-width: 1600px) 80vw, 1600px"
+                  priority={true}
+                  quality={95}
+                  unoptimized={false}
+                />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
+                <h3 className="text-white text-lg font-semibold">
+                  {previewImage.name}
+                </h3>
+              </div>
+            </div>
+          )}
+        </div>
+      </MainModal> */}
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteAlertDialog
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        itemName="this product"
+        onConfirm={handleDeleteConfirm}
+      />
+    </>
   );
 };
 

@@ -6,10 +6,10 @@ interface BookingFilters {
   user_name_filter?: string | null; // Search name
   status_filter?: string | null; // e.g., 'confirmed', 'cancelled'
   booking_id_filter?: string | null; // Booking ID filter
-  date_range?: {
-    from: string; // ISO string
-    to: string; // ISO string
-  } | null;
+  // date_range?: {
+  //   from: string; // ISO string
+  //   to: string; // ISO string
+  // } | null;
   limit_count?: number; // pagination limit
   offset_count?: number; // pagination offset
 }
@@ -24,7 +24,7 @@ export async function getAllBookings(
     user_name_filter = null,
     status_filter = null,
     booking_id_filter = null,
-    date_range = null,
+    // date_range = null,
     limit_count = 10,
     offset_count = 0,
   } = filters;
@@ -35,8 +35,8 @@ export async function getAllBookings(
     user_name_filter,
     status_filter,
     booking_id_filter,
-    created_start: date_range?.from || null,
-    created_end: date_range?.to || null,
+    // created_start: date_range?.from || null,
+    // created_end: date_range?.to || null,
     limit_count,
     offset_count,
   });

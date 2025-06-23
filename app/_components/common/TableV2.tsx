@@ -24,12 +24,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TableV2Props<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   filterColumn?: string;
   filterPlaceholder?: string;
+  totalCount?: number;
+  page?: number;
+  pageSize?: number;
+  onNextPage?: () => void;
+  onPreviousPage?: () => void;
+  onPageChange?: (page: number) => void;
+  isLoading?: boolean;
+  entityName?: string;
 }
 
 export function TableV2<TData, TValue>({
@@ -37,6 +46,14 @@ export function TableV2<TData, TValue>({
   data,
   filterColumn,
   filterPlaceholder = "Filter...",
+  totalCount = 0,
+  page = 1,
+  pageSize = 10,
+  onNextPage,
+  onPreviousPage,
+  onPageChange,
+  isLoading,
+  entityName = "results",
 }: TableV2Props<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -62,8 +79,55 @@ export function TableV2<TData, TValue>({
     },
   });
 
+  const showPagination = onNextPage && onPreviousPage && onPageChange;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const getPaginationRange = () => {
+    const siblingCount = 1;
+    const totalPageNumbers = siblingCount + 5;
+
+    if (totalPageNumbers >= totalPages) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const leftSiblingIndex = Math.max(page - siblingCount, 1);
+    const rightSiblingIndex = Math.min(page + siblingCount, totalPages);
+
+    const shouldShowLeftDots = leftSiblingIndex > 2;
+    const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
+
+    const firstPageIndex = 1;
+    const lastPageIndex = totalPages;
+
+    if (!shouldShowLeftDots && shouldShowRightDots) {
+      const leftItemCount = 3 + 2 * siblingCount;
+      const leftRange = Array.from({ length: leftItemCount }, (_, i) => i + 1);
+      return [...leftRange, "...", totalPages];
+    }
+
+    if (shouldShowLeftDots && !shouldShowRightDots) {
+      const rightItemCount = 3 + 2 * siblingCount;
+      const rightRange = Array.from(
+        { length: rightItemCount },
+        (_, i) => totalPages - rightItemCount + 1 + i
+      );
+      return [firstPageIndex, "...", ...rightRange];
+    }
+
+    if (shouldShowLeftDots && shouldShowRightDots) {
+      const middleRange = Array.from(
+        { length: rightSiblingIndex - leftSiblingIndex + 1 },
+        (_, i) => leftSiblingIndex + i
+      );
+      return [firstPageIndex, "...", ...middleRange, "...", lastPageIndex];
+    }
+    return [];
+  };
+
+  const paginationRange = totalPages > 1 ? getPaginationRange() : [];
+
   return (
-    <div className="w-full">
+    <div className="w-full font-['Montserrat']">
       {filterColumn && (
         <div className="flex items-center py-4">
           <Input
@@ -78,16 +142,16 @@ export function TableV2<TData, TValue>({
           />
         </div>
       )}
-      <div className="rounded-md border border-gray-200 shadow-md">
-        <Table>
-          <TableHeader>
+      <div className="rounded-sm border border-stroke-strong shadow-sm overflow-hidden">
+        <Table className="font-['Montserrat']">
+          <TableHeader className="bg-background">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead
                       key={header.id}
-                      className="font-bold text-strong text-sm uppercase px-3.5 py-5"
+                      className="px-6 py-3 bg-gray-100 text-left text-sm font-bold uppercase tracking-wide text-strong"
                     >
                       {header.isPlaceholder
                         ? null
@@ -107,11 +171,12 @@ export function TableV2<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  // className="hover:bg-fill transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="text-small text-weak font-semibold  px-4 py-5"
+                      className="px-6 py-4 whitespace-nowrap text-sm text-text font-medium"
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -134,24 +199,57 @@ export function TableV2<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      {/* <div className="flex items-center justify-end space-x-2 py-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+      {showPagination && paginationRange.length > 0 && (
+        <nav
+          aria-label="Pagination"
+          className="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6"
         >
-          Previous
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Next
-        </Button>
-      </div> */}
+          <div className="flex flex-1 justify-end items-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPreviousPage}
+              disabled={page === 1 || isLoading}
+              className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+
+            <div className="mx-4 flex items-center gap-1">
+              {paginationRange.map((pageNumber, index) =>
+                typeof pageNumber === "string" ? (
+                  <span key={index} className="px-2 py-1 text-sm">
+                    ...
+                  </span>
+                ) : (
+                  <Button
+                    key={index}
+                    onClick={() => onPageChange(pageNumber)}
+                    disabled={isLoading}
+                    variant={page === pageNumber ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 w-8 p-0 text-sm"
+                  >
+                    {pageNumber}
+                  </Button>
+                )
+              )}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onNextPage}
+              disabled={page * pageSize >= totalCount || isLoading}
+              className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

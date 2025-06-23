@@ -54,11 +54,10 @@ export function BookingTableV2() {
 
   // Pagination & filters
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(5);
+  const [pageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState<BookingFiltersType>({
     status_filter: "all",
-    date_range: { from: undefined, to: undefined },
     selected_time_filter: "all",
     tour_filter: "all",
     booking_id_filter: "",
@@ -103,16 +102,6 @@ export function BookingTableV2() {
       if (filters.booking_id_filter) {
         filterParams.booking_id_filter = filters.booking_id_filter;
       }
-      if (filters.date_range.from || filters.date_range.to) {
-        filterParams.date_range = {
-          from: filters.date_range.from
-            ? format(filters.date_range.from, "yyyy-MM-dd")
-            : null,
-          to: filters.date_range.to
-            ? format(filters.date_range.to, "yyyy-MM-dd")
-            : null,
-        };
-      }
 
       const data = await getAllBookings(filterParams);
 
@@ -145,6 +134,10 @@ export function BookingTableV2() {
 
   const handlePrevious = () => {
     setPage((p) => Math.max(p - 1, 1));
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
   const handleFiltersChange = (newFilters: BookingFiltersType) => {
@@ -336,49 +329,17 @@ export function BookingTableV2() {
           columns={columns}
           data={bookings}
           filterColumn={undefined} // filters handled here instead
+          // Pagination props
+          totalCount={totalCount}
+          page={page}
+          pageSize={pageSize}
+          onNextPage={handleNext}
+          onPreviousPage={handlePrevious}
+          onPageChange={handlePageChange}
+          isLoading={isLoading || isFilterLoading}
+          entityName="bookings"
         />
       </div>
-
-      {/* Pagination */}
-      <nav
-        aria-label="Pagination"
-        className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6"
-      >
-        <div className="hidden sm:block">
-          <p className="text-sm text-gray-700">
-            Showing{" "}
-            <span className="font-medium">{(page - 1) * pageSize + 1}</span> to{" "}
-            <span className="font-medium">
-              {Math.min(page * pageSize, totalCount)}
-            </span>{" "}
-            of <span className="font-medium">{totalCount}</span> bookings
-          </p>
-        </div>
-        <div className="flex flex-1 justify-between sm:justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevious}
-            disabled={page === 1 || isLoading || isFilterLoading}
-            className="relative inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNext}
-            disabled={
-              page * pageSize >= totalCount || isLoading || isFilterLoading
-            }
-            className="relative ml-3 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-gray-300 ring-inset hover:bg-gray-50 focus-visible:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-          >
-            Next
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-      </nav>
 
       {/* Update Booking Dialog */}
       <Dialog

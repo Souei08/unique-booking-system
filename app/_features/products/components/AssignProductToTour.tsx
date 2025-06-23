@@ -31,6 +31,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip } from "@/components/ui/tooltip";
 
 interface AssignProductToTourProps {
   product: Product;
@@ -155,20 +156,28 @@ const AssignProductToTour: React.FC<AssignProductToTourProps> = ({
 
   if (!tours || tours.length === 0) {
     return (
-      <Button variant="outline" size="sm" disabled>
-        <Plus className="h-4 w-4 mr-2" />
-        No Tours Available
-      </Button>
+      <Tooltip content="No tours available to assign">
+        <Button variant="outline" size="sm" disabled className="h-8 px-3">
+          <Plus className="h-4 w-4 mr-1" />
+          Assign to Tours
+        </Button>
+      </Tooltip>
     );
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Assign to Tours
-        </Button>
+        <Tooltip content="Assign this product to available tours">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-3 text-xs font-medium text-weak"
+          >
+            <Plus className="h-2 w-2 mr-1 text-weak" />
+            Assign to Tours
+          </Button>
+        </Tooltip>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>

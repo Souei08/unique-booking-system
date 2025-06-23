@@ -82,8 +82,12 @@ const ContentLayout = ({
       <div className="px-4 sm:px-6 lg:px-8 py-10 min-h-dvh">
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">
-            <h1 className="text-h2 font-bold text-strong">{title}</h1>
-            <p className="mt-2 text-lg text-weak">{description}</p>
+            <h1 className="text-2xl md:text-3xl text-strong font-bold mb-2">
+              {title}
+            </h1>
+            <p className="text-base md:text-base lg:text-lg text-text">
+              {description}
+            </p>
           </div>
 
           {buttonText && (

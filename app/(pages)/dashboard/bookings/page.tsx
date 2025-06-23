@@ -4,7 +4,7 @@ import ContentLayout from "@/app/(pages)/dashboard/ContentLayout";
 export default function BookingsPage() {
   return (
     <ContentLayout
-      title="List of Bookings"
+      title="Bookings"
       description="View and manage all current bookings for tours."
       buttonText="Create Direct Booking"
       modalTitle="Create a Direct Booking"
