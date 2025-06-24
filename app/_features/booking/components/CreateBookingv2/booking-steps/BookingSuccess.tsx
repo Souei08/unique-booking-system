@@ -6,9 +6,9 @@ import { DateValue, getLocalTimeZone } from "@internationalized/date";
 import { formatToDateString } from "@/app/_lib/utils/utils";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { getOneBooking } from "@/app/_features/booking/api/getOneBooking";
+import { getOneBooking } from "@/app/_features/booking/api/get-booking/getOneBooking";
 import { BookingTable } from "@/app/_features/booking/types/booking-types";
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 import { format } from "date-fns";
 
 interface BookingSuccessProps {
@@ -37,7 +37,7 @@ const BookingSuccess = ({
   useEffect(() => {
     const fetchBookingDetails = async () => {
       try {
-        const booking = await getOneBooking(bookingId);
+        const booking = await getOneBooking(bookingId, null);
 
         if (!booking) {
           console.error("No booking found with ID:", bookingId);
@@ -109,7 +109,7 @@ const BookingSuccess = ({
         </div>
         <div className="space-y-3">
           <h2 className="text-3xl font-bold tracking-tight text-strong">
-            Booking Confirmed!
+            Booking Created !
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {getSuccessMessage()}

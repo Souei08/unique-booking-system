@@ -24,6 +24,8 @@ import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/
 import { UpsertUser } from "@/app/_features/users/form/UpsertUser";
 import CreateProduct from "@/app/_features/products/components/CreateProduct";
 import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickBooking";
+import CreatePromo from "@/app/_features/promos/components/CreatePromo";
+import UpsertTourV2Stepped from "@/app/_features/tours/forms/upsert-tour-v2/UpsertTourV2Stepped";
 
 interface ContentLayoutProps {
   title: string;
@@ -33,7 +35,7 @@ interface ContentLayoutProps {
 
   modalTitle?: string;
   modalDescription?: string;
-  modalRoute?: "booking" | "tours" | "users" | "products";
+  modalRoute?: "booking" | "tours" | "users" | "products" | "promos";
 }
 
 const ContentLayout = ({
@@ -49,38 +51,43 @@ const ContentLayout = ({
   const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isPromoDialogOpen, setIsPromoDialogOpen] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
 
   const handleButtonClick = () => {
     if (modalRoute === "users") {
       setIsUserDialogOpen(true);
     } else if (modalRoute === "products") {
       setIsProductDialogOpen(true);
-    } else {
+    } else if (modalRoute === "promos") {
+      setIsPromoDialogOpen(true);
+    } else if (modalRoute === "tours") {
       setIsTourDialogOpen(true);
+    } else if (modalRoute === "booking") {
+      setIsBookingDialogOpen(true);
     }
   };
 
-  const handleDialogClose = (setDialogOpen: (value: boolean) => void) => {
-    if (modalRoute === "booking") {
-      setShowConfirmDialog(true);
-    } else {
-      setDialogOpen(false);
-    }
-  };
-
-  const handleConfirmClose = () => {
-    setShowConfirmDialog(false);
-    setIsTourDialogOpen(false);
-  };
+  // const handleDialogClose = (setDialogOpen: (value: boolean) => void) => {
+  //   if (modalRoute === "booking") {
+  //     setShowConfirmDialog(true);
+  //   } else {
+  //     setDialogOpen(false);
+  //   }
+  // };
 
   return (
     <main className="flex-1">
       <div className="px-4 sm:px-6 lg:px-8 py-10 min-h-dvh">
         <div className="sm:flex sm:items-center">
           <div className="sm:flex-auto">
-            <h1 className="text-h2 font-bold text-strong">{title}</h1>
-            <p className="mt-2 text-lg text-weak">{description}</p>
+            <h1 className="text-2xl md:text-3xl text-strong font-bold mb-2">
+              {title}
+            </h1>
+            <p className="text-base md:text-base lg:text-lg text-text">
+              {description}
+            </p>
           </div>
 
           {buttonText && (
@@ -100,28 +107,78 @@ const ContentLayout = ({
       </div>
 
       <Dialog
+        open={isPromoDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsPromoDialogOpen(false);
+          } else {
+            setIsPromoDialogOpen(true);
+          }
+        }}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-lg font-bold">
+              {modalTitle}
+            </DialogTitle>
+            <DialogDescription className="text-weak text-sm">
+              {modalDescription}
+            </DialogDescription>
+          </DialogHeader>
+
+          <CreatePromo onSuccess={() => setIsPromoDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
         open={isTourDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
-            handleDialogClose(setIsTourDialogOpen);
+            setIsTourDialogOpen(false);
           } else {
             setIsTourDialogOpen(true);
           }
         }}
       >
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle>{modalTitle}</DialogTitle>
-            <DialogDescription>{modalDescription}</DialogDescription>
+          <DialogHeader className="mb-5 text-center items-center border-b border-gray-200 pb-5">
+            <DialogTitle className="text-strong text-3xl font-bold">
+              {modalTitle}
+            </DialogTitle>
+            <DialogDescription className="text-weak text-sm">
+              {modalDescription}
+            </DialogDescription>
           </DialogHeader>
 
           {modalRoute === "tours" && (
-            <UpsertTourV2 onSuccess={() => setIsTourDialogOpen(false)} />
+            <UpsertTourV2Stepped onSuccess={() => setIsTourDialogOpen(false)} />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isBookingDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsBookingDialogOpen(false);
+          } else {
+            setIsBookingDialogOpen(true);
+          }
+        }}
+      >
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-xl font-bold">
+              {modalTitle}
+            </DialogTitle>
+            <DialogDescription className="text-weak text-sm">
+              {modalDescription}
+            </DialogDescription>
+          </DialogHeader>
 
           {modalRoute === "booking" && (
             <QuickBooking
-              onClose={() => handleDialogClose(setIsTourDialogOpen)}
+              onClose={() => setIsBookingDialogOpen(false)}
               selectedTour={null as any}
               selectedDate={null as any}
               selectedTime={null as any}
@@ -132,8 +189,10 @@ const ContentLayout = ({
 
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle>{modalTitle}</DialogTitle>
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-xl font-bold">
+              {modalTitle}
+            </DialogTitle>
 
             <UpsertUser onSuccess={() => setIsUserDialogOpen(false)} />
           </DialogHeader>
@@ -142,8 +201,8 @@ const ContentLayout = ({
 
       <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5">
-            <DialogTitle className="text-h1 font-bold text-strong">
+          <DialogHeader className="mb-5 text-center items-center">
+            <DialogTitle className="text-strong text-xl font-bold">
               {modalTitle}
             </DialogTitle>
           </DialogHeader>
@@ -163,7 +222,7 @@ const ContentLayout = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose}>
+            <AlertDialogAction onClick={() => setIsBookingDialogOpen(false)}>
               Yes, leave page
             </AlertDialogAction>
           </AlertDialogFooter>

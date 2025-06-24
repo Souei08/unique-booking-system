@@ -14,7 +14,7 @@ import {
   CustomSlotField,
 } from "../CreateBookingv2/booking-steps/SlotDetails";
 import { toast } from "sonner";
-import { updateBookingSlots } from "../../api/UpdateBookingSlots";
+import { updateBookingSlots } from "../../api/update-booking/UpdateBookingSlots";
 import {
   AdditionalProduct,
   CustomerInformation,
@@ -131,8 +131,8 @@ const SlotDetailsModal: React.FC<SlotDetailsModalProps> = ({
         }
       });
 
-      // Validate slot type if custom slot types exist
-      if (customSlotTypes) {
+      // Validate slot type if custom slot types exist and are not empty
+      if (customSlotTypes && customSlotTypes.length > 0) {
         if (!slot.type) {
           errors.push(`Slot ${index + 1}: Type is required`);
         } else if (!customSlotTypes.find((t) => t.name === slot.type)) {

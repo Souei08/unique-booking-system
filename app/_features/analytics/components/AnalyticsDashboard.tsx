@@ -82,57 +82,6 @@ export function AnalyticsDashboard() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Time-based Revenue Chart */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Revenue Over Time</CardTitle>
-          <div className="flex gap-2">
-            {["week", "month", "year"].map((tf) => (
-              <button
-                key={tf}
-                onClick={() => setTimeframe(tf as "week" | "month" | "year")}
-                className={`px-3 py-1 rounded-md text-sm ${
-                  timeframe === tf
-                    ? "bg-brand text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-              >
-                {tf.charAt(0).toUpperCase() + tf.slice(1)}
-              </button>
-            ))}
-          </div>
-        </CardHeader>
-        <CardContent className="h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data.revenueByTimeframe}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey={timeframe}
-                tickFormatter={formatDate}
-                tick={{ fontSize: 12 }}
-              />
-              <YAxis
-                tickFormatter={(value) => formatCurrency(value)}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
-                labelFormatter={formatDate}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="#8884d8"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
       {/* Stats Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -186,7 +135,58 @@ export function AnalyticsDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      {/* Time-based Revenue Chart */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Revenue Over Time</CardTitle>
+          <div className="flex gap-2">
+            {["week", "month", "year"].map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf as "week" | "month" | "year")}
+                className={`px-3 py-1 rounded-md text-sm ${
+                  timeframe === tf
+                    ? "bg-brand text-white"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                {tf.charAt(0).toUpperCase() + tf.slice(1)}
+              </button>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data.revenueByTimeframe}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey={timeframe}
+                tickFormatter={formatDate}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                tickFormatter={(value) => formatCurrency(value)}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip
+                formatter={(value: number) => formatCurrency(value)}
+                labelFormatter={formatDate}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="total"
+                stroke="#8884d8"
+                strokeWidth={2}
+                dot={{ r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-4">
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>Revenue by Product</CardTitle>

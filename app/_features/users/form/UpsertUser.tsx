@@ -21,6 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AlertCircle } from "lucide-react";
 
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
@@ -62,15 +63,34 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
 
       console.log(res);
 
-      if (!res.success) {
-        throw new Error(res.error || "Failed to invite user");
+      if (res.success === false) {
+        showErrorToast(res.error || "Failed to send invitation.");
+
+        // Set form errors based on the response
+        if (res.error) {
+          // If there's a specific field error, you can set it like this:
+          // form.setError("email", { message: res.error });
+
+          // For now, setting a general form error
+          form.setError("root", {
+            message: res.error || "Failed to send invitation.",
+          });
+        }
+
+        return false;
       }
 
       showSuccessToast("Invitation sent successfully!");
+      form.reset(); // Reset form on success
       onSuccess?.();
     } catch (error: any) {
       console.error("Error sending invite:", error);
       showErrorToast(error.message || "Failed to send invitation.");
+
+      // Set form error for caught exceptions
+      form.setError("root", {
+        message: error.message || "Failed to send invitation.",
+      });
     }
   }
 
@@ -84,7 +104,15 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="Enter full name" {...field} />
+                <Input
+                  placeholder="Enter full name"
+                  {...field}
+                  className={
+                    form.formState.errors.root
+                      ? "border-destructive text-destructive"
+                      : ""
+                  }
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -102,6 +130,11 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
                   type="email"
                   placeholder="Enter email address"
                   {...field}
+                  className={
+                    form.formState.errors.root
+                      ? "border-destructive text-red-500"
+                      : ""
+                  }
                 />
               </FormControl>
               <FormMessage />
@@ -117,7 +150,13 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
               <FormLabel>Role</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger
+                    className={
+                      form.formState.errors.root
+                        ? "border-destructive text-destructive"
+                        : ""
+                    }
+                  >
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                 </FormControl>
@@ -135,6 +174,14 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
             </FormItem>
           )}
         />
+
+        {/* Display root form errors */}
+        {form.formState.errors.root && (
+          <div className="flex items-center gap-2 p-3 text-sm border border-destructive bg-destructive/10 text-destructive rounded-md">
+            <AlertCircle className="h-4 w-4" />
+            <span>{form.formState.errors.root.message}</span>
+          </div>
+        )}
 
         <Button type="submit" className="w-full">
           Send Invitation

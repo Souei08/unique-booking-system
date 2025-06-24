@@ -11,7 +11,6 @@ import { RefreshCw, Package } from "lucide-react";
 import AdditionalProducts from "../CreateBookingv2/booking-steps/AdditionalProducts";
 import { toast } from "sonner";
 import { updateBookingProducts } from "../../api/update-booking/UpdateBookingProducts";
-import { updatePayment } from "../../api/updatePayment";
 import { Product } from "@/app/_features/products/types/product-types";
 import {
   AdditionalProduct,
@@ -102,6 +101,7 @@ const ProductsModal: React.FC<ProductsModalProps> = ({
         const quantity = productQuantities[productId] || 1;
 
         return {
+          name: product?.name,
           product_id: productId,
           quantity: quantity,
           unit_price: product?.price || 0,
@@ -113,7 +113,12 @@ const ProductsModal: React.FC<ProductsModalProps> = ({
 
       // If there's a payment link, update it
       if (paymentLink) {
-        await handlePaymentLinkUpdate(true, [], editedProducts, null);
+        await handlePaymentLinkUpdate(
+          true,
+          [],
+          productsData as AdditionalProduct[],
+          null
+        );
       }
 
       toast.success("Products updated successfully");

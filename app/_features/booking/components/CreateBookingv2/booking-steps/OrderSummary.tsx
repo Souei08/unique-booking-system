@@ -3,7 +3,7 @@ import { Tour } from "@/app/_features/tours/tour-types";
 import { Product } from "@/app/_features/products/types/product-types";
 import { SlotDetail } from "@/app/_features/booking/types/booking-types";
 import { CustomSlotType, CustomSlotField } from "./SlotDetails";
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 import { format } from "date-fns";
 import { DateValue } from "@internationalized/date";
 
@@ -21,6 +21,7 @@ interface OrderSummaryProps {
   totalAmount: number;
   showGroupSizeControls?: boolean;
   onGroupSizeChange?: (newSize: number) => void;
+  appliedPromo?: any;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -37,6 +38,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   totalAmount,
   showGroupSizeControls = false,
   onGroupSizeChange,
+  appliedPromo,
 }) => {
   const tourImages = JSON.parse(selectedTour.images) as {
     url: string;
@@ -205,28 +207,31 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                   <div className="space-y-2 mt-2">
                     {(() => {
                       // Group slots by type and count occurrences
-                      const groupedSlots = slotDetails.reduce((acc, slot) => {
-                        const slotType = customSlotTypes.find(
-                          (type) => type.name === slot.type
-                        );
-                        const typeName = slotType?.name || "Default";
-                        const price = slotType?.price || 0;
+                      const groupedSlots = slotDetails.reduce(
+                        (acc, slot) => {
+                          const slotType = customSlotTypes.find(
+                            (type) => type.name === slot.type
+                          );
+                          const typeName = slotType?.name || "Default";
+                          const price = slotType?.price || 0;
 
-                        if (!acc[typeName]) {
-                          acc[typeName] = {
-                            count: 0,
-                            price: price,
-                          };
-                        }
-                        acc[typeName].count++;
-                        return acc;
-                      }, {} as Record<string, { count: number; price: number }>);
+                          if (!acc[typeName]) {
+                            acc[typeName] = {
+                              count: 0,
+                              price: price,
+                            };
+                          }
+                          acc[typeName].count++;
+                          return acc;
+                        },
+                        {} as Record<string, { count: number; price: number }>
+                      );
 
                       return Object.entries(groupedSlots).map(
                         ([typeName, { count, price }], index) => (
                           <div
                             key={index}
-                            className="flex items-center justify-between bg-fill/50 rounded-lg px-3 py-2"
+                            className="flex items-center justify-between w-full bg-fill/50 rounded-lg px-3 py-2"
                           >
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-brand"></div>
@@ -235,7 +240,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                               </span>
                             </div>
                             <span className="text-sm font-medium text-strong ml-2">
-                              ${price * count}
+                              ${(price * count).toFixed(2)}
                             </span>
                           </div>
                         )
@@ -243,7 +248,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                     })()}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between bg-fill/50 rounded-lg px-3 py-2 mt-2">
+                  <div className="flex items-center justify-between w-full bg-fill/50 rounded-lg px-3 py-2 mt-2">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-brand"></div>
                       <span className="text-sm text-weak">
@@ -251,7 +256,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                       </span>
                     </div>
                     <span className="text-sm font-medium text-strong ml-2">
-                      ${selectedTour.rate * numberOfPeople}
+                      $
+                      {parseFloat(
+                        (selectedTour.rate * numberOfPeople).toString()
+                      ).toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -296,6 +304,85 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               </div>
             )}
           </div>
+
+          {/* Promo Code Applied */}
+          {appliedPromo && (
+            <div className="border-t border-stroke-weak pt-4">
+              <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-200">
+                <div className="space-y-4">
+                  {/* Promo Code Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <svg
+                          className="w-2 h-2 text-white"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <span className="text-sm sm:text-base font-semibold text-emerald-800">
+                          Promo Code Applied
+                        </span>
+                        <p className="text-xs text-emerald-600 mt-0.5">
+                          {appliedPromo.discount_type === "percentage"
+                            ? `${appliedPromo.discount_value}% off`
+                            : `$${appliedPromo.discount_value} off`}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-emerald-100 border border-emerald-300 rounded-lg px-3 py-1.5">
+                      <span className="text-sm font-bold text-emerald-700">
+                        {appliedPromo.code}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Discount Breakdown */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between bg-white/70 rounded-lg px-3 py-2.5 border border-emerald-200">
+                      <span className="text-sm font-medium text-emerald-700">
+                        Original Total
+                      </span>
+                      <span className="text-sm font-semibold text-emerald-700 line-through">
+                        ${appliedPromo.original_amount?.toFixed(2) || "0.00"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-emerald-100 rounded-lg px-3 py-2.5 border border-emerald-300">
+                      <div className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-emerald-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                          />
+                        </svg>
+                        <span className="text-sm font-semibold text-emerald-800">
+                          You Save
+                        </span>
+                      </div>
+                      <span className="text-sm font-bold text-emerald-700">
+                        -${appliedPromo.discount_amount?.toFixed(2) || "0.00"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Total Amount */}
           <div className="border-t border-stroke-weak pt-4">

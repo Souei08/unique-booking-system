@@ -10,10 +10,11 @@ import {
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 import { Navigation } from "./Navigation";
-import { UserProfile } from "./UserProfile";
 
 import CompanyLogo from "@/app/_components/common/logo";
 import { useSidebar } from "@/app/context/SidebarContext/useSidebar";
+import Image from "next/image";
+import { UserProfile } from "./UserProfile";
 
 interface SidebarProps {
   user: any;
@@ -52,11 +53,17 @@ const Sidebar = ({ user }: SidebarProps) => {
                 </button>
               </div>
             </TransitionChild>
-            <div className="flex shrink-0 items-center px-4">
-              <img
-                alt="Your Company"
-                src="/logo/unique_logo-removebg-preview-2.png"
-                className="h-8 w-auto"
+            <div className="mx-auto">
+              <Image
+                alt="Wentech"
+                src="/logo/wentech-logo-latest.png"
+                // className="h-auto w-full object-cover"
+                className="h-[100px] w-[100px] object-cover"
+                width={400}
+                height={200}
+                style={{
+                  objectPosition: "-0px",
+                }}
               />
             </div>
             <div className="mt-5 h-0 flex-1 overflow-y-auto">
@@ -69,10 +76,23 @@ const Sidebar = ({ user }: SidebarProps) => {
 
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col border-r lg:border-gray-200 lg:pt-5 lg:pb-6">
         <div className="mx-auto">
-          <CompanyLogo />
+          {/* <CompanyLogo /> */}
+          <Image
+            alt="Wentech"
+            src="/logo/wentech-logo-latest.png"
+            // className="h-auto w-full object-cover"
+            className="h-[100px] w-[100px] object-cover"
+            width={400}
+            height={200}
+            style={{
+              objectPosition: "-0px",
+            }}
+          />
         </div>
         <div className="flex h-0 flex-1 flex-col overflow-y-auto pt-1 hover:overflow-y-auto">
           <Navigation user={user} />
+        </div>
+        <div className="px-4  mb-2 mt-auto">
           <UserProfile user={user} />
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getOneBooking } from "@/app/_features/booking/api/getOneBooking";
-import { formatTime } from "@/app/_utils/formatTime";
+import { getOneBooking } from "@/app/_features/booking/api/get-booking/getOneBooking";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 import { format } from "date-fns";
 import Link from "next/link";
 import { XCircle } from "lucide-react";
@@ -26,7 +26,7 @@ export default async function BookingCancelledPage(props: PageProps) {
   }
 
   try {
-    const booking = await getOneBooking(bookingId);
+    const booking = await getOneBooking(bookingId, null);
     if (!booking) {
       return notFound();
     }
@@ -62,7 +62,7 @@ export default async function BookingCancelledPage(props: PageProps) {
                   title="Number of People"
                   value={`${booking.slots} people`}
                 />
-                <Info title="Total Amount" value={`$${booking.total_price}`} />
+                <Info title="Total Amount" value={`$${booking.amount_paid}`} />
               </div>
 
               <div className="border-t pt-6">

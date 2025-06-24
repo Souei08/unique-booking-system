@@ -21,9 +21,13 @@ interface PaymentStepProps {
   fetchClientSecret: (bookingId: string | null) => void;
   clientSecret: string;
   paymentInformation: PaymentInformation;
-  handleCompleteBooking: (paymentId: string | null) => Promise<{
+  handleCompleteBooking: (
+    paymentId: string | null,
+    existingBookingId: string | null
+  ) => Promise<{
     success: boolean;
     bookingId: string | null;
+    email_response: any;
   }>;
   handleNext: () => void;
   handleBack: () => void;
@@ -45,6 +49,7 @@ interface PaymentStepProps {
   isLoadingPayment: boolean;
   setBookingId: (id: string) => void;
   setIsBookingComplete: (complete: boolean) => void;
+  appliedPromo?: any;
 }
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
@@ -72,6 +77,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   isLoadingPayment,
   setBookingId,
   setIsBookingComplete,
+  appliedPromo,
 }) => {
   const hasFetchedRef = useRef(false);
   const [stripeLoaded, setStripeLoaded] = useState(false);
@@ -114,8 +120,6 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                 >
                   <StripePaymentFormV2
                     onPaymentSuccess={async (paymentId, bookingId) => {
-                      // await handleCompleteBooking(paymentId);
-
                       setBookingId(bookingId);
                       setIsBookingComplete(true);
                     }}
@@ -167,6 +171,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             customSlotFields={customSlotFields}
             totalAmount={calculateTotal()}
             showGroupSizeControls={false}
+            appliedPromo={appliedPromo}
           />
         </div>
       </div>

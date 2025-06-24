@@ -24,14 +24,17 @@ import { Button } from "@/components/ui/button";
 import { TableV2 } from "@/app/_components/common/TableV2";
 import { redirect, useRouter } from "next/navigation";
 import UpsertTourV2 from "../forms/upsert-tour-v2/UpsertTourV2";
+
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { TourScheduleV2 } from "../forms/tour-schedule-v2/TourScheduleV2";
+import UpsertTourV2Stepped from "../forms/upsert-tour-v2/UpsertTourV2Stepped";
 interface TourTableV2Props {
   tours: Tour[];
   onView?: (tour: Tour) => void;
@@ -112,7 +115,7 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={() => {
                   redirect(`/tours/${tour.id}`);
                 }}
@@ -120,10 +123,10 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
               >
                 <Eye className="mr-2 h-4 w-4" />
                 View Tour
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuItem
                 onClick={() => {
-                  redirect(`/widget?booking_id=${tour.id}`);
+                  window.open(`/widget?booking_id=${tour.id}`, "_blank");
                 }}
                 className="cursor-pointer"
               >
@@ -183,13 +186,18 @@ export function TourTableV2({ tours, onView }: TourTableV2Props) {
       {/* Tour Form Dialog */}
       <Dialog open={isTourDialogOpen} onOpenChange={setIsTourDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle>
+          <DialogHeader className="mb-5 text-center items-center border-b border-gray-200 pb-5">
+            <DialogTitle className="text-strong text-3xl font-bold">
               {selectedTour ? "Edit Tour" : "Create New Tour"}
             </DialogTitle>
+            <DialogDescription className="text-weak text-sm">
+              {selectedTour
+                ? "Edit the tour details and features"
+                : "Create a new tour with all the details and features"}
+            </DialogDescription>
           </DialogHeader>
 
-          <UpsertTourV2
+          <UpsertTourV2Stepped
             initialData={selectedTour || undefined}
             onSuccess={() => setIsTourDialogOpen(false)}
           />

@@ -11,7 +11,7 @@ const ProductsPage = async () => {
 
   return (
     <ContentLayout
-      title="List of Products"
+      title="Products"
       buttonText="Create Product"
       description="View and manage all current products."
       modalTitle="Create a new product"

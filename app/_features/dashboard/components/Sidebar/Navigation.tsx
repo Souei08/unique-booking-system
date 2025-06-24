@@ -11,6 +11,8 @@ import {
   ShoppingBagIcon,
   BookOpenIcon,
   ChartBarIcon,
+  TicketIcon,
+  Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 
 interface NavigationItem {
@@ -20,68 +22,88 @@ interface NavigationItem {
   roles: string[]; // Allowed roles
 }
 
-// Define navigation items with role-based access
-const navigationItems: NavigationItem[] = [
+interface NavigationGroup {
+  name: string;
+  items: NavigationItem[];
+}
+
+// Define navigation groups with role-based access
+const navigationGroups: NavigationGroup[] = [
   {
-    name: "Dashboard",
-    href: "/dashboard",
-    icon: HomeIcon,
-    roles: ["admin", "staff", "customer"],
+    name: "Overview",
+    items: [
+      {
+        name: "Dashboard",
+        href: "/dashboard",
+        icon: HomeIcon,
+        roles: ["admin", "staff", "customer", "reservation_agent"],
+      },
+    ],
   },
   {
-    name: "Calendar",
-    href: "/dashboard/calendar",
-    icon: CalendarIcon,
-    roles: ["admin", "staff", "customer"],
+    name: "Bookings & Tours",
+    items: [
+      {
+        name: "Bookings",
+        href: "/dashboard/bookings",
+        icon: BookOpenIcon,
+        roles: ["admin", "staff", "customer", "reservation_agent"],
+      },
+      {
+        name: "Calendar",
+        href: "/dashboard/calendar",
+        icon: CalendarIcon,
+        roles: ["admin", "staff", "customer", "reservation_agent"],
+      },
+
+      {
+        name: "Tours",
+        href: "/dashboard/tours",
+        icon: GlobeAmericasIcon,
+        roles: ["admin", "staff", "reservation_agent"],
+      },
+    ],
   },
   {
-    name: "Bookings",
-    href: "/dashboard/bookings",
-    icon: BookOpenIcon,
-    roles: ["admin", "staff", "customer"],
+    name: "Management",
+    items: [
+      {
+        name: "Products",
+        href: "/dashboard/products",
+        icon: ShoppingBagIcon,
+        roles: ["admin", "staff", "reservation_agent"],
+      },
+      {
+        name: "Users",
+        href: "/dashboard/users",
+        icon: UserGroupIcon,
+        roles: ["admin", "reservation_agent"],
+      },
+      {
+        name: "Promo Codes",
+        href: "/dashboard/promo-codes",
+        icon: TicketIcon,
+        roles: ["admin", "staff", "reservation_agent"],
+      },
+    ],
   },
   {
-    name: "Tours",
-    href: "/dashboard/tours",
-    icon: GlobeAmericasIcon,
-    roles: ["admin", "staff"],
+    name: "Analytics & Settings",
+    items: [
+      {
+        name: "Analytics",
+        href: "/dashboard/analytics",
+        icon: ChartBarIcon,
+        roles: ["admin"],
+      },
+      {
+        name: "Settings",
+        href: "/dashboard/settings",
+        icon: Cog6ToothIcon,
+        roles: ["admin", "staff", "customer", "reservation_agent"],
+      },
+    ],
   },
-  {
-    name: "Products",
-    href: "/dashboard/products",
-    icon: ShoppingBagIcon,
-    roles: ["admin", "staff"],
-  },
-  {
-    name: "Users",
-    href: "/dashboard/users",
-    icon: UserGroupIcon,
-    roles: ["admin"],
-  },
-  {
-    name: "Analytics",
-    href: "/dashboard/analytics",
-    icon: ChartBarIcon,
-    roles: ["admin"],
-  },
-  // {
-  //   name: "Rentals",
-  //   href: "/dashboard/rentals",
-  //   icon: BuildingOfficeIcon,
-  //   roles: ["admin", "staff"],
-  // },
-  // {
-  //   name: "Users",
-  //   href: "/dashboard/users",
-  //   icon: UserGroupIcon,
-  //   roles: ["admin"],
-  // },
-  // {
-  //   name: "Reports & Analytics",
-  //   href: "#",
-  //   icon: ChartBarIcon,
-  //   roles: ["admin"],
-  // },
 ];
 
 function classNames(...classes: string[]) {
@@ -93,42 +115,58 @@ export const Navigation = ({ user }: { user: any }) => {
 
   if (!userRole) return null; // Hide sidebar if no user
 
-  // Filter navigation based on user role
-  const filteredNavigation = navigationItems.filter((item) =>
-    item.roles.includes(userRole)
-  );
+  // Filter navigation groups based on user role
+  const filteredNavigationGroups = navigationGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.roles.includes(userRole)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const currentPath = usePathname();
 
   return (
-    <nav className="px-2 mt-5">
-      <div className="space-y-1">
-        {filteredNavigation.map((item) => {
-          const isCurrent = currentPath === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              aria-current={isCurrent ? "page" : undefined}
-              className={classNames(
-                isCurrent
-                  ? "bg-brand text-white font-semibold"
-                  : "text-weak hover:bg-brand hover:text-white",
-                "group flex items-center rounded-md px-2 py-2 text-body font-medium"
-              )}
-            >
-              <item.icon
-                aria-hidden="true"
-                className={classNames(
-                  isCurrent ? "text-white" : "text-weak group-hover:text-white",
-                  "mr-3 size-6 shrink-0"
-                )}
-              />
-              {item.name}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <div className="flex flex-col h-full">
+      <nav className="px-2 mt-5 flex-1">
+        <div className="space-y-6">
+          {filteredNavigationGroups.map((group) => (
+            <div key={group.name}>
+              <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {group.name}
+              </h3>
+              <div className="mt-2 space-y-1">
+                {group.items.map((item) => {
+                  const isCurrent = currentPath === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      aria-current={isCurrent ? "page" : undefined}
+                      className={classNames(
+                        isCurrent
+                          ? "bg-brand/20  text-strong font-semibold"
+                          : "text-weak  hover:text-strong hover:bg-brand/5",
+                        "group flex items-center rounded-md px-2 py-2 text-sm font-medium"
+                      )}
+                    >
+                      <item.icon
+                        aria-hidden="true"
+                        className={classNames(
+                          isCurrent
+                            ? "text-strong"
+                            : "text-weak group-hover:text-strong",
+                          "mr-3 size-6 shrink-0"
+                        )}
+                      />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </nav>
+    </div>
   );
 };

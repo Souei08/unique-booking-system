@@ -28,7 +28,7 @@ export default async function UsersPage() {
 
   return (
     <ContentLayout
-      title="List of Users"
+      title="Users Management"
       buttonText="Create User"
       description="View and manage all current users."
       modalTitle="Create a new user"

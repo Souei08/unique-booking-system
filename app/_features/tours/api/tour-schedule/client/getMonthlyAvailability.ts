@@ -1,5 +1,5 @@
 import { createClient } from "@/supabase/client";
-import { getRemainingSlots } from "@/app/_features/booking/api/getRemainingSlots";
+import { getRemainingSlots } from "@/app/_features/booking/api/get-booking/getRemainingSlots";
 
 interface DateAvailability {
   date: string;

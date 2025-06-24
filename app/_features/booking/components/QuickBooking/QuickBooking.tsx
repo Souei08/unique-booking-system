@@ -26,6 +26,7 @@ import CheckForm from "../CreateBookingv2/booking-steps/CheckForm";
 import BookingSuccess from "../CreateBookingv2/booking-steps/BookingSuccess";
 import TourTimeAndDate from "../CreateBookingv2/booking-steps/TourTimeAndDate";
 import SelectTours from "../CreateBookingv2/booking-steps/SelectTours";
+import PromoCodeInput from "../CreateBookingv2/booking-steps/PromoCodeInput";
 
 // Types
 import { DateValue, parseDate } from "@internationalized/date";
@@ -39,8 +40,8 @@ import {
 } from "@/app/_features/booking/types/booking-types";
 
 // Api
-import { createTourBookingv2 } from "../../api/CreateTourBookingv2";
-import { updateBookingPaymentStatus } from "../../api/updateBookingPaymentStatus";
+import { createTourBookingv2 } from "../../api/create-booking/CreateTourBookingv2";
+import { sendBookingConfirmationEmail } from "../../api/email-booking/send-confirmation-email";
 
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
@@ -86,20 +87,7 @@ const QuickBooking = ({
   const [selectedTour, setSelectedTour] = useState<Tour | null>(
     initialSelectedTour
   );
-  const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([
-    {
-      type:
-        initialSelectedTour?.custom_slot_types &&
-        initialSelectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(initialSelectedTour.custom_slot_types)[0].name
-          : "",
-      price:
-        initialSelectedTour?.custom_slot_types &&
-        initialSelectedTour.custom_slot_types !== "[]"
-          ? JSON.parse(initialSelectedTour.custom_slot_types)[0].price
-          : 0,
-    },
-  ]);
+  const [slotDetails, setSlotDetails] = useState<SlotDetail[]>([]);
 
   // Customer and Payment Information
   const [customerInformation, setCustomerInformation] =
@@ -123,6 +111,7 @@ const QuickBooking = ({
     Record<string, number>
   >({});
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
 
   const customSlotTypes =
     selectedTour?.custom_slot_types && selectedTour.custom_slot_types !== "[]"
@@ -141,6 +130,7 @@ const QuickBooking = ({
       selectedTour.custom_slot_types !== "[]"
     ) {
       const customTypes = JSON.parse(selectedTour.custom_slot_types);
+
       if (customTypes.length > 0) {
         setSlotDetails([
           {
@@ -194,8 +184,53 @@ const QuickBooking = ({
       }
     });
 
+    // Apply promo code discount if available
+    if (appliedPromo) {
+      total = appliedPromo.final_amount;
+    }
+
     // Round to 2 decimal places to avoid floating point issues
     return Math.round(total * 100) / 100;
+  };
+
+  const calculateSubtotal = () => {
+    let total = 0;
+
+    if (!selectedTour) return total;
+
+    // Calculate tour price based on slot types if they exist
+    if (customSlotTypes && customSlotTypes.length > 0) {
+      // Sum up prices from slot details
+      total = slotDetails.reduce((sum, slot) => {
+        const slotType = customSlotTypes.find(
+          (type: CustomSlotType) => type.name === slot.type
+        );
+        return sum + (slotType?.price || 0);
+      }, 0);
+    } else {
+      // Use regular tour rate if no custom slot types
+      total = selectedTour.rate * numberOfPeople;
+    }
+
+    // Add product prices
+    selectedProducts.forEach((productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      if (product) {
+        const quantity = productQuantities[productId] || 1;
+        total += product.price * quantity;
+      }
+    });
+
+    // Round to 2 decimal places to avoid floating point issues
+    return Math.round(total * 100) / 100;
+  };
+
+  const handlePromoApplied = (promoData: any) => {
+    setAppliedPromo(promoData);
+  };
+
+  const handlePromoRemoved = () => {
+    setAppliedPromo(null);
   };
 
   const handleCompleteBooking = async (paymentId: string | null) => {
@@ -214,14 +249,16 @@ const QuickBooking = ({
       const quantity = productQuantities[productId] || 1;
       return {
         product_id: productId,
+        product_name: product?.name || "",
         quantity: quantity,
         unit_price: product?.price || 0,
+        description: product?.description || "",
+        images: product?.image_url || "",
       };
     });
 
     try {
       // Create booking first
-      console.log("Creating booking");
       const bookingResponse = await createTourBookingv2({
         first_name: customerInformation.first_name,
         last_name: customerInformation.last_name,
@@ -231,11 +268,15 @@ const QuickBooking = ({
         booking_date: formatToDateString(selectedDate) || "",
         selected_time: selectedTime,
         slots: numberOfPeople,
+        sub_total: calculateSubtotal(),
         total_price: calculateTotal(),
         payment_method: paymentInformation.payment_method,
         payment_id: paymentId || null,
         products: productsData,
         slot_details: slotDetails,
+        promo_code_id: appliedPromo?.id || null,
+        promo_code: appliedPromo?.code || null,
+        discount_amount: appliedPromo?.discount_amount || null,
       });
 
       if (!bookingResponse.success) {
@@ -251,7 +292,6 @@ const QuickBooking = ({
       setBookingId(bookingId);
 
       // Create payment link
-      console.log("Creating payment link");
       const paymentLinkResponse = await fetch("/api/create-payment-link", {
         method: "POST",
         headers: {
@@ -264,18 +304,28 @@ const QuickBooking = ({
           phone: customerInformation.phone_number,
           booking_id: bookingId,
           slots: numberOfPeople,
-          booking_price: calculateTotal() * 100, // Convert to cents and ensure integer
+          booking_price: selectedTour.rate, // Convert to cents and ensure integer
           tourProducts: productsData.map((product) => ({
             name:
               availableProducts.find((p) => p.id === product.product_id)
                 ?.name || "",
             quantity: product.quantity,
+            description: product.description,
+            images: product.images,
             unit_price: Math.round(product.unit_price * 100), // Convert to cents and ensure integer
           })),
           bookingTitle: selectedTour.title,
+          bookingImage:
+            JSON.parse(selectedTour.images).find(
+              (image: any) => image.isFeature
+            )?.url || "",
+          bookingDescription: selectedTour.description,
           slotDetails: slotDetails,
           customSlotTypes: customSlotTypes,
           customSlotFields: customSlotFields,
+          discounts: appliedPromo?.stripe_coupon_id
+            ? [{ coupon: appliedPromo.stripe_coupon_id }]
+            : undefined,
         }),
       });
 
@@ -285,11 +335,32 @@ const QuickBooking = ({
       }
 
       const { checkoutUrl } = await paymentLinkResponse.json();
+
       const supabase = createClient();
       await supabase
         .from("tour_bookings")
         .update({ payment_link: checkoutUrl })
         .eq("id", bookingId);
+
+      await sendBookingConfirmationEmail({
+        full_name: bookingResponse.email_response.full_name,
+        email: bookingResponse.email_response.email,
+        booking_date: bookingResponse.email_response.booking_date,
+        selected_time: bookingResponse.email_response.selected_time,
+        slots: bookingResponse.email_response.slots,
+        total_price: bookingResponse.email_response.total_price,
+        booking_reference_id:
+          bookingResponse.email_response.booking_reference_id,
+        tour_name: bookingResponse.email_response.tour_name,
+        tour_rate: bookingResponse.email_response.tour_rate,
+        products: bookingResponse.email_response.products,
+        slot_details: bookingResponse.email_response.slot_details,
+        manage_token: bookingResponse.email_response.manage_token,
+        waiver_link: "https://your-waiver-link.com",
+        sub_total: bookingResponse.email_response.sub_total,
+        coupon_code: appliedPromo?.code || null,
+        discount_amount: bookingResponse.email_response.discount_amount,
+      });
 
       toast.success("Booking Created", {
         description: "A payment link has been generated for the customer.",
@@ -493,15 +564,12 @@ const QuickBooking = ({
                 customSlotTypes={customSlotTypes}
                 customSlotFields={customSlotFields}
                 handleNext={() => {}}
+                appliedPromo={appliedPromo}
+                onPromoApplied={handlePromoApplied}
+                onPromoRemoved={handlePromoRemoved}
               />
             )}
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-8 sm:mt-12 text-center text-xs sm:text-sm text-muted-foreground">
-          <p>Need help? Contact our support team at support@example.com</p>
-          <p className="mt-2">Secure booking powered by Stripe</p>
         </div>
       </div>
 

@@ -9,13 +9,15 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: "#0bb3d9",
-        strong: "#033F65",
-        weak: "#486A80",
-        "stroke-strong": "#6dc2d8",
-        "stroke-weak": "#a8dce9",
-        fill: "#d5eff6",
-        background: "#ffffff",
+        brand: "#3B82F6", // NEW: Crisp blue accent (Tailwind's blue-500)
+        strong: "#1E3A8A", // Deep navy for headings (blue-900)
+        weak: "#64748B", // Muted gray-blue for secondary text (slate-500)
+        "stroke-strong": "#D1D5DB", // Gray-300 for solid dividers
+        "stroke-weak": "#E5E7EB", // Gray-200 for subtle dividers
+        fill: "#EFF6FF", // Soft blue fill for hover or highlights (blue-50)
+        background: "#FFFFFF", // Pure white for base
+        neutral: "#F9FAFB", // Neutral light gray for cards/sections (gray-50)
+        text: "#172554", // Dark slate for main body text (slate-900)
       },
 
       spacing: {
@@ -59,6 +61,9 @@ module.exports = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      fontFamily: {
+        sans: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],
       },
     },
   },

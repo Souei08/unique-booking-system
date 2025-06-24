@@ -7,11 +7,15 @@ import { UserMenu } from "./UserMenu";
 
 import { useSidebar } from "@/app/context/SidebarContext/useSidebar";
 
-export const Header = () => {
+interface HeaderProps {
+  user: any;
+}
+
+export const Header = ({ user }: HeaderProps) => {
   const { toggleSidebar } = useSidebar();
 
   return (
-    <div className="sticky top-0 z-10 flex h-16 shrink-0 border-b border-gray-200 bg-white lg:hidden">
+    <div className="sticky top-0 z-10 flex h-16 shrink-0 border-b border-gray-200 bg-white">
       <button
         type="button"
         onClick={toggleSidebar}
@@ -22,7 +26,7 @@ export const Header = () => {
       </button>
       <div className="flex flex-1 justify-between px-4 sm:px-6 lg:px-8">
         <SearchBar />
-        <UserMenu />
+        <UserMenu user={user} />
       </div>
     </div>
   );

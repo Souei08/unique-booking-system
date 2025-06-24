@@ -15,7 +15,7 @@ import {
 } from "@internationalized/date";
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { formatTime } from "@/app/_utils/formatTime";
+import { formatTime } from "@/app/_lib/utils/formatTime";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -27,9 +27,9 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { getTourSchedule } from "@/app/_features/tours/api/tour-schedule/client/getTourSchedule";
-import { getRemainingSlots } from "@/app/_features/booking/api/getRemainingSlots";
+import { getRemainingSlots } from "@/app/_features/booking/api/get-booking/getRemainingSlots";
 import { RenderCalendar } from "@/app/_components/calendar-v2/RenderCalendar";
-import { getFullyBookedDatesFromList } from "../../../api/getFullyBookedDatesFromList";
+import { getFullyBookedDatesFromList } from "../../../api/get-booking/getFullyBookedDatesFromList";
 import {
   Collapsible,
   CollapsibleContent,
@@ -944,7 +944,7 @@ const TourTimeAndDate = ({
             </div>
           </section>
 
-          <section className="rounded-xl sm:rounded-2xl lg:rounded-3xl border bg-card p-3 sm:p-6 lg:p-8 shadow-lg">
+          {/* <section className="rounded-xl sm:rounded-2xl lg:rounded-3xl border bg-card p-3 sm:p-6 lg:p-8 shadow-lg">
             <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-strong mb-3 sm:mb-4 lg:mb-8">
               Things to Know
             </h3>
@@ -953,7 +953,7 @@ const TourTimeAndDate = ({
                 {selectedTour.things_to_know}
               </p>
             </div>
-          </section>
+          </section> */}
 
           <section className="rounded-xl sm:rounded-2xl lg:rounded-3xl border bg-card p-3 sm:p-6 lg:p-8 shadow-lg">
             <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-strong mb-3 sm:mb-4 lg:mb-8">

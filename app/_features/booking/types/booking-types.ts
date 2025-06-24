@@ -42,7 +42,8 @@ export interface BookingTable {
   tour_id: string;
   user_id: string;
   slots: number;
-  total_price: number;
+  // total_price: number;
+  total_price_before_discount?: number;
   booking_created_at: string;
   booking_date: string;
   selected_time: string;
@@ -66,7 +67,16 @@ export interface BookingTable {
   booked_products: AdditionalProduct[];
   tour_featured_image: string;
   tour_description: string;
+
+  promo_code_id?: string;
+  promo_code?: string;
+
+  stripe_coupon_id?: string;
+  original_amount?: number;
+  discount_amount?: number;
   amount_paid: number;
+
+  total_count?: number;
 }
 
 export interface AdditionalProduct {
