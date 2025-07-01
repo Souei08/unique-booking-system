@@ -10,7 +10,7 @@ export async function inviteUserServerAction(data: {
 }) {
   const { email, full_name, role } = data;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
   const redirectTo = `${siteUrl}/auth/accept-invite`;
 
@@ -23,6 +23,8 @@ export async function inviteUserServerAction(data: {
   });
 
   if (error) {
+    console.log("error", error);
+
     console.error("Invite failed:", error.message);
     return { success: false, error: error.message };
   }
