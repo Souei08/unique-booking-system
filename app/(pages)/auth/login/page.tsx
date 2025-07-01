@@ -3,7 +3,6 @@ import React from "react";
 import { LoginForm } from "@/app/_features/auth/forms/auth";
 
 import CompanyLogo from "@/app/_components/common/logo";
-import GoogleLoginButton from "@/app/_components/common/GoogleLoginButton";
 
 const page = async () => {
   return (
@@ -15,7 +14,7 @@ const page = async () => {
             <h2 className="mt-8 text-2xl/9 font-bold tracking-tight text-strong">
               Sign in to your account
             </h2>
-            <p className="mt-2 text-sm/6 text-weak">
+            {/* <p className="mt-2 text-sm/6 text-weak">
               Forgot your password?{" "}
               <a
                 href="/auth/set-password"
@@ -23,7 +22,7 @@ const page = async () => {
               >
                 Reset it here
               </a>
-            </p>
+            </p> */}
           </div>
 
           <div className="mt-10">
@@ -54,7 +53,7 @@ const page = async () => {
       <div className="relative hidden w-0 flex-1 lg:block">
         <img
           alt=""
-          src="/auth/login-feature-img.jpeg"
+          src="/auth/login-feature-2.jpeg"
           className="absolute inset-0 size-full object-cover"
         />
       </div>

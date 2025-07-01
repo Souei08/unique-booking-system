@@ -127,6 +127,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
     return handlePaymentLinkUpdate({
       booking,
       bookingId,
+      paymentRefId: booking.payment_ref_id || null,
       isUpdate,
       currentSlots,
       currentProducts,

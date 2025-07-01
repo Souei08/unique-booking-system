@@ -96,7 +96,10 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mt-5">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6 mt-5 w-full"
+      >
         <FormField
           control={form.control}
           name="full_name"

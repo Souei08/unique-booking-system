@@ -127,6 +127,7 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
     return handlePaymentLinkUpdate({
       booking,
       bookingId,
+      paymentRefId: booking.payment_ref_id || null,
       isUpdate,
       currentSlots,
       currentProducts,
@@ -492,38 +493,43 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
         {/* Left Column - Customer Info & Actions */}
         <div className="space-y-4 sm:space-y-6">
           {/* Quick Info Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="bg-gray-100 p-2 rounded-lg">
-                  <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
+          {!(
+            booking.payment_status === "paid" &&
+            booking.booking_status === "confirmed"
+          ) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="bg-gray-100 p-2 rounded-lg">
+                    <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-tiny sm:text-small text-weak">
+                      Booked Date
+                    </p>
+                    <p className="font-semibold text-strong text-small sm:text-body truncate">
+                      {formatDate(booking.booking_date)}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-tiny sm:text-small text-weak">
-                    Booked Date
-                  </p>
-                  <p className="font-semibold text-strong text-small sm:text-body truncate">
-                    {formatDate(booking.booking_date)}
-                  </p>
+              </div>
+              <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="bg-gray-100 p-2 rounded-lg">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-tiny sm:text-small text-weak">
+                      Booked Time
+                    </p>
+                    <p className="font-semibold text-strong text-small sm:text-body">
+                      {formatTime(booking.selected_time || "")}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="bg-gray-100 p-2 rounded-lg">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-tiny sm:text-small text-weak">
-                    Booked Time
-                  </p>
-                  <p className="font-semibold text-strong text-small sm:text-body">
-                    {formatTime(booking.selected_time || "")}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Status Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -678,96 +684,112 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                   </div>
                 </Button>
 
-                {(!customSlotTypes || customSlotTypes.length === 0) &&
-                  (!customSlotFields || customSlotFields.length === 0) && (
+                {!(
+                  // booking.payment_status === "paid" &&
+                  (booking.booking_status === "confirmed")
+                ) && (
+                  <>
+                    {(!customSlotTypes || customSlotTypes.length === 0) &&
+                      (!customSlotFields || customSlotFields.length === 0) && (
+                        <Button
+                          variant="outline"
+                          className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                          onClick={() => setIsUpdateSlotsModalOpen(true)}
+                          disabled={
+                            isLoading || booking.payment_status !== "pending"
+                          }
+                        >
+                          <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
+                            <Users className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div className="text-left min-w-0 flex-1">
+                            <p className="font-semibold text-body truncate">
+                              Adjust Number of People
+                            </p>
+                            <p className="text-small text-weak mt-1 leading-relaxed">
+                              Add or remove people from this booking
+                            </p>
+                          </div>
+                        </Button>
+                      )}
+
+                    {((customSlotTypes && customSlotTypes.length > 0) ||
+                      (customSlotFields && customSlotFields.length > 0)) && (
+                      <Button
+                        variant="outline"
+                        className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                        onClick={() => setIsSlotDetailsModalOpen(true)}
+                        disabled={
+                          isLoading || booking.payment_status !== "pending"
+                        }
+                      >
+                        <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
+                          <Edit2 className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div className="text-left min-w-0 flex-1">
+                          <p className="font-semibold text-body truncate">
+                            Edit Guest Details
+                          </p>
+                          <p className="text-small text-weak mt-1 leading-relaxed">
+                            Update names and information for each person
+                          </p>
+                        </div>
+                      </Button>
+                    )}
+
                     <Button
                       variant="outline"
                       className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                      onClick={() => setIsUpdateSlotsModalOpen(true)}
+                      onClick={() => {
+                        setEditedProducts(editedProducts);
+                        setIsProductsModalOpen(true);
+                      }}
                       disabled={
                         isLoading || booking.payment_status !== "pending"
                       }
                     >
-                      <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
-                        <Users className="w-5 h-5 text-green-600" />
+                      <div className="bg-indigo-50 p-2 rounded-lg flex-shrink-0">
+                        <Package className="w-5 h-5 text-indigo-600" />
                       </div>
                       <div className="text-left min-w-0 flex-1">
                         <p className="font-semibold text-body truncate">
-                          Adjust Number of People
+                          Manage Add-ons & Extras
                         </p>
                         <p className="text-small text-weak mt-1 leading-relaxed">
-                          Add or remove people from this booking
+                          Add, remove, or modify additional products
                         </p>
                       </div>
                     </Button>
-                  )}
+                  </>
+                )}
 
-                {((customSlotTypes && customSlotTypes.length > 0) ||
-                  (customSlotFields && customSlotFields.length > 0)) && (
+                {!(
+                  booking.payment_status === "pending" &&
+                  booking.booking_status === "pending"
+                ) && (
                   <Button
                     variant="outline"
-                    className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                    onClick={() => setIsSlotDetailsModalOpen(true)}
-                    disabled={isLoading || booking.payment_status !== "pending"}
+                    className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700 transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                    onClick={handleAddAdditionalBooking}
+                    disabled={isLoading}
                   >
-                    <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
-                      <Edit2 className="w-5 h-5 text-purple-600" />
+                    <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
+                      <Plus className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="text-left min-w-0 flex-1">
                       <p className="font-semibold text-body truncate">
-                        Edit Guest Details
+                        Add More Services
                       </p>
-                      <p className="text-small text-weak mt-1 leading-relaxed">
-                        Update names and information for each person
+                      <p className="text-small text-blue-600 mt-1 leading-relaxed">
+                        Add additional people or products to this booking
                       </p>
                     </div>
                   </Button>
                 )}
-
-                <Button
-                  variant="outline"
-                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                  onClick={() => {
-                    setEditedProducts(editedProducts);
-                    setIsProductsModalOpen(true);
-                  }}
-                  disabled={isLoading || booking.payment_status !== "pending"}
-                >
-                  <div className="bg-indigo-50 p-2 rounded-lg flex-shrink-0">
-                    <Package className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="font-semibold text-body truncate">
-                      Manage Add-ons & Extras
-                    </p>
-                    <p className="text-small text-weak mt-1 leading-relaxed">
-                      Add, remove, or modify additional products
-                    </p>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700 transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                  onClick={handleAddAdditionalBooking}
-                  disabled={isLoading}
-                >
-                  <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
-                    <Plus className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="font-semibold text-body truncate">
-                      Add More Services
-                    </p>
-                    <p className="text-small text-blue-600 mt-1 leading-relaxed">
-                      Add additional people or products to this booking
-                    </p>
-                  </div>
-                </Button>
               </div>
 
               {/* Cancellation Action */}
-              {booking.payment_status === "paid" && (
+              {/* {booking.payment_status === "paid" && (
                 <div className="pt-4 border-t border-gray-200">
                   <Button
                     variant="outline"
@@ -794,7 +816,7 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                     </div>
                   </Button>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </div>
@@ -1041,7 +1063,7 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                             {booking.promo_code}
                           </span>
                         )}
-                        {booking?.total_price_before_discount &&
+                        {/* {booking?.total_price_before_discount &&
                           booking.total_price_before_discount > 0 && (
                             <span className="text-tiny sm:text-small text-green-600 block mt-1">
                               (
@@ -1052,7 +1074,7 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                               ).toFixed(0)}
                               % off)
                             </span>
-                          )}
+                          )} */}
                       </div>
                     </div>
                     <span className="text-small sm:text-body font-bold text-green-700">

@@ -136,28 +136,25 @@ export const ConfirmationEmailTemplate = ({
             </Text>
           </Section>
 
-          {/* ✅ Booking Management & Contact */}
+          {/* ✅ Pickup Service Information */}
           <Section style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Booking Management & Contact
+            <Text style={styles.sectionTitle}>Pickup Service Information</Text>
+            <Text style={styles.paragraph}>
+              If you chose our pick up service: The time of pick up is 30-60
+              minutes before the starting time of the tour. Please wait for our
+              driver at the lobby.
             </Text>
             <Text style={styles.paragraph}>
-              You can manage your booking, add additional services, or make
-              changes through your{" "}
-              <Link href={manageLink} style={styles.link}>
-                booking management portal
-              </Link>
-              . For any questions or assistance, please contact us:
+              If your hotel is one of the following, please wait at the security
+              gate 45 minutes before the starting time of the tour:
             </Text>
             <ul style={styles.list}>
-              <li>Email: info@uniquetoursandrentals.com</li>
-              <li>Phone: +1 (555) 123-4567</li>
-              <li>WhatsApp: +1 (555) 123-4567</li>
+              <li>Alexandra Resort</li>
+              <li>Blue Haven</li>
+              <li>Club Med</li>
+              <li>Beach House</li>
+              <li>La Vista Azul - pick up at the Simons restaurant</li>
             </ul>
-            <Text style={styles.detailNote}>
-              Our customer service team is available Monday to Friday, 9:00 AM -
-              6:00 PM EST.
-            </Text>
           </Section>
 
           {/* ✅ Cancellation Policy */}

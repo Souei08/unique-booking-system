@@ -77,6 +77,7 @@ export interface BookingTable {
   amount_paid: number;
 
   total_count?: number;
+  payment_ref_id?: string;
 }
 
 export interface AdditionalProduct {

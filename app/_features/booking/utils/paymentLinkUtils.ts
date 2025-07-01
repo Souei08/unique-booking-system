@@ -13,6 +13,7 @@ import {
 interface PaymentLinkUpdateParams {
   booking: BookingTable;
   bookingId: string;
+  paymentRefId: string | null;
   isUpdate?: boolean;
   currentSlots?: any[] | null;
   currentProducts?: AdditionalProduct[] | null;
@@ -25,6 +26,7 @@ interface PaymentLinkUpdateParams {
 export const handlePaymentLinkUpdate = async ({
   booking,
   bookingId,
+  paymentRefId,
   isUpdate = false,
   currentSlots = null,
   currentProducts = null,
@@ -143,6 +145,7 @@ export const handlePaymentLinkUpdate = async ({
       },
       body: JSON.stringify({
         booking_id: bookingId,
+        payment_ref_id: paymentRefId,
         email: customerInfoInsert.email,
         name: customerInfoInsert.full_name,
         phone: customerInfoInsert.phone,

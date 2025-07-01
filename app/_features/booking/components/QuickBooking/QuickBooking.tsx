@@ -388,6 +388,7 @@ const QuickBooking = ({
           name: `${customerInformation.first_name} ${customerInformation.last_name}`,
           phone: customerInformation.phone_number,
           booking_id: bookingId,
+          payment_ref_id: bookingResponse.email_response.payment_ref_id,
           slots: numberOfPeople,
           booking_price: selectedTour.rate, // Convert to cents and ensure integer
           tourProducts: productsData.map((product) => ({

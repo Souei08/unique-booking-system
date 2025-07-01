@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session;
       const bookingId = session.metadata?.booking_id;
       const paymentId = session.payment_intent as string;
+      const paymentRefId = session.metadata?.payment_ref_id;
 
       console.log("session", session);
 
@@ -75,6 +76,7 @@ export async function POST(req: NextRequest) {
                 {
                   booking_id: bookingId,
                   payment_id: paymentId,
+                  payment_ref_id: paymentRefId,
                   payment_method: "card",
                   status: "paid",
                   amount_paid: session.amount_total
@@ -83,7 +85,7 @@ export async function POST(req: NextRequest) {
                   paid_at: new Date().toISOString(),
                   updated_at: new Date().toISOString(),
                 },
-                { onConflict: "booking_id" }
+                { onConflict: "payment_ref_id" }
               );
 
             if (paymentError) throw paymentError;

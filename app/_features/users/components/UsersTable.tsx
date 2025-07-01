@@ -93,7 +93,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={async () => {
                   setSelectedUser(user);
 
@@ -134,7 +134,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Resend Invite
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -164,7 +164,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
 
       {/* User Form Dialog */}
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1000px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {selectedUser ? "Edit User" : "Create New User"}

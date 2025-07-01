@@ -214,7 +214,7 @@ const ContentLayout = ({
       </Dialog> */}
 
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="max-w-sm">
           <DialogHeader className="mb-5 text-center items-center">
             <DialogTitle className="text-strong text-xl font-bold">
               {modalTitle}

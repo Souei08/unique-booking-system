@@ -31,8 +31,8 @@ export default async function UsersPage() {
       title="Users Management"
       buttonText="Invite User"
       description="View and manage all current users."
-      modalTitle="Create a new user"
-      modalDescription="Create a new user to add to the list."
+      modalTitle="Invite a new user"
+      modalDescription="Invite a new user to the list."
       modalRoute="users"
     >
       <UsersTable users={users as User[]} />
