@@ -10,10 +10,9 @@ export async function inviteUserServerAction(data: {
 }) {
   const { email, full_name, role } = data;
 
-  // const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  // console.log("siteUrl", siteUrl);
-  const redirectTo = `https://ea54-143-44-184-241.ngrok-free.app/auth/accept-invite`;
+  const redirectTo = `${siteUrl}/auth/accept-invite`;
 
   const { error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
     data: {

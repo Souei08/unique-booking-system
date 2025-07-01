@@ -75,7 +75,7 @@ export const ConfirmationEmailTemplate = ({
     return details;
   };
 
-  const manageLink = `http://localhost:3000/${manage_link}`;
+  const manageLink = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/${manage_link}`;
 
   return (
     <Html>
