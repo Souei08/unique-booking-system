@@ -29,7 +29,7 @@ export default async function UsersPage() {
   return (
     <ContentLayout
       title="Users Management"
-      buttonText="Create User"
+      buttonText="Invite User"
       description="View and manage all current users."
       modalTitle="Create a new user"
       modalDescription="Create a new user to add to the list."

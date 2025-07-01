@@ -22,6 +22,11 @@ interface OrderSummaryProps {
   showGroupSizeControls?: boolean;
   onGroupSizeChange?: (newSize: number) => void;
   appliedPromo?: any;
+  securePromoData?: {
+    subtotal: number;
+    discountAmount: number;
+    total: number;
+  } | null;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -39,6 +44,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   showGroupSizeControls = false,
   onGroupSizeChange,
   appliedPromo,
+  securePromoData,
 }) => {
   const tourImages = JSON.parse(selectedTour.images) as {
     url: string;
@@ -284,7 +290,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                         className="flex items-center justify-between bg-fill/50 rounded-lg px-3 py-2"
                       >
                         <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-stroke-strong"></div>
+                          <div className="w-2 h-2 rounded-full bg-brand"></div>
                           <div>
                             <span className="text-sm text-weak">
                               {product.name}
@@ -306,16 +312,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
 
           {/* Promo Code Applied */}
-          {appliedPromo && (
+          {appliedPromo && securePromoData && (
             <div className="border-t border-stroke-weak pt-4">
-              <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-200">
-                <div className="space-y-4">
+              <div className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-xl p-4 border border-emerald-200/60 shadow-sm">
+                <div className="space-y-3">
                   {/* Promo Code Header */}
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
                         <svg
-                          className="w-2 h-2 text-white"
+                          className="w-4 h-4 text-white"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -327,38 +333,74 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                         </svg>
                       </div>
                       <div>
-                        <span className="text-sm sm:text-base font-semibold text-emerald-800">
+                        <span className="text-sm font-semibold text-emerald-800">
                           Promo Code Applied
                         </span>
                         <p className="text-xs text-emerald-600 mt-0.5">
                           {appliedPromo.discount_type === "percentage"
-                            ? `${appliedPromo.discount_value}% off`
-                            : `$${appliedPromo.discount_value} off`}
+                            ? `${appliedPromo.discount_value}% discount`
+                            : `$${appliedPromo.discount_value} discount`}
                         </p>
                       </div>
                     </div>
-                    <div className="bg-emerald-100 border border-emerald-300 rounded-lg px-3 py-1.5">
-                      <span className="text-sm font-bold text-emerald-700">
+                    <div className="bg-white border-2 border-emerald-300 rounded-lg px-3 py-1.5 shadow-sm">
+                      <span className="text-sm font-bold text-emerald-700 tracking-wide">
                         {appliedPromo.code}
                       </span>
                     </div>
                   </div>
 
-                  {/* Discount Breakdown */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between bg-white/70 rounded-lg px-3 py-2.5 border border-emerald-200">
-                      <span className="text-sm font-medium text-emerald-700">
-                        Original Total
-                      </span>
-                      <span className="text-sm font-semibold text-emerald-700 line-through">
-                        ${appliedPromo.original_amount?.toFixed(2) || "0.00"}
+                  {/* Price Breakdown with Promo */}
+                  <div className="bg-white/80 rounded-lg p-3 border border-emerald-200/50 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Subtotal</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        ${securePromoData.subtotal.toFixed(2)}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between bg-emerald-100 rounded-lg px-3 py-2.5 border border-emerald-300">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <svg
                           className="w-4 h-4 text-emerald-600"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <span className="text-sm font-medium text-emerald-700">
+                          Discount
+                        </span>
+                      </div>
+                      <span className="text-sm font-semibold text-emerald-600">
+                        -${securePromoData.discountAmount.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="border-t border-emerald-200/50 pt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-emerald-800">
+                          Final Total
+                        </span>
+                        <span className="text-base font-bold text-emerald-700">
+                          ${securePromoData.total.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Savings Highlight */}
+                  <div className="bg-emerald-100 rounded-lg p-3 border border-emerald-300/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <svg
+                          className="w-5 h-5 text-emerald-600"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -374,8 +416,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                           You Save
                         </span>
                       </div>
-                      <span className="text-sm font-bold text-emerald-700">
-                        -${appliedPromo.discount_amount?.toFixed(2) || "0.00"}
+                      <span className="text-lg font-bold text-emerald-700">
+                        ${securePromoData.discountAmount.toFixed(2)}
                       </span>
                     </div>
                   </div>

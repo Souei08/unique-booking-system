@@ -277,6 +277,7 @@ const TourTimeAndDate = ({
   // Handle time selection
   const handleTimeSelection = (time: string) => {
     setSelectedTime(time);
+
     const timeSlot = availableTimes.find((slot) => slot.start_time === time);
     setSelectedTimeSlot(timeSlot || null);
 
@@ -481,7 +482,7 @@ const TourTimeAndDate = ({
                         className="rounded-lg sm:rounded-xl border bg-background p-3 sm:p-4 transition-all duration-200 hover:border-brand/50"
                       >
                         <div className="mb-3 sm:mb-4">
-                          <h4 className="text-base sm:text-lg font-semibold text-foreground">
+                          <h4 className="text-base sm:text-lg font-semibold text-foreground capitalize">
                             {type.name}
                           </h4>
                           <p className="text-xs sm:text-sm text-muted-foreground">
@@ -542,11 +543,14 @@ const TourTimeAndDate = ({
                           </button>
                         </div>
                         <div className="mt-2 sm:mt-3 flex items-center justify-between rounded-lg bg-brand/5 p-2 sm:p-3">
-                          <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                          <p className="text-xs sm:text-sm font-medium text-muted-foreground capitalize">
                             Total for {type.name}
                           </p>
                           <p className="text-sm sm:text-base font-semibold text-brand">
-                            ${(slotTypeCounts[type.name] || 0) * type.price}
+                            $
+                            {(
+                              (slotTypeCounts[type.name] || 0) * type.price
+                            ).toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -568,10 +572,9 @@ const TourTimeAndDate = ({
                           </p>
                           <p className="text-base sm:text-lg font-semibold text-brand">
                             $
-                            {slotDetails.reduce(
-                              (sum, slot) => sum + slot.price,
-                              0
-                            )}
+                            {slotDetails
+                              .reduce((sum, slot) => sum + slot.price, 0)
+                              .toFixed(2)}
                           </p>
                         </div>
                       </div>

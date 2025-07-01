@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RoleAvatar } from "@/app/_components/common/RoleAvatar";
 import { Badge } from "@/components/ui/badge";
 import {
   UserIcon,
@@ -86,12 +87,7 @@ export default function ProfilePage() {
           <Card>
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={profile.avatar} alt={profile.name} />
-                  <AvatarFallback>
-                    <UserIcon className="h-12 w-12" />
-                  </AvatarFallback>
-                </Avatar>
+                <RoleAvatar full_name={profile.name} className="h-24 w-24" />
               </div>
               <CardTitle>{profile.name}</CardTitle>
               <CardDescription>{profile.email}</CardDescription>

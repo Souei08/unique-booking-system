@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
       const intent = event.data.object as Stripe.PaymentIntent;
       const paymentId = intent.id;
       const bookingId = intent.metadata?.booking_id || null;
+      const paymentIdRef = intent.metadata?.payment_ref_id || null;
 
       const amountPaid = intent.amount_received / 100;
 
@@ -130,13 +131,14 @@ export async function POST(req: NextRequest) {
               {
                 booking_id: bookingId,
                 payment_id: paymentId,
+                payment_ref_id: paymentIdRef,
                 payment_method: "card",
                 status: "paid",
                 amount_paid: amountPaid,
                 paid_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
               },
-              { onConflict: "booking_id" }
+              { onConflict: "payment_ref_id" }
             );
 
           if (paymentError) throw paymentError;

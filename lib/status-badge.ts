@@ -30,27 +30,29 @@ export const statusBadgeVariants = cva(
   {
     variants: {
       variant: {
-        // Payment status variants
-        payment_pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-        payment_paid: "bg-green-100 text-green-800 border-green-200",
-        payment_failed: "bg-red-100 text-red-800 border-red-200",
-        payment_refunding: "bg-blue-100 text-blue-800 border-blue-200",
-        payment_refunded: "bg-purple-100 text-purple-800 border-purple-200",
-        payment_partial_refund:
-          "bg-orange-100 text-orange-800 border-orange-200",
-        payment_cancelled: "bg-gray-100 text-gray-800 border-gray-200",
+        // Payment status variants — brand aligned
+        payment_pending: "bg-yellow-500 text-white border-yellow-200",
+        payment_paid: "bg-green-500 text-white border-green-200",
+        payment_failed: "bg-red-500 text-white border-red-200",
+        payment_refunding: "bg-fill text-brand border-fill",
+        payment_refunded: "bg-purple-500 text-white border-purple-200",
+        payment_partial_refund: "bg-orange-500 text-white border-orange-200",
+        payment_cancelled: "bg-neutral text-weak border-stroke-weak",
 
-        // Booking status variants
-        booking_pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-        booking_confirmed: "bg-green-100 text-green-800 border-green-200",
-        booking_checked_in: "bg-blue-100 text-blue-800 border-blue-200",
-        booking_cancelled: "bg-red-100 text-red-800 border-red-200",
-        booking_rescheduled: "bg-purple-100 text-purple-800 border-purple-200",
-        booking_refunded: "bg-orange-100 text-orange-800 border-orange-200",
+        // Booking status variants — brand aligned
+        booking_pending: "bg-yellow-500 text-white border-yellow-200",
+        booking_confirmed: "bg-green-500 text-white border-green-200",
+        booking_checked_in: "bg-fill text-brand border-fill",
+        booking_cancelled: "bg-red-500 text-white border-red-200",
+        booking_rescheduled: "bg-purple-500 text-white border-purple-200",
+        booking_refunded: "bg-orange-500 text-white border-orange-200",
         booking_partially_refunded:
-          "bg-orange-100 text-orange-800 border-orange-200",
-        booking_completed: "bg-green-100 text-green-800 border-green-200",
-        booking_no_show: "bg-gray-100 text-gray-800 border-gray-200",
+          "bg-orange-500 text-white border-orange-200",
+        booking_completed: "bg-green-500 text-white border-green-200",
+        booking_no_show: "bg-neutral text-weak border-stroke-weak",
+
+        // Active today variant — distinctive blue color to highlight current day bookings
+        booking_active_today: "bg-blue-500 text-white border-blue-200",
       },
     },
     defaultVariants: {

@@ -142,8 +142,8 @@ export function TableV2<TData, TValue>({
           />
         </div>
       )}
-      <div className="rounded-sm border border-stroke-strong shadow-sm overflow-hidden">
-        <Table className="font-['Montserrat']">
+      <div className="rounded-sm bg-white border border-stroke-strong shadow-sm overflow-hidden">
+        <Table className="font-['Montserrat'] bg-white">
           <TableHeader className="bg-background">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -167,25 +167,47 @@ export function TableV2<TData, TValue>({
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  // className="hover:bg-fill transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-text font-medium"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              <>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className=" bg-white"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="px-6 py-4 whitespace-nowrap text-sm text-text font-medium"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+                {/* Add empty rows to fill the table height */}
+                {Array.from({
+                  length: Math.max(
+                    0,
+                    pageSize - table.getRowModel().rows.length
+                  ),
+                }).map((_, index) => (
+                  <TableRow key={`empty-${index}`} className="bg-white">
+                    {Array.from({ length: columns.length }).map(
+                      (_, cellIndex) => (
+                        <TableCell
+                          key={`empty-cell-${index}-${cellIndex}`}
+                          className="px-6 py-4 whitespace-nowrap text-sm text-text font-medium"
+                        >
+                          &nbsp;
+                        </TableCell>
+                      )
+                    )}
+                  </TableRow>
+                ))}
+              </>
             ) : (
               <TableRow>
                 <TableCell

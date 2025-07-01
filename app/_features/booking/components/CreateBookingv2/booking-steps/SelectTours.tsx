@@ -41,10 +41,10 @@ const SelectTours = ({
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="text-center space-y-2 px-4 sm:px-0">
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-bold text-strong">
           Select Your Tour
         </h2>
-        <p className="text-muted-foreground text-sm sm:text-base">
+        <p className="text-base sm:text-lg text-weak">
           Choose from our curated selection of unforgettable experiences
         </p>
       </div>
@@ -58,7 +58,7 @@ const SelectTours = ({
           return (
             <div
               key={tour.id}
-              className="group relative h-[350px] sm:h-[450px] rounded-xl overflow-hidden bg-card shadow-lg hover:shadow-xl transition-all duration-300"
+              className="group relative h-[350px] sm:h-[450px] rounded-xl overflow-hidden bg-card shadow-md hover:shadow-lg transition-all duration-300"
             >
               <div
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
@@ -73,10 +73,10 @@ const SelectTours = ({
 
               <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 space-y-3 sm:space-y-4 text-left">
                 <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight text-left">
+                  <h3 className="text-lg sm:text-xl font-semibold text-white">
                     {tour.title}
                   </h3>
-                  <p className="text-white/90 text-xs sm:text-sm leading-relaxed line-clamp-2 text-left">
+                  <p className="text-white/90 text-sm sm:text-base leading-relaxed line-clamp-2 text-left">
                     {tour.description}
                   </p>
                 </div>

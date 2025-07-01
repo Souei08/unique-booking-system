@@ -25,7 +25,7 @@ export const UserMenu = ({ user }: UserMenuProps) => {
               />
               <div className="text-left">
                 <div className="text-sm font-medium text-strong">
-                  {user.user_metadata?.name || "Web Developer"}
+                  {user.full_name || "Web Developer"}
                 </div>
                 <div className="text-xs text-weak capitalize">
                   {user.role === "reservation_agent"

@@ -26,6 +26,7 @@ interface BookingData {
   promo_code?: string | null;
   sub_total: number;
   discount_amount?: number | null;
+  payment_ref_id?: string | null;
 }
 
 export async function createTourBookingv2(data: BookingData): Promise<{
@@ -129,6 +130,7 @@ export async function createTourBookingv2(data: BookingData): Promise<{
         promo_code: promo_code || null,
         sub_total: sub_total || null,
         discount_amount: discount_amount || null,
+        payment_ref_id: booking.payment_ref_id || null,
       },
     };
   } catch (err: any) {

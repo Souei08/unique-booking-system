@@ -10,6 +10,8 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
+  User,
+  MapPin,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,6 +24,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { TableV2 } from "@/app/_components/common/TableV2";
+import { CardList } from "@/app/_components/common/CardList";
+import { BookingCard } from "@/app/_features/dashboard/components/BookingCard";
+import { RoleAvatar } from "@/app/_components/common/RoleAvatar";
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -38,6 +43,7 @@ import {
 } from "./BookingFilters";
 import { getAllTours } from "@/app/_features/tours/api/getAllTours";
 import { BookingTableSkeleton } from "./BookingTableSkeleton";
+import { BookingCardSkeleton } from "./BookingCardSkeleton";
 
 export function BookingTableV2() {
   const [bookings, setBookings] = useState<BookingTable[]>([]);
@@ -51,18 +57,24 @@ export function BookingTableV2() {
   const [isLoadingTours, setIsLoadingTours] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   // Pagination & filters
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState<BookingFiltersType>({
     status_filter: "all",
     selected_time_filter: "all",
     tour_filter: "all",
-    booking_id_filter: "",
-    customer_name_filter: "",
+    search_query: "",
   });
+
+  // Update page size when view mode changes
+  useEffect(() => {
+    setPageSize(viewMode === "cards" ? 5 : 10);
+    setPage(1); // Reset to first page when changing view mode
+  }, [viewMode]);
 
   // Fetch tours for filter dropdown
   useEffect(() => {
@@ -87,7 +99,7 @@ export function BookingTableV2() {
 
       // Prepare filter parameters
       const filterParams: any = {
-        user_name_filter: filters.customer_name_filter || null,
+        search_query: filters.search_query || null,
         limit_count: pageSize,
         offset_count: offset,
       };
@@ -99,8 +111,8 @@ export function BookingTableV2() {
       if (filters.tour_filter && filters.tour_filter !== "all") {
         filterParams.tour_filter = filters.tour_filter;
       }
-      if (filters.booking_id_filter) {
-        filterParams.booking_id_filter = filters.booking_id_filter;
+      if (filters.search_query) {
+        filterParams.search_query = filters.search_query;
       }
 
       const data = await getAllBookings(filterParams);
@@ -161,13 +173,11 @@ export function BookingTableV2() {
   const handleSearch = (query: string) => {
     setIsFilterLoading(true);
     setPage(1); // Reset to first page when searching
-    // This function is called when the search form is submitted
-    if (query.trim()) {
-      setFilters((prev) => ({
-        ...prev,
-        customer_name_filter: query.trim(),
-      }));
-    }
+    // Update the filters state with the search query
+    setFilters((prev) => ({
+      ...prev,
+      search_query: query.trim(),
+    }));
     // The loading state will be cleared when fetchBookings completes
   };
 
@@ -179,42 +189,74 @@ export function BookingTableV2() {
   }, [isLoading, isFilterLoading]);
 
   const handleEmailConfirmation = async (booking: BookingTable) => {
-    try {
-      await sendBookingConfirmationEmail({
-        full_name: booking.full_name,
-        email: booking.email,
-        booking_date: booking.booking_date,
-        selected_time: booking.selected_time,
-        slots: booking.slots,
-        total_price: booking.amount_paid,
-        booking_reference_id: booking.reference_number,
-        tour_name: booking.tour_title,
-        tour_rate: booking.tour_rate,
-        products:
-          booking.booked_products?.map((product) => ({
-            product_name: product.name,
-            product_id: product.product_id || "",
-            quantity: product.quantity,
-            unit_price: product.unit_price,
-          })) || [],
-        slot_details: booking.slot_details || [],
-        manage_token: booking.manage_token,
-        waiver_link: "https://your-waiver-link.com",
-        sub_total: booking.original_amount || 0,
-        coupon_code: booking.promo_code || "",
-        discount_amount: booking.discount_amount || 0,
-      });
-      // You might want to show a success toast here
-    } catch (error) {
-      console.error("Error sending confirmation email:", error);
-      // You might want to show an error toast here
-    }
+    // try {
+    //   await sendBookingConfirmationEmail({
+    //     full_name: booking.full_name,
+    //     email: booking.email,
+    //     booking_date: booking.booking_date,
+    //     selected_time: booking.selected_time,
+    //     slots: booking.slots,
+    //     total_price: booking.amount_paid,
+    //     booking_reference_id: booking.reference_number,
+    //     tour_name: booking.tour_title,
+    //     tour_rate: booking.tour_rate,
+    //     products:
+    //       booking.booked_products?.map((product) => ({
+    //         product_name: product.name,
+    //         product_id: product.product_id || "",
+    //         quantity: product.quantity,
+    //         unit_price: product.unit_price,
+    //       })) || [],
+    //     slot_details: booking.slot_details || [],
+    //     manage_token: booking.manage_token,
+    //     waiver_link: "https://your-waiver-link.com",
+    //     sub_total: booking.original_amount || 0,
+    //     coupon_code: booking.promo_code || "",
+    //     discount_amount: booking.discount_amount || 0,
+    //     manage_link: booking.manage_link,
+    //   });
+    //   // You might want to show a success toast here
+    // } catch (error) {
+    //   console.error("Error sending confirmation email:", error);
+    //   // You might want to show an error toast here
+    // }
   };
 
   const columns: ColumnDef<BookingTable>[] = [
     { accessorKey: "reference_number", header: "Booking ID" },
-    { accessorKey: "full_name", header: "Customer Name" },
-    { accessorKey: "tour_title", header: "Tour" },
+    {
+      accessorKey: "full_name",
+      header: "Customer Name",
+      cell: ({ row }) => {
+        const fullName = row.getValue("full_name") as string;
+        return (
+          <div className="flex items-center gap-2">
+            <RoleAvatar full_name={fullName} className="h-8 w-8" />
+            {fullName}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "tour_title",
+      header: "Booked Tour",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+            {row.original.tour_featured_image ? (
+              <img
+                src={row.original.tour_featured_image}
+                alt={row.original.tour_title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <MapPin className="h-4 w-4 text-gray-500" />
+            )}
+          </div>
+          {row.getValue("tour_title")}
+        </div>
+      ),
+    },
     {
       accessorKey: "booking_status",
       header: "Booking Status",
@@ -298,6 +340,29 @@ export function BookingTableV2() {
 
   // Show loading skeleton when initially loading or when filters are being applied
   if ((isLoading && bookings.length === 0) || isFilterLoading) {
+    if (viewMode === "cards") {
+      return (
+        <div className="mt-7">
+          <BookingFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            tours={tours}
+            isLoading={isLoadingTours || isFilterLoading}
+            onSearch={handleSearch}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+            viewMode={viewMode}
+            onViewChange={setViewMode}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <BookingCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      );
+    }
     return <BookingTableSkeleton />;
   }
 
@@ -312,6 +377,8 @@ export function BookingTableV2() {
         onSearch={handleSearch}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
+        viewMode={viewMode}
+        onViewChange={setViewMode}
       />
 
       {/* Loading overlay for table when refreshing */}
@@ -325,20 +392,86 @@ export function BookingTableV2() {
           </div>
         )}
 
-        <TableV2
-          columns={columns}
-          data={bookings}
-          filterColumn={undefined} // filters handled here instead
-          // Pagination props
-          totalCount={totalCount}
-          page={page}
-          pageSize={pageSize}
-          onNextPage={handleNext}
-          onPreviousPage={handlePrevious}
-          onPageChange={handlePageChange}
-          isLoading={isLoading || isFilterLoading}
-          entityName="bookings"
-        />
+        {viewMode === "table" ? (
+          <TableV2
+            columns={columns}
+            data={bookings}
+            filterColumn={undefined} // filters handled here instead
+            // Pagination props
+            totalCount={totalCount}
+            page={page}
+            pageSize={pageSize}
+            onNextPage={handleNext}
+            onPreviousPage={handlePrevious}
+            onPageChange={handlePageChange}
+            isLoading={isLoading || isFilterLoading}
+            entityName="bookings"
+          />
+        ) : (
+          <CardList
+            data={bookings}
+            renderCard={(booking, index) => (
+              <div
+                key={booking.booking_id || index}
+                className="relative cursor-pointer group"
+                onClick={() => {
+                  setSelectedBooking(booking);
+                  setIsUpdateBookingDialogOpen(true);
+                }}
+              >
+                <BookingCard booking={booking} variant="booking" />
+                {/* Floating action button */}
+                <div className="absolute top-3 right-3 z-20">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 w-8 p-0 bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBooking(booking);
+                          setIsUpdateBookingDialogOpen(true);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Update Booking
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEmailConfirmation(booking);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send Confirmation
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            )}
+            totalCount={totalCount}
+            page={page}
+            pageSize={pageSize}
+            onNextPage={handleNext}
+            onPreviousPage={handlePrevious}
+            onPageChange={handlePageChange}
+            isLoading={isLoading || isFilterLoading}
+            entityName="bookings"
+          />
+        )}
       </div>
 
       {/* Update Booking Dialog */}
@@ -346,9 +479,9 @@ export function BookingTableV2() {
         open={isUpdateBookingDialogOpen}
         onOpenChange={setIsUpdateBookingDialogOpen}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Update Booking</DialogTitle>
+            <DialogTitle className="sr-only">Update Booking</DialogTitle>
           </DialogHeader>
           {selectedBooking && (
             <UpdateBooking

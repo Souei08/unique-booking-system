@@ -9,7 +9,11 @@ export const StripePaymentFormV2 = ({
   onPaymentSuccess,
   handleCompleteBooking,
 }: {
-  onPaymentSuccess: (paymentId: string, bookingId: string) => void;
+  onPaymentSuccess: (
+    paymentId: string,
+    bookingId: string,
+    paymentRefId: string
+  ) => void;
   handleCompleteBooking: (
     paymentId: string | null,
     existingBookingId: string | null
@@ -80,7 +84,11 @@ export const StripePaymentFormV2 = ({
         });
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
         // Payment successful, update booking status
-        onPaymentSuccess(paymentIntent.id, bookingId);
+        onPaymentSuccess(
+          paymentIntent.id,
+          bookingId,
+          email_response.payment_ref_id
+        );
 
         const emailResponse = await sendBookingConfirmationEmail({
           full_name: email_response.full_name,
@@ -95,6 +103,7 @@ export const StripePaymentFormV2 = ({
           products: email_response.products,
           slot_details: email_response.slot_details,
           manage_token: email_response.manage_token,
+          manage_link: `manage-additional-booking?manage_token=${email_response.manage_token}`,
           waiver_link: "https://your-waiver-link.com",
           sub_total: email_response.sub_total,
           coupon_code: email_response.coupon_code,

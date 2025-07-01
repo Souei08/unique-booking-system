@@ -3,7 +3,7 @@ import ContentLayout from "@/app/(pages)/dashboard/ContentLayout";
 import ProductTable from "@/app/_features/products/components/ProductTable";
 import { Product } from "@/app/_features/products/types/product-types";
 import { getAllProducts } from "@/app/_features/products/api/getAllProducts";
-import { getAllTours } from "@/app/_features/tours/api/getTours";
+import { getAllTours } from "@/app/_features/tours/api/getAllTours";
 
 const ProductsPage = async () => {
   const products = await getAllProducts();
@@ -18,7 +18,7 @@ const ProductsPage = async () => {
       modalDescription="Create a new product to add to the list."
       modalRoute="products"
     >
-      <ProductTable products={products as Product[]} tours={tours as any} />
+      <ProductTable products={products as Product[]} tours={tours} />
     </ContentLayout>
   );
 };

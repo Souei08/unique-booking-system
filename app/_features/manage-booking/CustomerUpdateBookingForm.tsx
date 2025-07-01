@@ -7,6 +7,10 @@ import {
   CustomerInformation,
 } from "../booking/types/booking-types";
 import { getOneBooking } from "../booking/api/get-booking/getOneBooking";
+import {
+  getAdditionalBookings,
+  AdditionalWithPayment,
+} from "../booking/api/get-booking/getAdditionalBookings";
 import { rescheduleBooking } from "../booking/api/update-booking/RescheduleBooking";
 import { updateBookingPayment } from "../booking/api/updateBookingPayment";
 import {
@@ -38,6 +42,7 @@ import {
   CheckCircle,
   Info,
   UserRound,
+  Plus,
 } from "lucide-react";
 
 import { formatTime } from "@/app/_lib/utils/formatTime";
@@ -82,6 +87,10 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [booking, setBooking] = useState<BookingTable | null>(null);
+  const [additionalBookings, setAdditionalBookings] = useState<
+    AdditionalWithPayment[]
+  >([]);
+  const [isLoadingAdditional, setIsLoadingAdditional] = useState(false);
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [isSlotDetailsModalOpen, setIsSlotDetailsModalOpen] = useState(false);
   const [isProductsModalOpen, setIsProductsModalOpen] = useState(false);
@@ -293,6 +302,21 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
     }
   };
 
+  const fetchAdditionalBookings = async () => {
+    if (!bookingId) return;
+
+    try {
+      setIsLoadingAdditional(true);
+      const additionalData = await getAdditionalBookings(bookingId);
+      setAdditionalBookings(additionalData);
+    } catch (error) {
+      console.error("Error fetching additional bookings:", error);
+      toast.error("Failed to load additional bookings");
+    } finally {
+      setIsLoadingAdditional(false);
+    }
+  };
+
   const handleReschedule = async (newDate: string, newTime: string) => {
     if (!booking) return;
 
@@ -368,6 +392,12 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
   }, []);
 
   useEffect(() => {
+    if (booking) {
+      fetchAdditionalBookings();
+    }
+  }, [booking]);
+
+  useEffect(() => {
     fetchAvailableProducts();
   }, [isProductsModalOpen, booking?.tour_id]);
 
@@ -393,6 +423,49 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
     );
   }
 
+  const handleAddAdditionalBooking = () => {
+    if (manageToken) {
+      window.location.href = `/manage-additional-booking?manage_token=${manageToken}`;
+    }
+  };
+
+  // Helper function to map additional booking status to payment status
+  const mapAdditionalStatusToPaymentStatus = (
+    status: string | null
+  ):
+    | "pending"
+    | "paid"
+    | "failed"
+    | "refunding"
+    | "refunded"
+    | "partial_refund"
+    | "cancelled" => {
+    if (!status) return "pending";
+
+    const lowerStatus = status.toLowerCase();
+
+    switch (lowerStatus) {
+      case "paid":
+      case "completed":
+        return "paid";
+      case "failed":
+      case "error":
+        return "failed";
+      case "refunding":
+        return "refunding";
+      case "refunded":
+        return "refunded";
+      case "partial_refund":
+      case "partially_refunded":
+        return "partial_refund";
+      case "cancelled":
+      case "canceled":
+        return "cancelled";
+      default:
+        return "pending";
+    }
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
       {/* Header */}
@@ -412,22 +485,13 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 sm:h-10 sm:w-10 p-0 hover:bg-white/20 text-white flex-shrink-0"
-            onClick={onClose}
-          >
-            <X className="w-4 h-4 sm:w-5 sm:h-5" />
-          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
-        {/* Left Column - Actions */}
+        {/* Left Column - Customer Info & Actions */}
         <div className="space-y-4 sm:space-y-6">
           {/* Quick Info Cards */}
-
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
               <div className="flex items-center gap-2 sm:gap-3">
@@ -503,163 +567,6 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
             </div>
           </div>
 
-          {/* Actions Section */}
-          <div className="bg-background rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl lg:text-h2 font-bold text-strong mb-4 sm:mb-6 flex items-center gap-2">
-              Manage Booking
-            </h2>
-
-            <div className="space-y-3 sm:space-y-4">
-              {/* Primary Actions */}
-              <div className="grid grid-cols-1 gap-3">
-                <Button
-                  variant="outline"
-                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                  onClick={() => setIsPersonalInfoModalOpen(true)}
-                  disabled={isLoading}
-                >
-                  <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
-                    <UserCog className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="font-semibold text-body truncate">
-                      Update Contact Information
-                    </p>
-                    <p className="text-small text-weak mt-1 leading-relaxed">
-                      Change customer name, email, and phone number
-                    </p>
-                  </div>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                  onClick={() => setIsRescheduleModalOpen(true)}
-                  disabled={
-                    isLoading ||
-                    booking.payment_status === "refunding" ||
-                    booking.payment_status === "refunded" ||
-                    booking.payment_status === "partially_refunded"
-                  }
-                >
-                  <div className="bg-orange-50 p-2 rounded-lg flex-shrink-0">
-                    <RefreshCw className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="font-semibold text-body truncate">
-                      Change Date & Time
-                    </p>
-                    <p className="text-small text-weak mt-1 leading-relaxed">
-                      Reschedule to a different date or time slot
-                    </p>
-                  </div>
-                </Button>
-
-                {(!customSlotTypes || customSlotTypes.length === 0) && (
-                  <Button
-                    variant="outline"
-                    className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                    onClick={() => setIsUpdateSlotsModalOpen(true)}
-                    disabled={isLoading || booking.payment_status !== "pending"}
-                  >
-                    <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
-                      <Users className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <p className="font-semibold text-body truncate">
-                        Adjust Number of People
-                      </p>
-                      <p className="text-small text-weak mt-1 leading-relaxed">
-                        Add or remove people from this booking
-                      </p>
-                    </div>
-                  </Button>
-                )}
-
-                {customSlotTypes &&
-                  customSlotTypes.length > 0 &&
-                  customSlotFields &&
-                  customSlotFields.length > 0 && (
-                    <Button
-                      variant="outline"
-                      className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                      onClick={() => setIsSlotDetailsModalOpen(true)}
-                      disabled={
-                        isLoading || booking.payment_status !== "pending"
-                      }
-                    >
-                      <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
-                        <Edit2 className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div className="text-left min-w-0 flex-1">
-                        <p className="font-semibold text-body truncate">
-                          Edit Guest Details
-                        </p>
-                        <p className="text-small text-weak mt-1 leading-relaxed">
-                          Update names and information for each person
-                        </p>
-                      </div>
-                    </Button>
-                  )}
-
-                <Button
-                  variant="outline"
-                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                  onClick={() => {
-                    setEditedProducts(editedProducts);
-                    setIsProductsModalOpen(true);
-                  }}
-                  disabled={isLoading || booking.payment_status !== "pending"}
-                >
-                  <div className="bg-indigo-50 p-2 rounded-lg flex-shrink-0">
-                    <Package className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="font-semibold text-body truncate">
-                      Manage Add-ons & Extras
-                    </p>
-                    <p className="text-small text-weak mt-1 leading-relaxed">
-                      Add, remove, or modify additional products
-                    </p>
-                  </div>
-                </Button>
-              </div>
-
-              {/* Cancellation Action */}
-              {booking.payment_status === "paid" && (
-                <div className="pt-4 border-t border-gray-200">
-                  <Button
-                    variant="outline"
-                    className="w-full h-auto min-h-[60px] sm:min-h-[70px] text-red-600 border-red-200 hover:border-red-300 hover:bg-red-50/50 transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                    onClick={handleCancelBooking}
-                    disabled={
-                      isLoading || booking.booking_status === "cancelled"
-                    }
-                  >
-                    <div className="bg-red-50 p-2 rounded-lg flex-shrink-0">
-                      {isLoading ? (
-                        <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-600" />
-                      )}
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <p className="font-semibold text-body">
-                        {isLoading ? "Processing..." : "Cancel & Refund"}
-                      </p>
-                      <p className="text-small text-red-500 mt-1 leading-relaxed">
-                        Cancel this booking and process refund
-                      </p>
-                    </div>
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column - Payment Breakdown */}
-        <div className="space-y-4 sm:space-y-6">
           {/* Customer Info */}
           <div className="bg-background rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl lg:text-h2 font-bold text-strong mb-3 sm:mb-4 flex items-center gap-2">
@@ -719,39 +626,220 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
             </div>
           </div>
 
-          {/* Payment Breakdown */}
+          {/* Actions Section */}
           <div className="bg-background rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg sm:text-xl lg:text-h2 font-bold text-strong mb-4 sm:mb-6 flex items-center gap-2">
-              Booking Details
+              Manage Booking
+            </h2>
+
+            <div className="space-y-3 sm:space-y-4">
+              {/* Primary Actions */}
+              <div className="grid grid-cols-1 gap-3">
+                <Button
+                  variant="outline"
+                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                  onClick={() => setIsPersonalInfoModalOpen(true)}
+                  disabled={isLoading}
+                >
+                  <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
+                    <UserCog className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="font-semibold text-body truncate">
+                      Update Contact Information
+                    </p>
+                    <p className="text-small text-weak mt-1 leading-relaxed">
+                      Change customer name, email, and phone number
+                    </p>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                  onClick={() => setIsRescheduleModalOpen(true)}
+                  disabled={
+                    isLoading ||
+                    booking.payment_status === "refunding" ||
+                    booking.payment_status === "refunded" ||
+                    booking.payment_status === "partially_refunded"
+                  }
+                >
+                  <div className="bg-orange-50 p-2 rounded-lg flex-shrink-0">
+                    <RefreshCw className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="font-semibold text-body truncate">
+                      Change Date & Time
+                    </p>
+                    <p className="text-small text-weak mt-1 leading-relaxed">
+                      Reschedule to a different date or time slot
+                    </p>
+                  </div>
+                </Button>
+
+                {(!customSlotTypes || customSlotTypes.length === 0) &&
+                  (!customSlotFields || customSlotFields.length === 0) && (
+                    <Button
+                      variant="outline"
+                      className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                      onClick={() => setIsUpdateSlotsModalOpen(true)}
+                      disabled={
+                        isLoading || booking.payment_status !== "pending"
+                      }
+                    >
+                      <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
+                        <Users className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="text-left min-w-0 flex-1">
+                        <p className="font-semibold text-body truncate">
+                          Adjust Number of People
+                        </p>
+                        <p className="text-small text-weak mt-1 leading-relaxed">
+                          Add or remove people from this booking
+                        </p>
+                      </div>
+                    </Button>
+                  )}
+
+                {((customSlotTypes && customSlotTypes.length > 0) ||
+                  (customSlotFields && customSlotFields.length > 0)) && (
+                  <Button
+                    variant="outline"
+                    className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                    onClick={() => setIsSlotDetailsModalOpen(true)}
+                    disabled={isLoading || booking.payment_status !== "pending"}
+                  >
+                    <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
+                      <Edit2 className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div className="text-left min-w-0 flex-1">
+                      <p className="font-semibold text-body truncate">
+                        Edit Guest Details
+                      </p>
+                      <p className="text-small text-weak mt-1 leading-relaxed">
+                        Update names and information for each person
+                      </p>
+                    </div>
+                  </Button>
+                )}
+
+                <Button
+                  variant="outline"
+                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                  onClick={() => {
+                    setEditedProducts(editedProducts);
+                    setIsProductsModalOpen(true);
+                  }}
+                  disabled={isLoading || booking.payment_status !== "pending"}
+                >
+                  <div className="bg-indigo-50 p-2 rounded-lg flex-shrink-0">
+                    <Package className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="font-semibold text-body truncate">
+                      Manage Add-ons & Extras
+                    </p>
+                    <p className="text-small text-weak mt-1 leading-relaxed">
+                      Add, remove, or modify additional products
+                    </p>
+                  </div>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700 transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                  onClick={handleAddAdditionalBooking}
+                  disabled={isLoading}
+                >
+                  <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
+                    <Plus className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="text-left min-w-0 flex-1">
+                    <p className="font-semibold text-body truncate">
+                      Add More Services
+                    </p>
+                    <p className="text-small text-blue-600 mt-1 leading-relaxed">
+                      Add additional people or products to this booking
+                    </p>
+                  </div>
+                </Button>
+              </div>
+
+              {/* Cancellation Action */}
+              {booking.payment_status === "paid" && (
+                <div className="pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    className="w-full h-auto min-h-[60px] sm:min-h-[70px] text-red-600 border-red-200 hover:border-red-300 hover:bg-red-50/50 transition-all duration-200 flex items-start gap-3 px-4 py-3"
+                    onClick={handleCancelBooking}
+                    disabled={
+                      isLoading || booking.booking_status === "cancelled"
+                    }
+                  >
+                    <div className="bg-red-50 p-2 rounded-lg flex-shrink-0">
+                      {isLoading ? (
+                        <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-600" />
+                      )}
+                    </div>
+                    <div className="text-left min-w-0 flex-1">
+                      <p className="font-semibold text-body">
+                        {isLoading ? "Processing..." : "Cancel & Refund"}
+                      </p>
+                      <p className="text-small text-red-500 mt-1 leading-relaxed">
+                        Cancel this booking and process refund
+                      </p>
+                    </div>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Primary Booking & Additional Bookings */}
+        <div className="space-y-4 sm:space-y-6">
+          {/* Primary Booking */}
+          <div className="bg-background rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold text-strong mb-4 sm:mb-6 flex items-center gap-2">
+              <div className="bg-brand/10 p-1.5 rounded-lg">
+                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
+              </div>
+              Primary Booking
             </h2>
 
             <div className="space-y-3 sm:space-y-4">
               {/* Selected Tour Section */}
-              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
-                <h3 className="font-semibold text-strong text-small sm:text-body mb-3">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-3 sm:p-4 border border-gray-200">
+                <h3 className="font-semibold text-strong text-small sm:text-body mb-3 flex items-center gap-2">
+                  <div className="bg-brand/10 p-1 rounded-lg">
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-brand" />
+                  </div>
                   Tour Details
                 </h3>
 
                 {/* Tour Base Price */}
                 {!customSlotTypes || customSlotTypes.length === 0 ? (
-                  <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg">
+                  <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100">
                     <div className="flex items-center gap-2 sm:gap-3">
                       <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
-                        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg overflow-hidden">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden">
                           <Image
                             src={
                               booking.tour_featured_image ||
                               "/images/default-tour.png"
                             }
                             alt={booking.tour_title}
-                            width={32}
-                            height={32}
+                            width={40}
+                            height={40}
                             className="w-full h-full object-cover"
                           />
                         </div>
                       </div>
                       <div>
-                        <p className="font-medium text-strong text-small sm:text-body">
+                        <p className="font-semibold text-strong text-small sm:text-body">
                           {booking.tour_title}
                         </p>
                         <p className="text-tiny sm:text-small text-weak">
@@ -770,24 +858,24 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                 ) : (
                   <>
                     {/* Tour Title for Custom Slots */}
-                    <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg mb-3">
+                    <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100 mb-3">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg overflow-hidden">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden">
                             <Image
                               src={
                                 booking.tour_featured_image ||
                                 "/images/default-tour.png"
                               }
                               alt={booking.tour_title}
-                              width={32}
-                              height={32}
+                              width={40}
+                              height={40}
                               className="w-full h-full object-cover"
                             />
                           </div>
                         </div>
                         <div>
-                          <p className="font-medium text-strong text-small sm:text-body">
+                          <p className="font-semibold text-strong text-small sm:text-body">
                             {booking.tour_title}
                           </p>
                           <p className="text-tiny sm:text-small text-weak">
@@ -826,14 +914,14 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                       ).map(([typeName, details]) => (
                         <div
                           key={typeName}
-                          className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg"
+                          className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100"
                         >
                           <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
+                            <div className="bg-brand/10 p-1.5 rounded-lg">
                               <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-brand" />
                             </div>
                             <div>
-                              <p className="font-medium text-strong text-small sm:text-body">
+                              <p className="font-semibold text-strong text-small sm:text-body">
                                 {typeName}
                               </p>
                               <p className="text-tiny sm:text-small text-weak">
@@ -856,53 +944,59 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
               {/* Additional Products */}
               {editedProducts.length > 0 && (
                 <div className="pt-3 sm:pt-4 border-t border-gray-200">
-                  <p className="font-medium text-strong text-small px-3 sm:text-body mb-2">
-                    Additional Products
-                  </p>
-                  {editedProducts.map((product, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-gray-50  rounded-lg mb-2"
-                    >
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="bg-background rounded-lg">
-                          <Image
-                            src={
-                              product.image_url || "/images/default-product.png"
-                            }
-                            alt={product.name}
-                            width={70}
-                            height={80}
-                            className="rounded-lg"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-strong text-small sm:text-body truncate">
-                            {product.name}
-                          </p>
-                          <p className="text-tiny sm:text-small text-weak">
-                            {product.quantity} item
-                            {product.quantity > 1 ? "s" : ""} in cart
-                          </p>
-                        </div>
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 sm:p-4 border border-indigo-200">
+                    <h3 className="font-semibold text-strong text-small sm:text-body mb-3 flex items-center gap-2">
+                      <div className="bg-indigo-100 p-1 rounded-lg">
+                        <Package className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600" />
                       </div>
-                      <span className="font-bold text-strong text-small sm:text-body">
-                        ${(product.unit_price * product.quantity).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
+                      Additional Products
+                    </h3>
+                    {editedProducts.map((product, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100 mb-2"
+                      >
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="bg-background rounded-lg overflow-hidden">
+                            <Image
+                              src={
+                                product.image_url ||
+                                "/images/default-product.png"
+                              }
+                              alt={product.name}
+                              width={60}
+                              height={70}
+                              className="rounded-lg"
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-strong text-small sm:text-body truncate">
+                              {product.name}
+                            </p>
+                            <p className="text-tiny sm:text-small text-weak">
+                              {product.quantity} item
+                              {product.quantity > 1 ? "s" : ""} in cart
+                            </p>
+                          </div>
+                        </div>
+                        <span className="font-bold text-strong text-small sm:text-body">
+                          ${(product.unit_price * product.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
               <div className="h-px bg-gray-200 my-4 sm:my-6"></div>
 
               {/* Subtotal (shown when discount is applied) */}
-              {booking?.discount_amount && booking.discount_amount > 0 && (
-                <div className="flex items-center justify-between py-3 sm:py-4 px-3 sm:px-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <span className="text-sm font-medium text-gray-700">
+              {booking.discount_amount !== 0 && (
+                <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+                  <span className="text-small sm:text-body font-semibold text-gray-700">
                     Subtotal
                   </span>
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-small sm:text-body font-semibold text-gray-900">
                     $
                     {booking?.total_price_before_discount?.toFixed(2) ||
                       (() => {
@@ -931,28 +1025,28 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
               )}
 
               {/* Discount Section */}
-              {booking?.discount_amount && booking.discount_amount > 0 && (
+              {booking.discount_amount !== 0 && (
                 <>
-                  <div className="flex items-center justify-between py-3 sm:py-4 px-3 sm:px-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="bg-green-100 p-1.5 sm:p-2 rounded-lg">
+                      <div className="bg-green-100 p-1.5 rounded-lg">
                         <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
                       </div>
                       <div>
-                        <span className="text-sm text-green-700 font-medium">
+                        <span className="text-small sm:text-body text-green-700 font-semibold">
                           Discount
                         </span>
                         {booking?.promo_code && (
-                          <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full ml-2">
+                          <span className="text-tiny sm:text-small text-green-600 bg-green-100 px-2 py-1 rounded-full ml-2">
                             {booking.promo_code}
                           </span>
                         )}
                         {booking?.total_price_before_discount &&
                           booking.total_price_before_discount > 0 && (
-                            <span className="text-xs text-green-600 block mt-1">
+                            <span className="text-tiny sm:text-small text-green-600 block mt-1">
                               (
                               {(
-                                (booking.discount_amount /
+                                ((booking.discount_amount || 0) /
                                   booking.total_price_before_discount) *
                                 100
                               ).toFixed(0)}
@@ -961,18 +1055,18 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                           )}
                       </div>
                     </div>
-                    <span className="text-sm font-bold text-green-700">
-                      -${booking.discount_amount.toFixed(2)}
+                    <span className="text-small sm:text-body font-bold text-green-700">
+                      -${(booking.discount_amount || 0).toFixed(2)}
                     </span>
                   </div>
                 </>
               )}
 
               {/* Total Amount */}
-              <div className="flex items-center justify-between py-3 sm:py-4 px-3 sm:px-4   rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between py-3 sm:py-4 px-3 sm:px-4 bg-gradient-to-r from-brand/5 to-brand/10 rounded-lg border-2 border-brand/20">
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="bg-background p-1.5 sm:p-2 rounded-lg">
-                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
+                  <div className="bg-brand p-1.5 sm:p-2 rounded-lg">
+                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
                   <div>
                     <p className="font-bold text-strong text-small sm:text-body">
@@ -983,9 +1077,9 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                     </p>
                   </div>
                 </div>
-                <span className="text-lg sm:text-xl font-bold text-brand">
-                  $
-                  {(() => {
+                <span className="text-small sm:text-body font-bold text-brand">
+                  ${booking?.amount_paid.toFixed(2)}
+                  {/* {(() => {
                     // Calculate total from custom slots
                     const slotsTotal =
                       customSlotTypes && customSlotTypes.length > 0
@@ -1005,7 +1099,7 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                     );
 
                     return (slotsTotal + productsTotal).toFixed(2);
-                  })()}
+                  })()} */}
                 </span>
               </div>
 
@@ -1040,6 +1134,150 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
                     </button>
                   )}
                 </div>
+              )}
+
+              {/* Additional Bookings Section */}
+              {additionalBookings.length > 0 && (
+                <>
+                  <div className="h-px bg-gray-200 my-4 sm:my-6"></div>
+
+                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-3 sm:p-4 border border-blue-200">
+                    <h3 className="font-semibold text-blue-800 text-small sm:text-body mb-3 flex items-center gap-2">
+                      <div className="bg-blue-100 p-1 rounded-lg">
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                      </div>
+                      Additional Bookings
+                    </h3>
+                    <div className="space-y-3">
+                      {additionalBookings.map((additional, index) => (
+                        <div
+                          key={additional.additional_id}
+                          className="bg-white rounded-lg p-3 border border-blue-200 shadow-sm"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="bg-blue-100 p-1.5 rounded-lg">
+                                <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-blue-800 text-small">
+                                  Additional #{index + 1}
+                                </p>
+                                <p className="text-tiny text-blue-600">
+                                  Added on{" "}
+                                  {new Date(
+                                    additional.additional_created_at
+                                  ).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <StatusBadge
+                              status={mapAdditionalStatusToPaymentStatus(
+                                additional.status
+                              )}
+                              type="payment"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            {additional.added_slots > 0 && (
+                              <div className="flex items-center justify-between text-tiny">
+                                <span className="text-blue-600 font-medium">
+                                  Additional Slots:
+                                </span>
+                                <span className="font-semibold text-blue-800">
+                                  {additional.added_slots}
+                                  {additional.added_slots === 1
+                                    ? " person"
+                                    : " people"}
+                                </span>
+                              </div>
+                            )}
+
+                            {additional.amount_paid && (
+                              <div className="flex items-center justify-between text-tiny">
+                                <span className="text-blue-600 font-medium">
+                                  Amount Paid:
+                                </span>
+                                <span className="font-bold text-blue-800 text-small">
+                                  ${additional.amount_paid.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+
+                            {additional.payment_reference && (
+                              <div className="flex items-center justify-between text-tiny">
+                                <span className="text-blue-600 font-medium">
+                                  Payment Ref:
+                                </span>
+                                <span className="font-mono text-blue-800 text-xs">
+                                  {additional.payment_reference}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Additional Products */}
+                            {additional.added_products &&
+                              additional.added_products.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-blue-200">
+                                  <div className="flex items-center gap-1 mb-1">
+                                    <Package className="w-3 h-3 text-blue-600" />
+                                    <span className="text-tiny font-medium text-blue-700">
+                                      Added Products:
+                                    </span>
+                                  </div>
+                                  <div className="space-y-1">
+                                    {additional.added_products.map(
+                                      (product: any, productIndex: number) => {
+                                        // Handle different possible data structures
+                                        const productName =
+                                          product.name ||
+                                          product.product_name ||
+                                          product.title ||
+                                          "Unknown Product";
+                                        const quantity =
+                                          product.quantity || product.qty || 1;
+                                        const unitPrice =
+                                          product.unit_price ||
+                                          product.price ||
+                                          product.unitPrice ||
+                                          0;
+
+                                        return (
+                                          <div
+                                            key={`additional-product-${index}-${productIndex}`}
+                                            className="flex items-center justify-between text-tiny bg-blue-50 rounded px-2 py-1"
+                                          >
+                                            <span className="text-blue-800">
+                                              {productName} (x{quantity})
+                                            </span>
+                                            <span className="font-semibold text-blue-800">
+                                              $
+                                              {(unitPrice * quantity).toFixed(
+                                                2
+                                              )}
+                                            </span>
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                            {additional.note && (
+                              <div className="mt-2 p-2 bg-blue-100 rounded border border-blue-300">
+                                <p className="text-tiny text-blue-700">
+                                  <strong>Note:</strong> {additional.note}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

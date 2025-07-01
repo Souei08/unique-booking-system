@@ -9,8 +9,6 @@ export async function getBookingByToken(
   // Convert empty string to null to avoid UUID conversion error
   const tokenParam = manageToken?.trim() || null;
 
-  console.log("manageToken", tokenParam);
-
   const { data, error } = await supabase
     .rpc("get_one_booking_v2", {
       _booking_id: null,

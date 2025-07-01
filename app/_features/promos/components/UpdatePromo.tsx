@@ -28,7 +28,7 @@ import { Promo } from "../types/promo-types";
 
 const formSchema = z.object({
   code: z.string().min(1, "Promo code is required"),
-  discount_type: z.enum(["percentage", "fixed"], {
+  discount_type: z.enum(["percentage", "fixed_amount"], {
     required_error: "Please select a discount type",
   }),
   discount_value: z.string().min(1, "Discount value is required"),
@@ -50,7 +50,7 @@ export default function UpdatePromo({ promo, onSuccess }: UpdatePromoProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       code: promo.code,
-      discount_type: promo.discount_type as "percentage" | "fixed",
+      discount_type: promo.discount_type as "percentage" | "fixed_amount",
       discount_value: promo.discount_value.toString(),
       expires_at: new Date(promo.expires_at).toISOString().split("T")[0],
       max_uses: promo.max_uses.toString(),
@@ -106,7 +106,7 @@ export default function UpdatePromo({ promo, onSuccess }: UpdatePromoProps) {
                 </FormControl>
                 <SelectContent>
                   <SelectItem value="percentage">Percentage</SelectItem>
-                  <SelectItem value="fixed">Fixed Amount</SelectItem>
+                  <SelectItem value="fixed_amount">Fixed Amount</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

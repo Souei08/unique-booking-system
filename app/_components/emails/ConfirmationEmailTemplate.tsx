@@ -22,6 +22,7 @@ interface ConfirmationEmailTemplateProps {
     booking_reference_id: string;
     tour_name: string;
     manage_token: string;
+    manage_link: string;
     sub_total: number;
     coupon_code: string;
     discount_amount: number;
@@ -41,6 +42,7 @@ export const ConfirmationEmailTemplate = ({
     booking_reference_id,
     tour_name,
     manage_token,
+    manage_link,
     sub_total,
     coupon_code,
     discount_amount,
@@ -73,7 +75,7 @@ export const ConfirmationEmailTemplate = ({
     return details;
   };
 
-  const manageLink = `http://localhost:3000/manage-booking?manage_token=${manage_token}`;
+  const manageLink = `http://localhost:3000/${manage_link}`;
 
   return (
     <Html>
@@ -131,6 +133,30 @@ export const ConfirmationEmailTemplate = ({
                 Complete Waiver Form
               </Link>
               .
+            </Text>
+          </Section>
+
+          {/* ✅ Booking Management & Contact */}
+          <Section style={styles.section}>
+            <Text style={styles.sectionTitle}>
+              Booking Management & Contact
+            </Text>
+            <Text style={styles.paragraph}>
+              You can manage your booking, add additional services, or make
+              changes through your{" "}
+              <Link href={manageLink} style={styles.link}>
+                booking management portal
+              </Link>
+              . For any questions or assistance, please contact us:
+            </Text>
+            <ul style={styles.list}>
+              <li>Email: info@uniquetoursandrentals.com</li>
+              <li>Phone: +1 (555) 123-4567</li>
+              <li>WhatsApp: +1 (555) 123-4567</li>
+            </ul>
+            <Text style={styles.detailNote}>
+              Our customer service team is available Monday to Friday, 9:00 AM -
+              6:00 PM EST.
             </Text>
           </Section>
 

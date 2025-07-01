@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RoleAvatar } from "@/app/_components/common/RoleAvatar";
 import { UpsertUser } from "../form/UpsertUser";
 import { createServerClient } from "@supabase/ssr";
 import { inviteUserServerAction } from "../api/inviteUserRole";
@@ -53,14 +53,10 @@ export function UsersTable({ users, onView }: UsersTableProps) {
         const fullName = row.original.full_name || "N/A";
         return (
           <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 ring-2 ring-brand/20">
-              {row.original.avatar_url && (
-                <AvatarImage src={row.original.avatar_url} alt={fullName} />
-              )}
-              <AvatarFallback className="bg-brand/10 text-brand">
-                {fullName.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+            <RoleAvatar
+              full_name={fullName}
+              className="h-8 w-8 ring-2 ring-brand/20"
+            />
             <div className="text-sm font-medium">{fullName}</div>
           </div>
         );

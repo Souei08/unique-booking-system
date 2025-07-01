@@ -10,6 +10,10 @@ import { getOneBooking } from "../../api/get-booking/getOneBooking";
 import { rescheduleBooking } from "../../api/update-booking/RescheduleBooking";
 import { updateBookingPayment } from "../../api/updateBookingPayment";
 import {
+  getAdditionalBookings,
+  AdditionalWithPayment,
+} from "../../api/get-booking/getAdditionalBookings";
+import {
   CustomSlotType,
   CustomSlotField,
 } from "../CreateBookingv2/booking-steps/SlotDetails";
@@ -37,6 +41,8 @@ import {
   X,
   MapPin,
   List,
+  Plus,
+  Calendar,
 } from "lucide-react";
 
 import { formatTime } from "@/app/_lib/utils/formatTime";
@@ -104,6 +110,10 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
       email: "",
       phone_number: "",
     });
+  const [additionalBookings, setAdditionalBookings] = useState<
+    AdditionalWithPayment[]
+  >([]);
+  const [isLoadingAdditional, setIsLoadingAdditional] = useState(false);
 
   // Wrapper function to maintain compatibility with modal components
   const handlePaymentLinkUpdateWrapper = async (
@@ -268,6 +278,11 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
     } finally {
       setIsFetching(false);
     }
+
+    // Fetch additional bookings after main booking is loaded
+    if (bookingId) {
+      fetchAdditionalBookings();
+    }
   };
 
   const fetchAvailableProducts = async () => {
@@ -295,6 +310,40 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
     }
   };
 
+  const fetchAdditionalBookings = async () => {
+    if (!bookingId) return;
+
+    try {
+      setIsLoadingAdditional(true);
+      const additionalData = await getAdditionalBookings(bookingId);
+
+      // Filter out duplicates based on additional_id
+      const uniqueAdditionalBookings = additionalData.filter(
+        (booking, index, self) =>
+          index ===
+          self.findIndex((b) => b.additional_id === booking.additional_id)
+      );
+
+      setAdditionalBookings(uniqueAdditionalBookings);
+    } catch (error) {
+      console.error("Error fetching additional bookings:", error);
+      toast.error("Failed to fetch additional bookings");
+    } finally {
+      setIsLoadingAdditional(false);
+    }
+  };
+
+  const handleAddAdditionalBooking = () => {
+    if (manageToken) {
+      window.location.href = `/manage-additional-booking?manage_token=${manageToken}`;
+    }
+  };
+
+  const handleRefreshAdditionalBookings = async () => {
+    await fetchAdditionalBookings();
+    toast.success("Additional bookings refreshed");
+  };
+
   const handleReschedule = async (newDate: string, newTime: string) => {
     if (!booking) return;
 
@@ -314,6 +363,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
       toast.success("Booking rescheduled successfully");
       setIsRescheduleModalOpen(false);
       await fetchBooking();
+      await fetchAdditionalBookings();
       onSuccess?.();
     } catch (error) {
       console.error("Reschedule error:", error);
@@ -351,6 +401,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
       if (result.success) {
         toast.success(result.message);
         await fetchBooking();
+        await fetchAdditionalBookings();
         onSuccess?.();
       } else {
         throw new Error("Failed to cancel booking");
@@ -375,6 +426,12 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
   useEffect(() => {
     fetchAvailableProducts();
   }, [isProductsModalOpen, booking?.tour_id]);
+
+  useEffect(() => {
+    if (bookingId) {
+      fetchAdditionalBookings();
+    }
+  }, [bookingId]);
 
   if (isFetching) {
     return (
@@ -560,38 +617,36 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
           </div>
 
           {/* Slot Details Card */}
-          {customSlotTypes &&
-            customSlotTypes.length > 0 &&
-            customSlotFields &&
-            customSlotFields.length > 0 && (
-              <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
-                {/* Header Section */}
-                <div className="p-8 border-b border-gray-200">
-                  <h2 className="text-xl sm:text-2xl font-bold text-strong flex items-center gap-2">
-                    <List className="w-5 h-5" />
-                    Slot Details
-                  </h2>
-                  <p className="text-sm text-weak mt-1">
-                    View and manage booking slot information
-                  </p>
-                </div>
-
-                {/* Content Section */}
-                <div className="p-8">
-                  <SlotDetails
-                    numberOfPeople={booking?.slots || 0}
-                    customSlotTypes={customSlotTypes}
-                    customSlotFields={customSlotFields}
-                    tourRate={booking?.tour_rate || 0}
-                    setSlotDetails={setSlotDetails}
-                    slotDetails={slotDetails}
-                    readOnly={true}
-                    showCard={false}
-                    showHeader={false}
-                  />
-                </div>
+          {((customSlotTypes && customSlotTypes.length > 0) ||
+            (customSlotFields && customSlotFields.length > 0)) && (
+            <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
+              {/* Header Section */}
+              <div className="p-8 border-b border-gray-200">
+                <h2 className="text-xl sm:text-2xl font-bold text-strong flex items-center gap-2">
+                  <List className="w-5 h-5" />
+                  Slot Details
+                </h2>
+                <p className="text-sm text-weak mt-1">
+                  View and manage booking slot information
+                </p>
               </div>
-            )}
+
+              {/* Content Section */}
+              <div className="p-8">
+                <SlotDetails
+                  numberOfPeople={booking?.slots || 0}
+                  customSlotTypes={customSlotTypes}
+                  customSlotFields={customSlotFields}
+                  tourRate={booking?.tour_rate || 0}
+                  setSlotDetails={setSlotDetails}
+                  slotDetails={slotDetails}
+                  readOnly={true}
+                  showCard={false}
+                  showHeader={false}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Additional Products Card */}
           <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
@@ -627,6 +682,211 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
               />
             </div>
           </div>
+
+          {/* Additional Bookings Card */}
+          <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
+            {/* Header Section */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-strong flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Additional Bookings
+                  </h2>
+                  <p className="text-sm text-weak mt-1">
+                    {additionalBookings.length > 0
+                      ? `${additionalBookings.length} additional booking${additionalBookings.length > 1 ? "s" : ""}`
+                      : "No additional bookings yet"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRefreshAdditionalBookings}
+                    disabled={isLoadingAdditional}
+                    className="h-8 px-3"
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 ${isLoadingAdditional ? "animate-spin" : ""}`}
+                    />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Section */}
+            <div className="p-6">
+              {isLoadingAdditional ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                    <p className="mt-2 text-sm text-gray-600">Loading...</p>
+                  </div>
+                </div>
+              ) : additionalBookings.length > 0 ? (
+                <div className="space-y-4">
+                  {additionalBookings.map((additional, index) => (
+                    <div
+                      key={additional.additional_id}
+                      className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200"
+                    >
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <Plus className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">
+                              Additional #{index + 1}
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              {new Date(
+                                additional.additional_created_at
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-900">
+                            ${additional.amount_paid?.toFixed(2) || "0.00"}
+                          </p>
+                          <StatusBadge
+                            status={
+                              (additional.status?.toLowerCase() as any) ||
+                              "pending"
+                            }
+                            type="payment"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Quick Info */}
+                      <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          <span>{additional.added_slots} slots</span>
+                        </div>
+                        {additional.added_products &&
+                          additional.added_products.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Package className="w-3 h-3" />
+                              <span>
+                                {additional.added_products.length} products
+                              </span>
+                            </div>
+                          )}
+                      </div>
+
+                      {/* Products with Images */}
+                      {additional.added_products &&
+                        additional.added_products.length > 0 && (
+                          <div className="space-y-2">
+                            {additional.added_products.map(
+                              (product: any, productIndex: number) => {
+                                const productName =
+                                  product.name ||
+                                  product.product_name ||
+                                  product.title ||
+                                  "Unknown Product";
+                                const quantity =
+                                  product.quantity || product.qty || 1;
+                                const unitPrice =
+                                  product.unit_price ||
+                                  product.price ||
+                                  product.unitPrice ||
+                                  0;
+                                const imageUrl =
+                                  product.image_url || product.image || null;
+
+                                return (
+                                  <div
+                                    key={`product-${productIndex}`}
+                                    className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
+                                  >
+                                    {/* Product Image */}
+                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                                      {imageUrl ? (
+                                        <img
+                                          src={imageUrl}
+                                          alt={productName}
+                                          className="w-full h-full object-cover"
+                                          onError={(e) => {
+                                            const target =
+                                              e.target as HTMLImageElement;
+                                            target.style.display = "none";
+                                            target.nextElementSibling?.classList.remove(
+                                              "hidden"
+                                            );
+                                          }}
+                                        />
+                                      ) : null}
+                                      <div
+                                        className={`w-full h-full flex items-center justify-center ${imageUrl ? "hidden" : ""}`}
+                                      >
+                                        <Package className="w-5 h-5 text-gray-400" />
+                                      </div>
+                                    </div>
+
+                                    {/* Product Details */}
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 truncate">
+                                        {productName}
+                                      </p>
+                                      <p className="text-xs text-gray-500">
+                                        ${unitPrice.toFixed(2)} × {quantity}
+                                      </p>
+                                    </div>
+
+                                    {/* Total Price */}
+                                    <div className="text-right">
+                                      <p className="text-sm font-bold text-gray-900">
+                                        ${(unitPrice * quantity).toFixed(2)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            )}
+                          </div>
+                        )}
+
+                      {/* Note (if exists) */}
+                      {additional.note && (
+                        <div className="mt-3 pt-3 border-t border-gray-100">
+                          <p className="text-xs text-gray-600 italic">
+                            "{additional.note}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Plus className="w-6 h-6 text-gray-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">
+                    No Additional Bookings
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-4">
+                    Add more people or products to this booking
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddAdditionalBooking}
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Booking
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right Column - Payment & Actions */}
@@ -634,376 +894,195 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
           {/* Payment Information Card */}
           <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
             {/* Header Section */}
-            <div className="p-8 border-b border-gray-200">
-              <h2 className="text-xl sm:text-2xl font-bold text-strong flex items-center gap-2">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-strong flex items-center gap-2">
                 <CreditCard className="w-5 h-5" />
                 Payment Details
               </h2>
               <p className="text-sm text-weak mt-1">
-                View payment details and manage payment link
+                Payment status and transaction information
               </p>
             </div>
 
             {/* Content Section */}
-            <div className="p-8 space-y-8">
-              {/* Payment Status and Method */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                  <div className="mb-2">
-                    <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
-                      <List className="w-3 h-3" />
-                      Payment Status
-                    </p>
-                  </div>
-                  <div className="text-base font-medium">
-                    <StatusBadge
-                      status={
-                        (booking?.payment_status?.toLowerCase() as any) ||
-                        "pending"
-                      }
-                      type="payment"
-                    />
-                  </div>
-                </div>
-                <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                  <div className="mb-2">
-                    <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
-                      <CreditCard className="w-3 h-3" />
-                      Payment Method
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-bold text-strong uppercase">
+            <div className="p-6 space-y-4">
+              {/* Payment Status and Amount */}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <StatusBadge
+                    status={
+                      (booking?.payment_status?.toLowerCase() as any) ||
+                      "pending"
+                    }
+                    type="payment"
+                  />
+                  <div>
+                    <p className="text-sm text-gray-600">Payment Status</p>
+                    <p className="text-xs text-gray-500">
                       {booking?.payment_method || "Credit Card"}
                     </p>
                   </div>
                 </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-strong">
+                    ${booking?.amount_paid.toFixed(2)}
+                  </p>
+                  {booking?.discount_amount && booking.discount_amount > 0 && (
+                    <p className="text-xs text-gray-500 line-through">
+                      ${booking?.total_price_before_discount?.toFixed(2)}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {/* Payment Amount and Transaction ID */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                  <div className="mb-2">
-                    <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
-                      <Tag className="w-3 h-3" />
-                      Payment Amount
-                    </p>
+              {/* Transaction ID */}
+              {booking?.stripe_payment_id && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <ExternalLink className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      Transaction ID
+                    </span>
                   </div>
-                  <div className="space-y-1">
-                    {booking?.discount_amount && booking.discount_amount > 0 ? (
-                      <>
-                        <p className="text-sm font-bold text-strong">
-                          ${booking?.amount_paid.toFixed(2)}
-                        </p>
-                        <p className="text-xs text-gray-500 line-through">
-                          ${booking?.total_price_before_discount?.toFixed(2)}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-base font-bold text-strong">
-                        ${booking?.amount_paid.toFixed(2)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                  <div className="mb-2">
-                    <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
-                      <ExternalLink className="w-3 h-3" />
-                      Stripe Transaction ID
-                    </p>
-                  </div>
-                  <p className="text-xs font-bold text-strong break-all">
-                    {booking?.stripe_payment_id === null
-                      ? "N/A"
-                      : booking?.stripe_payment_id}
+                  <p className="text-xs font-mono text-gray-700 break-all">
+                    {booking.stripe_payment_id}
                   </p>
                 </div>
-              </div>
-
-              {booking?.payment_status.toLowerCase() !== "paid" && (
-                <>
-                  {/* Payment Link Section */}
-                  <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                    <div className="mb-3">
-                      <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
-                        <Link className="w-3 h-3" />
-                        Payment Link
-                      </p>
-                    </div>
-                    {booking?.payment_link ? (
-                      <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-900 truncate">
-                            {booking.payment_link}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-gray-100"
-                            onClick={() => {
-                              navigator.clipboard.writeText(
-                                booking.payment_link
-                              );
-                              toast.success("Payment link copied to clipboard");
-                            }}
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-gray-100"
-                            onClick={() =>
-                              window.open(booking.payment_link, "_blank")
-                            }
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <div className="flex-1">
-                            <p className="text-sm text-yellow-800">
-                              No payment link available
-                            </p>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-8 border-yellow-200 hover:bg-yellow-100 hover:text-yellow-900"
-                            onClick={() =>
-                              handlePaymentLinkUpdateWrapper(
-                                false,
-                                null,
-                                null,
-                                null
-                              )
-                            }
-                            disabled={isLoading}
-                          >
-                            {isLoading ? (
-                              <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <Link className="w-4 h-4 mr-2" />
-                            )}
-                            Create Payment Link
-                          </Button>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          Generate a payment link to share with the customer
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </>
               )}
 
-              {/* Pricing Breakdown */}
-              <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200">
-                <div className="mb-3">
-                  <p className="text-xs text-gray-500 font-semibold flex items-center gap-2">
-                    <CreditCard className="w-3 h-3" />
-                    Pricing Breakdown
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {/* Tour Base Price */}
-                  {!customSlotTypes || customSlotTypes.length === 0 ? (
-                    <div className="flex items-center justify-between py-3 px-4 bg-white rounded-lg">
-                      <span className="text-sm text-gray-600">
-                        Base Rate × {booking?.slots} people
+              {/* Payment Link */}
+              {booking?.payment_status.toLowerCase() !== "paid" && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Link className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Payment Link
                       </span>
-                      <span className="text-sm font-medium text-gray-900">
-                        $
-                        {(
-                          (booking?.tour_rate || 0) * (booking?.slots || 0)
-                        ).toFixed(2)}
-                      </span>
+                    </div>
+                    {!booking?.payment_link && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handlePaymentLinkUpdateWrapper(
+                            false,
+                            null,
+                            null,
+                            null
+                          )
+                        }
+                        disabled={isLoading}
+                        className="h-8"
+                      >
+                        {isLoading ? (
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Link className="w-4 h-4 mr-2" />
+                        )}
+                        Create
+                      </Button>
+                    )}
+                  </div>
+
+                  {booking?.payment_link ? (
+                    <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                      <p className="text-sm text-gray-900 truncate flex-1">
+                        {booking.payment_link}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => {
+                            navigator.clipboard.writeText(booking.payment_link);
+                            toast.success("Payment link copied");
+                          }}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() =>
+                            window.open(booking.payment_link, "_blank")
+                          }
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ) : (
-                    <>
-                      {(() => {
-                        const groupedSlots = slotDetails.reduce(
-                          (acc, slot) => {
-                            const slotType = customSlotTypes.find(
-                              (type) => type.name === slot.type
-                            );
-                            const typeName = slotType?.name || "Default";
-                            const price = slotType?.price || 0;
+                    <p className="text-xs text-gray-500">
+                      No payment link available. Create one to share with the
+                      customer.
+                    </p>
+                  )}
+                </div>
+              )}
 
-                            if (!acc[typeName]) {
-                              acc[typeName] = {
-                                count: 0,
-                                price: price,
-                              };
-                            }
-                            acc[typeName].count++;
-                            return acc;
-                          },
-                          {} as Record<string, { count: number; price: number }>
-                        );
-
+              {/* Pricing Summary */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between py-1">
+                  <span className="text-sm text-gray-600">
+                    {!customSlotTypes || customSlotTypes.length === 0
+                      ? `Base Rate × ${booking?.slots} people`
+                      : "Tour Slots"}
+                  </span>
+                  <span className="text-sm font-medium text-gray-900">
+                    $
+                    {(() => {
+                      if (!customSlotTypes || customSlotTypes.length === 0) {
                         return (
-                          Object.entries(groupedSlots) as [
-                            string,
-                            { count: number; price: number },
-                          ][]
-                        ).map(([typeName, details]) => (
-                          <div
-                            key={typeName}
-                            className="flex items-center justify-between py-3 px-4 bg-white rounded-lg"
-                          >
-                            <span className="text-sm text-gray-600">
-                              {typeName} × {details.count}
-                            </span>
-                            <span className="text-sm font-medium text-gray-900">
-                              ${(details.price * details.count).toFixed(2)}
-                            </span>
-                          </div>
-                        ));
-                      })()}
-                    </>
-                  )}
-
-                  {/* Additional Products */}
-                  {editedProducts.length > 0 && (
-                    <>
-                      <div className="pt-3">
-                        <p className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-2">
-                          <Package className="w-4 h-4" />
-                          Additional Products
-                        </p>
-                        {editedProducts.map((product, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between py-3 px-4 bg-white rounded-lg mb-2"
-                          >
-                            <span className="text-sm text-gray-600">
-                              {product.name} × {product.quantity}
-                            </span>
-                            <span className="text-sm font-medium text-gray-900">
-                              $
-                              {(product.unit_price * product.quantity).toFixed(
-                                2
-                              )}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-
-                  <div className="h-px bg-gray-200 my-4"></div>
-
-                  {/* Subtotal (shown when discount is applied) */}
-                  {booking?.discount_amount && booking.discount_amount > 0 && (
-                    <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <span className="text-sm font-medium text-gray-700">
-                        Subtotal
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">
-                        $
-                        {booking?.total_price_before_discount?.toFixed(2) ||
-                          (() => {
-                            // Calculate subtotal from custom slots
-                            const slotsTotal =
-                              customSlotTypes && customSlotTypes.length > 0
-                                ? slotDetails.reduce((sum, slot) => {
-                                    const slotType = customSlotTypes.find(
-                                      (t) => t.name === slot.type
-                                    );
-                                    return sum + (slotType?.price || 0);
-                                  }, 0)
-                                : (booking?.tour_rate || 0) *
-                                  (booking?.slots || 0);
-
-                            // Calculate subtotal from products
-                            const productsTotal = editedProducts.reduce(
-                              (sum, product) =>
-                                sum + product.unit_price * product.quantity,
-                              0
-                            );
-
-                            return (slotsTotal + productsTotal).toFixed(2);
-                          })()}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Discount Section */}
-                  {booking?.discount_amount && booking.discount_amount > 0 && (
-                    <>
-                      <div className="flex items-center justify-between py-3 px-4 bg-green-50 rounded-lg border border-green-200">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-green-700 font-medium">
-                            Discount
-                          </span>
-                          {booking?.promo_code && (
-                            <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                              {booking.promo_code}
-                            </span>
-                          )}
-                          {booking?.total_price_before_discount &&
-                            booking.total_price_before_discount > 0 && (
-                              <span className="text-xs text-green-600">
-                                (
-                                {(
-                                  (booking.discount_amount /
-                                    booking.total_price_before_discount) *
-                                  100
-                                ).toFixed(0)}
-                                % off)
-                              </span>
-                            )}
-                        </div>
-                        <span className="text-sm font-bold text-green-700">
-                          -${booking.discount_amount.toFixed(2)}
-                        </span>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Total Amount */}
-                  <div className="flex items-center justify-between py-4 px-4 bg-white rounded-lg">
-                    <span className="text-sm font-bold text-strong">
-                      Total Amount
-                    </span>
-                    <span className="text-base font-bold text-strong">
-                      ${booking?.amount_paid.toFixed(2)}
-                      {/* {(() => {
-                        // Use total_price from database if available
-                        if (
-                          booking?.total_price !== undefined &&
-                          booking?.total_price !== null
-                        ) {
-                          return booking.total_price.toFixed(2);
-                        }
-
-                        // Calculate total from custom slots
-                        const slotsTotal =
-                          customSlotTypes && customSlotTypes.length > 0
-                            ? slotDetails.reduce((sum, slot) => {
-                                const slotType = customSlotTypes.find(
-                                  (t) => t.name === slot.type
-                                );
-                                return sum + (slotType?.price || 0);
-                              }, 0)
-                            : (booking?.tour_rate || 0) * (booking?.slots || 0);
-
-                        // Calculate total from products
-                        const productsTotal = editedProducts.reduce(
+                          (booking?.tour_rate || 0) * (booking?.slots || 0)
+                        ).toFixed(2);
+                      }
+                      return slotDetails
+                        .reduce((sum, slot) => {
+                          const slotType = customSlotTypes.find(
+                            (type) => type.name === slot.type
+                          );
+                          return sum + (slotType?.price || 0);
+                        }, 0)
+                        .toFixed(2);
+                    })()}
+                  </span>
+                </div>
+                {editedProducts.length > 0 && (
+                  <div className="flex items-center justify-between py-1">
+                    <span className="text-sm text-gray-600">Products</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      $
+                      {editedProducts
+                        .reduce(
                           (sum, product) =>
                             sum + product.unit_price * product.quantity,
                           0
-                        );
-
-                        return (slotsTotal + productsTotal).toFixed(2);
-                      })()} */}
+                        )
+                        .toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {booking?.discount_amount && booking.discount_amount > 0 && (
+                  <div className="flex items-center justify-between py-1 text-green-600">
+                    <span className="text-sm">
+                      Discount{" "}
+                      {booking?.promo_code && `(${booking.promo_code})`}
+                    </span>
+                    <span className="text-sm font-medium">
+                      -${booking.discount_amount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <div className="border-t border-gray-200 pt-2 mt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold text-strong">
+                      Total
+                    </span>
+                    <span className="text-lg font-bold text-strong">
+                      ${booking?.amount_paid.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -1158,6 +1237,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         onClose={() => setIsSlotDetailsModalOpen(false)}
         onSuccess={() => {
           fetchBooking();
+          fetchAdditionalBookings();
           onSuccess?.();
         }}
         bookingId={bookingId}
@@ -1177,6 +1257,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         onClose={() => setIsProductsModalOpen(false)}
         onSuccess={() => {
           fetchBooking();
+          fetchAdditionalBookings();
           onSuccess?.();
         }}
         bookingId={bookingId}
@@ -1195,6 +1276,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         onClose={() => setIsPersonalInfoModalOpen(false)}
         onSuccess={() => {
           fetchBooking();
+          fetchAdditionalBookings();
           onSuccess?.();
         }}
         bookingId={bookingId}
@@ -1210,6 +1292,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         onConfirm={async (refundAmount) => {
           await processCancellation(refundAmount);
           fetchBooking();
+          fetchAdditionalBookings();
         }}
         totalAmount={booking?.amount_paid || 0}
         isLoading={isLoading}
@@ -1221,6 +1304,7 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
         onClose={() => setIsUpdateSlotsModalOpen(false)}
         onSuccess={() => {
           fetchBooking();
+          fetchAdditionalBookings();
           onSuccess?.();
         }}
         bookingId={bookingId}

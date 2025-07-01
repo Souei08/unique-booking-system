@@ -80,16 +80,49 @@ export async function getUser() {
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
 
-  const { data: userRole } = await supabase
-    .from("users")
-    .select("role")
-    .eq("supabase_id", user?.id)
-    .single();
+  if (userError || !user) {
+    return null;
+  }
 
-  return {
-    ...user,
-    role: userRole?.role,
-  };
+  try {
+    // Try to get role from JWT claims first (if implemented)
+    if (user.user_metadata?.role) {
+      return {
+        ...user,
+        role: user.user_metadata.role,
+      };
+    }
+
+    // Fallback to database query using the optimized RPC function
+    const { data: userRole, error: roleError } = await supabase.rpc(
+      "get_user_role",
+      {
+        user_id: user.id,
+      }
+    );
+
+    if (roleError) {
+      console.error("Error fetching user role:", roleError);
+      // Return user without role rather than failing completely
+      return {
+        ...user,
+        role: null,
+      };
+    }
+
+    return {
+      ...user,
+      role: userRole,
+    };
+  } catch (error) {
+    console.error("Error in getUser function:", error);
+    // Return user without role rather than failing completely
+    return {
+      ...user,
+      role: null,
+    };
+  }
 }

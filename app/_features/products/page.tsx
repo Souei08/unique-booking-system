@@ -16,13 +16,18 @@ export default async function ProductsPage() {
     .select("id, name")
     .order("name");
 
+  const mappedTours = (tours || []).map((tour: any) => ({
+    id: tour.id,
+    title: tour.name,
+  }));
+
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Products</h1>
         <CreateProduct />
       </div>
-      <ProductTable products={products || []} tours={tours || []} />
+      <ProductTable products={products || []} tours={mappedTours} />
     </div>
   );
 }

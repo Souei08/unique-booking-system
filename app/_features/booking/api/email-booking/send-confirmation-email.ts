@@ -23,6 +23,7 @@ export async function sendBookingConfirmationEmail(bookingData: {
   }>;
   slot_details: Array<{ type: string; price: number }>;
   manage_token: string;
+  manage_link: string;
   waiver_link: string;
   sub_total: number;
   coupon_code: string;

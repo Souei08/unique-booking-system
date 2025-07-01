@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   Dialog,
@@ -75,11 +77,11 @@ const MainModal: React.FC<MainModalProps> = ({
         <DialogHeader className={`border-b border-stroke-strong pb-4 p-6`}>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <DialogTitle className="text-xl font-semibold text-strong">
+              <DialogTitle className="text-xl sm:text-2xl font-semibold text-strong">
                 {title}
               </DialogTitle>
               {description && (
-                <DialogDescription className="text-weak">
+                <DialogDescription className="text-sm sm:text-base text-weak mt-1">
                   {description}
                 </DialogDescription>
               )}
@@ -96,7 +98,7 @@ const MainModal: React.FC<MainModalProps> = ({
             )}
           </div>
         </DialogHeader>
-        <div className="pt-0 p-6 ">{children}</div>
+        <div className="p-6 sm:p-8 text-text space-y-6">{children}</div>
       </DialogContent>
     </Dialog>
   );
@@ -166,7 +168,7 @@ export const ConfirmationModal = ({
     maxWidth="sm"
   >
     <div className="space-y-4">
-      <p className="text-gray-600">{message}</p>
+      <p className="text-sm text-weak leading-relaxed">{message}</p>
       <div className="flex justify-end space-x-2">
         <Button variant="outline" onClick={() => onOpenChange(false)}>
           {cancelText}
@@ -207,12 +209,10 @@ export const ImagePreviewModal = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
         className="
-      max-w-3xl h-[50%] overflow-hidden
-      flex flex-col bg-black bg-center bg-no-repeat bg-cover
-    "
-        style={{
-          backgroundImage: `url(${imageSrc})`,
-        }}
+          w-full max-w-4xl aspect-video bg-cover bg-center
+          flex flex-col justify-end relative overflow-hidden
+        "
+        style={{ backgroundImage: `url(${imageSrc})` }}
       >
         <DialogTitle className="sr-only">Image Preview</DialogTitle>
 

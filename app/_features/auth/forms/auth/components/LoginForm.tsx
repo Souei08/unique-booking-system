@@ -33,7 +33,11 @@ export default function LoginForm() {
       }
 
       showSuccessToast("Login successful!");
-      router.push("/dashboard"); // Always redirect to /dashboard
+
+      // Let the middleware handle the redirection based on user role
+      // This ensures proper role-based routing
+      router.push("/");
+      router.refresh(); // Force a refresh to ensure middleware picks up the new session
     } catch (error: any) {
       if (error.fieldErrors) {
         throw error; // Re-throw field errors to be handled by AuthForm

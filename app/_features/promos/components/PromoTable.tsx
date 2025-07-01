@@ -49,7 +49,25 @@ export default function PromoTable({ initialPromos }: PromoTableProps) {
       header: "Discount Type",
       cell: ({ row }) => {
         const type = row.getValue("discount_type") as string;
-        return type.charAt(0).toUpperCase() + type.slice(1);
+        let displayText = "";
+        let badgeClasses = "";
+
+        if (type === "fixed_amount") {
+          displayText = "FIXED AMOUNT";
+          badgeClasses = "bg-blue-100 text-blue-800 border-blue-200";
+        } else if (type === "percentage") {
+          displayText = "PERCENTAGE";
+          badgeClasses = "bg-purple-100 text-purple-800 border-purple-200";
+        } else {
+          displayText = type.toUpperCase();
+          badgeClasses = "bg-gray-100 text-gray-800 border-gray-200";
+        }
+
+        return (
+          <Badge variant="outline" className={badgeClasses}>
+            {displayText}
+          </Badge>
+        );
       },
     },
     {
@@ -77,13 +95,39 @@ export default function PromoTable({ initialPromos }: PromoTableProps) {
       header: "Times Used",
     },
     {
+      accessorKey: "created_at",
+      header: "Created At",
+      cell: ({ row }) => {
+        return format(new Date(row.getValue("created_at")), "MMM dd, yyyy");
+      },
+    },
+    {
       accessorKey: "is_active",
       header: "Status",
       cell: ({ row }) => {
         const isActive = row.getValue("is_active") as boolean;
+        const expiresAt = row.getValue("expires_at") as string;
+        const now = new Date();
+        const expiryDate = new Date(expiresAt);
+        const isExpired = expiryDate < now;
+
+        let statusText = "";
+        let badgeClasses = "";
+
+        if (isExpired) {
+          statusText = "Expired";
+          badgeClasses = "bg-red-100 text-red-800 border-red-200";
+        } else if (isActive) {
+          statusText = "Active";
+          badgeClasses = "bg-green-100 text-green-800 border-green-200";
+        } else {
+          statusText = "Inactive";
+          badgeClasses = "bg-gray-100 text-gray-800 border-gray-200";
+        }
+
         return (
-          <Badge variant={isActive ? "default" : "destructive"}>
-            {isActive ? "Active" : "Inactive"}
+          <Badge variant="outline" className={badgeClasses}>
+            {statusText}
           </Badge>
         );
       },
