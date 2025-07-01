@@ -33,6 +33,7 @@ interface SlotDetail {
 
 interface RequestPayload {
   booking_id: string;
+  payment_ref_id: string;
   email: string;
   name: string;
   phone: string;
@@ -60,6 +61,7 @@ interface RequestPayload {
 async function preparePaymentSessionData(data: RequestPayload) {
   const {
     booking_id,
+    payment_ref_id,
     email,
     name,
     phone,
@@ -166,6 +168,7 @@ async function preparePaymentSessionData(data: RequestPayload) {
     customer_name: name,
     customer_email: email,
     customer_phone: phone,
+    payment_ref_id: payment_ref_id,
   };
 
   return {
@@ -178,7 +181,13 @@ async function preparePaymentSessionData(data: RequestPayload) {
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const data: RequestPayload = await request.json();
-    const { booking_id, email, slots, tourProducts = [] } = data;
+    const {
+      booking_id,
+      email,
+      slots,
+      tourProducts = [],
+      payment_ref_id,
+    } = data;
 
     if (!booking_id || !email || (!slots && tourProducts.length === 0)) {
       return NextResponse.json(
@@ -199,6 +208,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       success_url: `${baseUrl}/booking-success?booking_id=${booking_id}&status=success`,
       cancel_url: `${baseUrl}/booking-cancelled?booking_id=${booking_id}&status=cancelled`,
       customer_email: email,
+      payment_ref_id: payment_ref_id,
     });
 
     // Create new session

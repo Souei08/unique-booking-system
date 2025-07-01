@@ -147,6 +147,7 @@ const SlotDetailsModal: React.FC<SlotDetailsModalProps> = ({
     }
 
     setIsLoading(true);
+
     try {
       // First update the booking slots
       await updateBookingSlots(

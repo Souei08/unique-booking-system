@@ -1,16 +1,8 @@
 import React from "react";
+import { DashboardPageLoader } from "@/app/_components/common/DashboardLoader";
 
 const Loading = () => {
-  return (
-    <div className="flex justify-center items-center h-screen">
-      <div
-        className="animate-spin inline-block w-12 h-12 border-4 border-t-transparent border-blue-500 rounded-full"
-        role="status"
-      >
-        <span className="sr-only">Loading...</span>
-      </div>
-    </div>
-  );
+  return <DashboardPageLoader />;
 };
 
 export default Loading;

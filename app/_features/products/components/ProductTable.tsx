@@ -7,8 +7,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, X, ZoomIn } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Pencil, Trash2, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 import { deleteProduct } from "../api/deleteProduct";
 import { useRouter } from "next/navigation";
@@ -22,7 +21,7 @@ import { DeleteAlertDialog } from "@/app/_components/custom-modals/alert-dialog"
 
 interface ProductTableProps {
   products: Product[];
-  tours: { id: string; name: string }[];
+  tours: { id: string; title: string }[];
 }
 
 const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
@@ -176,9 +175,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
               />
             )}
           </MainModal>
-          <div className="inline-block">
-            <AssignProductToTour product={row.original} tours={tours as any} />
-          </div>
+          <AssignProductToTour product={row.original} tours={tours as any} />
           <Tooltip content="Permanently delete this product">
             <Button
               variant="outline"

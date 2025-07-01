@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RoleAvatar } from "@/app/_components/common/RoleAvatar";
 import { UpsertUser } from "../form/UpsertUser";
 import { createServerClient } from "@supabase/ssr";
 import { inviteUserServerAction } from "../api/inviteUserRole";
@@ -53,14 +53,10 @@ export function UsersTable({ users, onView }: UsersTableProps) {
         const fullName = row.original.full_name || "N/A";
         return (
           <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 ring-2 ring-brand/20">
-              {row.original.avatar_url && (
-                <AvatarImage src={row.original.avatar_url} alt={fullName} />
-              )}
-              <AvatarFallback className="bg-brand/10 text-brand">
-                {fullName.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+            <RoleAvatar
+              full_name={fullName}
+              className="h-8 w-8 ring-2 ring-brand/20"
+            />
             <div className="text-sm font-medium">{fullName}</div>
           </div>
         );
@@ -97,7 +93,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
+              {/* <DropdownMenuItem
                 onClick={async () => {
                   setSelectedUser(user);
 
@@ -138,7 +134,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
               >
                 <Pencil className="mr-2 h-4 w-4" />
                 Resend Invite
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
 
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -168,7 +164,7 @@ export function UsersTable({ users, onView }: UsersTableProps) {
 
       {/* User Form Dialog */}
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1000px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {selectedUser ? "Edit User" : "Create New User"}

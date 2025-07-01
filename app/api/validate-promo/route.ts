@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Calculate discount (server-side only)
+    // Calculate discount server-side
     let discountAmount = 0;
     if (promo.discount_type === "percentage") {
       discountAmount = (totalAmount * promo.discount_value) / 100;
@@ -64,9 +64,8 @@ export async function POST(request: Request) {
 
     // Ensure discount doesn't exceed total amount
     discountAmount = Math.min(discountAmount, totalAmount);
+    const finalAmount = Math.round((totalAmount - discountAmount) * 100) / 100;
 
-    // Return only validation success, not the actual calculation
-    // The actual discount will be calculated server-side during booking
     return NextResponse.json({
       success: true,
       promo: {
@@ -74,8 +73,8 @@ export async function POST(request: Request) {
         code: promo.code,
         discount_type: promo.discount_type,
         discount_value: promo.discount_value,
-        // Don't return calculated amounts to prevent client-side manipulation
-        original_amount: totalAmount,
+        discount_amount: Math.round(discountAmount * 100) / 100,
+        final_amount: finalAmount,
         stripe_coupon_id: promo.stripe_coupon_id,
       },
     });

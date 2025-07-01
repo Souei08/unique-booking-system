@@ -7,7 +7,11 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  Bars3Icon,
+  XMarkIcon as XMarkIconSolid,
+} from "@heroicons/react/24/outline";
 
 import { Navigation } from "./Navigation";
 
@@ -21,7 +25,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ user }: SidebarProps) => {
-  const { isOpen, toggleSidebar } = useSidebar();
+  const { isOpen, isCollapsed, toggleSidebar, toggleCollapsed } = useSidebar();
 
   return (
     <>
@@ -74,26 +78,59 @@ const Sidebar = ({ user }: SidebarProps) => {
         </div>
       </Dialog>
 
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col border-r lg:border-gray-200 lg:pt-5 lg:pb-6">
-        <div className="mx-auto">
-          {/* <CompanyLogo /> */}
-          <Image
-            alt="Wentech"
-            src="/logo/wentech-logo-latest.png"
-            // className="h-auto w-full object-cover"
-            className="h-[100px] w-[100px] object-cover"
-            width={400}
-            height={200}
-            style={{
-              objectPosition: "-0px",
-            }}
-          />
+      <div
+        className={`hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col border-r lg:border-gray-200 lg:pt-5 lg:pb-6 transition-all duration-300 ease-in-out ${
+          isCollapsed ? "lg:w-16" : "lg:w-64"
+        }`}
+      >
+        {/* Floating collapse button */}
+        <button
+          onClick={toggleCollapsed}
+          className="absolute -right-3 top-6 z-10 hidden lg:flex items-center justify-center w-6 h-6 rounded-full bg-white border border-gray-200 shadow-md hover:bg-gray-50 transition-colors duration-150"
+          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? (
+            <Bars3Icon className="w-3 h-3 text-gray-600" />
+          ) : (
+            <XMarkIconSolid className="w-3 h-3 text-gray-600" />
+          )}
+        </button>
+
+        {/* Logo section */}
+        <div className="flex justify-center mb-4">
+          {!isCollapsed ? (
+            <Image
+              alt="Wentech"
+              src="/logo/wentech-logo-latest.png"
+              className="h-[100px] w-[100px] object-cover"
+              width={400}
+              height={200}
+              style={{
+                objectPosition: "-0px",
+              }}
+            />
+          ) : (
+            <Image
+              alt="Wentech"
+              src="/logo/wentech-logo-latest.png"
+              className="h-12 w-12 object-cover"
+              width={48}
+              height={48}
+              style={{
+                objectPosition: "-0px",
+              }}
+            />
+          )}
         </div>
+
+        {/* Navigation */}
         <div className="flex h-0 flex-1 flex-col overflow-y-auto pt-1 hover:overflow-y-auto">
-          <Navigation user={user} />
+          <Navigation user={user} isCollapsed={isCollapsed} />
         </div>
-        <div className="px-4  mb-2 mt-auto">
-          <UserProfile user={user} />
+
+        {/* User Profile */}
+        <div className={`${isCollapsed ? "px-2" : "px-4"} mb-2 mt-auto`}>
+          <UserProfile user={user} isCollapsed={isCollapsed} />
         </div>
       </div>
     </>

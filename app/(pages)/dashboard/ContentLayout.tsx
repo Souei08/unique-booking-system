@@ -26,6 +26,10 @@ import CreateProduct from "@/app/_features/products/components/CreateProduct";
 import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickBooking";
 import CreatePromo from "@/app/_features/promos/components/CreatePromo";
 import UpsertTourV2Stepped from "@/app/_features/tours/forms/upsert-tour-v2/UpsertTourV2Stepped";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
+import MainModal from "@/app/_components/custom-modals/main-modal";
 
 interface ContentLayoutProps {
   title: string;
@@ -156,7 +160,29 @@ const ContentLayout = ({
         </DialogContent>
       </Dialog>
 
-      <Dialog
+      <MainModal
+        isOpen={isBookingDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsBookingDialogOpen(false);
+          } else {
+            setIsBookingDialogOpen(true);
+          }
+        }}
+        title={modalTitle || "Booking"}
+        description={modalDescription || "Book a tour"}
+        maxWidth="responsive"
+        onClose={() => setIsBookingDialogOpen(false)}
+      >
+        <QuickBooking
+          onClose={() => setIsBookingDialogOpen(false)}
+          selectedTour={null as any}
+          selectedDate={null as any}
+          selectedTime={null as any}
+        />
+      </MainModal>
+
+      {/* <Dialog
         open={isBookingDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
@@ -185,10 +211,10 @@ const ContentLayout = ({
             />
           )}
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
 
       <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="max-w-sm">
           <DialogHeader className="mb-5 text-center items-center">
             <DialogTitle className="text-strong text-xl font-bold">
               {modalTitle}

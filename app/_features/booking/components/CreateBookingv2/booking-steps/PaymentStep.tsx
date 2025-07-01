@@ -46,10 +46,18 @@ interface PaymentStepProps {
   selectedDate: DateValue;
   selectedTime: string;
   calculateTotal: () => number;
+  calculateSubtotal: () => number;
+  calculateSecureTotal: () => Promise<{
+    subtotal: number;
+    discountAmount: number;
+    total: number;
+    promoValidation: any;
+  }>;
   isLoadingPayment: boolean;
   setBookingId: (id: string) => void;
   setIsBookingComplete: (complete: boolean) => void;
   appliedPromo?: any;
+  setPaymentRefId: (id: string) => void;
 }
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
@@ -74,24 +82,55 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   selectedDate,
   selectedTime,
   calculateTotal,
+  calculateSubtotal,
+  calculateSecureTotal,
   isLoadingPayment,
   setBookingId,
   setIsBookingComplete,
   appliedPromo,
+  setPaymentRefId,
 }) => {
   const hasFetchedRef = useRef(false);
   const [stripeLoaded, setStripeLoaded] = useState(false);
+  const [securePromoData, setSecurePromoData] = useState<{
+    subtotal: number;
+    discountAmount: number;
+    total: number;
+  } | null>(null);
 
   useEffect(() => {
     stripePromise.then(() => setStripeLoaded(true));
   }, []);
+
+  // Calculate secure promo data when appliedPromo changes
+  useEffect(() => {
+    const calculateSecurePromo = async () => {
+      if (!appliedPromo) {
+        setSecurePromoData(null);
+        return;
+      }
+
+      try {
+        const secureCalculation = await calculateSecureTotal();
+        setSecurePromoData({
+          subtotal: secureCalculation.subtotal,
+          discountAmount: secureCalculation.discountAmount,
+          total: secureCalculation.total,
+        });
+      } catch (error) {
+        console.error("Error calculating secure promo:", error);
+        setSecurePromoData(null);
+      }
+    };
+
+    calculateSecurePromo();
+  }, [appliedPromo, calculateSecureTotal]);
 
   useEffect(() => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
     fetchClientSecret(null);
   }, [clientSecret]);
-  // }, [paymentInformation.total_price, calculateTotal]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
@@ -119,9 +158,14 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
                   key={clientSecret}
                 >
                   <StripePaymentFormV2
-                    onPaymentSuccess={async (paymentId, bookingId) => {
+                    onPaymentSuccess={async (
+                      paymentId,
+                      bookingId,
+                      paymentRefId
+                    ) => {
                       setBookingId(bookingId);
                       setIsBookingComplete(true);
+                      setPaymentRefId(paymentRefId);
                     }}
                     handleCompleteBooking={handleCompleteBooking}
                   />
@@ -169,9 +213,12 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
             slotDetails={slotDetails}
             customSlotTypes={customSlotTypes}
             customSlotFields={customSlotFields}
-            totalAmount={calculateTotal()}
+            totalAmount={
+              securePromoData ? securePromoData.total : calculateTotal()
+            }
             showGroupSizeControls={false}
             appliedPromo={appliedPromo}
+            securePromoData={securePromoData}
           />
         </div>
       </div>

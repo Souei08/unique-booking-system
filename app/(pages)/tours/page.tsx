@@ -1,24 +1,57 @@
 import React from "react";
-import { getAllTours } from "@/app/_features/tours/api/getTours";
+import { getAllTours } from "@/app/_features/tours/api/getAllTours";
 import { ClockIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import CustomerHeader from "@/app/_features/customer/CustomerHeader";
 
-const ToursPage = async () => {
+interface ToursPageProps {
+  searchParams: Promise<{
+    page?: string;
+    pageSize?: string;
+    search?: string;
+  }>;
+}
+
+const ToursPage = async ({ searchParams }: ToursPageProps) => {
+  const params = await searchParams;
+  const page = parseInt(params.page || "1");
+  const pageSize = parseInt(params.pageSize || "12");
+  const search = params.search || null;
+
   const tours = await getAllTours();
 
+  // Filter tours based on search and status
+  let filteredTours = tours;
+
+  if (search) {
+    filteredTours = filteredTours.filter(
+      (tour) =>
+        tour.title.toLowerCase().includes(search.toLowerCase()) ||
+        tour.description.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  // Note: Status filtering removed as Tour type doesn't have a status property
+
+  // Calculate pagination
+  const totalCount = filteredTours.length;
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedTours = filteredTours.slice(startIndex, endIndex);
+
   // Transform tours data to match the expected booking format
-  const bookings = tours.map((tour: any) => ({
+  const bookings = paginatedTours.map((tour: any) => ({
     title: tour.title,
     href: `/tours/${tour.id}`,
     category: tour.category || "Adventure Tour",
     description: tour.description,
     price: tour.rate,
-    groupSize: tour.groupSize || "1 to 7",
-    imageUrl:
-      tour?.image ||
-      "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
+    groupSize: `${tour.group_size_limit} people`,
+    imageUrl: tour?.images
+      ? JSON.parse(tour.images)[0]?.url
+      : "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1679&q=80",
     duration: `${tour.duration} hour${tour.duration > 1 ? "s" : ""}`,
     rating: 5, // You might want to make this dynamic based on actual ratings
   }));
@@ -139,6 +172,62 @@ const ToursPage = async () => {
             </div>
           ))}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center space-x-2 mt-8">
+            <a
+              href={`/tours?page=${Math.max(1, page - 1)}${search ? `&search=${search}` : ""}`}
+              className={`px-3 py-2 text-sm font-medium rounded-md ${
+                page <= 1
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-strong hover:text-brand"
+              }`}
+              onClick={(e) => page <= 1 && e.preventDefault()}
+            >
+              Previous
+            </a>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) {
+                pageNum = i + 1;
+              } else if (page <= 3) {
+                pageNum = i + 1;
+              } else if (page >= totalPages - 2) {
+                pageNum = totalPages - 4 + i;
+              } else {
+                pageNum = page - 2 + i;
+              }
+
+              return (
+                <a
+                  key={pageNum}
+                  href={`/tours?page=${pageNum}${search ? `&search=${search}` : ""}`}
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    page === pageNum
+                      ? "bg-brand text-white"
+                      : "text-strong hover:text-brand"
+                  }`}
+                >
+                  {pageNum}
+                </a>
+              );
+            })}
+
+            <a
+              href={`/tours?page=${Math.min(totalPages, page + 1)}${search ? `&search=${search}` : ""}`}
+              className={`px-3 py-2 text-sm font-medium rounded-md ${
+                page >= totalPages
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-strong hover:text-brand"
+              }`}
+              onClick={(e) => page >= totalPages && e.preventDefault()}
+            >
+              Next
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

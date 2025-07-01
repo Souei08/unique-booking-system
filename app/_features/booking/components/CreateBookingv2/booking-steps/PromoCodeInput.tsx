@@ -8,6 +8,7 @@ import { Check, X, Tag } from "lucide-react";
 
 interface PromoCodeInputProps {
   totalAmount: number;
+  calculateTotal: () => number;
   onPromoApplied: (promoData: any) => void;
   onPromoRemoved: () => void;
   appliedPromo?: any;
@@ -15,6 +16,7 @@ interface PromoCodeInputProps {
 
 const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
   totalAmount,
+  calculateTotal,
   onPromoApplied,
   onPromoRemoved,
   appliedPromo,
@@ -52,27 +54,11 @@ const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
       }
 
       if (data.success) {
-        // Calculate discount client-side for display purposes only
-        const promo = data.promo;
-        let discountAmount = 0;
-
-        if (promo.discount_type === "percentage") {
-          // discount_value is a whole number percent (e.g. 20 means 20%)
-          discountAmount = (totalAmount * promo.discount_value) / 100;
-        } else if (promo.discount_type === "fixed_amount") {
-          // discount_value is a fixed dollar amount
-          discountAmount = promo.discount_value;
-        } else {
-          discountAmount = 0; // fallback if unknown type
-        }
-
-        // Ensure discount doesn't exceed total amount
-        discountAmount = Math.min(discountAmount, totalAmount);
-
+        // Only pass the promo data to parent component
+        // Let the parent handle secure calculations
         const promoData = {
-          ...promo,
-          discount_amount: discountAmount,
-          final_amount: totalAmount - discountAmount,
+          ...data.promo,
+          code: promoCode.trim().toUpperCase(),
         };
 
         onPromoApplied(promoData);

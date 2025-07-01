@@ -15,6 +15,8 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 
+import { Tooltip } from "@/components/ui/tooltip";
+
 interface NavigationItem {
   name: string;
   href: string;
@@ -34,9 +36,9 @@ const navigationGroups: NavigationGroup[] = [
     items: [
       {
         name: "Dashboard",
-        href: "/dashboard",
+        href: "/dashboard", // Main dashboard overview
         icon: HomeIcon,
-        roles: ["admin", "staff", "customer", "reservation_agent"],
+        roles: ["admin", "reservation_agent", "reseller"],
       },
     ],
   },
@@ -44,23 +46,22 @@ const navigationGroups: NavigationGroup[] = [
     name: "Bookings & Tours",
     items: [
       {
-        name: "Bookings",
+        name: "All Bookings",
         href: "/dashboard/bookings",
         icon: BookOpenIcon,
-        roles: ["admin", "staff", "customer", "reservation_agent"],
+        roles: ["admin", "reservation_agent", "reseller"],
       },
       {
         name: "Calendar",
         href: "/dashboard/calendar",
         icon: CalendarIcon,
-        roles: ["admin", "staff", "customer", "reservation_agent"],
+        roles: ["admin", "reservation_agent", "reseller"],
       },
-
       {
         name: "Tours",
         href: "/dashboard/tours",
         icon: GlobeAmericasIcon,
-        roles: ["admin", "staff", "reservation_agent"],
+        roles: ["admin"],
       },
     ],
   },
@@ -71,24 +72,24 @@ const navigationGroups: NavigationGroup[] = [
         name: "Products",
         href: "/dashboard/products",
         icon: ShoppingBagIcon,
-        roles: ["admin", "staff", "reservation_agent"],
+        roles: ["admin"],
       },
       {
         name: "Users",
         href: "/dashboard/users",
         icon: UserGroupIcon,
-        roles: ["admin", "reservation_agent"],
+        roles: ["admin"],
       },
       {
         name: "Promo Codes",
         href: "/dashboard/promo-codes",
         icon: TicketIcon,
-        roles: ["admin", "staff", "reservation_agent"],
+        roles: ["admin"],
       },
     ],
   },
   {
-    name: "Analytics & Settings",
+    name: "Analytics",
     items: [
       {
         name: "Analytics",
@@ -96,12 +97,12 @@ const navigationGroups: NavigationGroup[] = [
         icon: ChartBarIcon,
         roles: ["admin"],
       },
-      {
-        name: "Settings",
-        href: "/dashboard/settings",
-        icon: Cog6ToothIcon,
-        roles: ["admin", "staff", "customer", "reservation_agent"],
-      },
+      // {
+      //   name: "Settings",
+      //   href: "/dashboard/settings",
+      //   icon: Cog6ToothIcon,
+      //   roles: ["admin", "reservation_agent"],
+      // },
     ],
   },
 ];
@@ -110,7 +111,12 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export const Navigation = ({ user }: { user: any }) => {
+interface NavigationProps {
+  user: any;
+  isCollapsed?: boolean;
+}
+
+export const Navigation = ({ user, isCollapsed = false }: NavigationProps) => {
   const userRole = user?.role;
 
   if (!userRole) return null; // Hide sidebar if no user
@@ -125,41 +131,68 @@ export const Navigation = ({ user }: { user: any }) => {
 
   const currentPath = usePathname();
 
+  const NavigationLink = ({
+    item,
+    isCurrent,
+  }: {
+    item: NavigationItem;
+    isCurrent: boolean;
+  }) => {
+    const linkContent = (
+      <Link
+        href={item.href}
+        aria-current={isCurrent ? "page" : undefined}
+        className={classNames(
+          isCurrent
+            ? "bg-brand/20 text-strong font-semibold"
+            : "text-weak hover:text-strong hover:bg-brand/5",
+          isCollapsed
+            ? "group flex items-center justify-center rounded-md p-2 text-sm font-medium"
+            : "group flex items-center rounded-md px-2 py-2 text-sm font-medium"
+        )}
+      >
+        <item.icon
+          aria-hidden="true"
+          className={classNames(
+            isCurrent ? "text-strong" : "text-weak group-hover:text-strong",
+            isCollapsed ? "size-6" : "mr-3 size-6 shrink-0"
+          )}
+        />
+        {!isCollapsed && item.name}
+      </Link>
+    );
+
+    if (isCollapsed) {
+      return (
+        <Tooltip content={item.name} side="right">
+          {linkContent}
+        </Tooltip>
+      );
+    }
+
+    return linkContent;
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <nav className="px-2 mt-5 flex-1">
+      <nav className={`${isCollapsed ? "px-1" : "px-2"} mt-5 flex-1`}>
         <div className="space-y-6">
           {filteredNavigationGroups.map((group) => (
             <div key={group.name}>
-              <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                {group.name}
-              </h3>
+              {!isCollapsed && (
+                <h3 className="px-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  {group.name}
+                </h3>
+              )}
               <div className="mt-2 space-y-1">
                 {group.items.map((item) => {
                   const isCurrent = currentPath === item.href;
                   return (
-                    <Link
+                    <NavigationLink
                       key={item.name}
-                      href={item.href}
-                      aria-current={isCurrent ? "page" : undefined}
-                      className={classNames(
-                        isCurrent
-                          ? "bg-brand/20  text-strong font-semibold"
-                          : "text-weak  hover:text-strong hover:bg-brand/5",
-                        "group flex items-center rounded-md px-2 py-2 text-sm font-medium"
-                      )}
-                    >
-                      <item.icon
-                        aria-hidden="true"
-                        className={classNames(
-                          isCurrent
-                            ? "text-strong"
-                            : "text-weak group-hover:text-strong",
-                          "mr-3 size-6 shrink-0"
-                        )}
-                      />
-                      {item.name}
-                    </Link>
+                      item={item}
+                      isCurrent={isCurrent}
+                    />
                   );
                 })}
               </div>

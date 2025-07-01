@@ -5,7 +5,7 @@ interface BookingFilters {
   tour_filter?: string | null; // UUID
   user_name_filter?: string | null; // Search name
   status_filter?: string | null; // e.g., 'confirmed', 'cancelled'
-  booking_id_filter?: string | null; // Booking ID filter
+  search_query?: string | null; // Booking ID filter
   // date_range?: {
   //   from: string; // ISO string
   //   to: string; // ISO string
@@ -23,7 +23,7 @@ export async function getAllBookings(
     tour_filter = null,
     user_name_filter = null,
     status_filter = null,
-    booking_id_filter = null,
+    search_query = null,
     // date_range = null,
     limit_count = 10,
     offset_count = 0,
@@ -34,7 +34,7 @@ export async function getAllBookings(
     tour_filter,
     user_name_filter,
     status_filter,
-    booking_id_filter,
+    search_query,
     // created_start: date_range?.from || null,
     // created_end: date_range?.to || null,
     limit_count,
@@ -62,6 +62,7 @@ export async function getAllBookings(
       phone_number: booking.phone_number || "",
       manage_token: booking.manage_token || "",
       tour_title: booking.tour_title || "",
+      tour_featured_image: booking.tour_featured_image || "",
       payment_method: booking.payment_method || "",
       booking_status: booking.booking_status || "",
       payment_status: booking.payment_status || "",

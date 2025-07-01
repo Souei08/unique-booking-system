@@ -22,6 +22,7 @@ interface ConfirmationEmailTemplateProps {
     booking_reference_id: string;
     tour_name: string;
     manage_token: string;
+    manage_link: string;
     sub_total: number;
     coupon_code: string;
     discount_amount: number;
@@ -41,6 +42,7 @@ export const ConfirmationEmailTemplate = ({
     booking_reference_id,
     tour_name,
     manage_token,
+    manage_link,
     sub_total,
     coupon_code,
     discount_amount,
@@ -73,7 +75,7 @@ export const ConfirmationEmailTemplate = ({
     return details;
   };
 
-  const manageLink = `http://localhost:3000/manage-booking?manage_token=${manage_token}`;
+  const manageLink = `http://localhost:3000/${manage_link}`;
 
   return (
     <Html>
@@ -132,6 +134,27 @@ export const ConfirmationEmailTemplate = ({
               </Link>
               .
             </Text>
+          </Section>
+
+          {/* ✅ Pickup Service Information */}
+          <Section style={styles.section}>
+            <Text style={styles.sectionTitle}>Pickup Service Information</Text>
+            <Text style={styles.paragraph}>
+              If you chose our pick up service: The time of pick up is 30-60
+              minutes before the starting time of the tour. Please wait for our
+              driver at the lobby.
+            </Text>
+            <Text style={styles.paragraph}>
+              If your hotel is one of the following, please wait at the security
+              gate 45 minutes before the starting time of the tour:
+            </Text>
+            <ul style={styles.list}>
+              <li>Alexandra Resort</li>
+              <li>Blue Haven</li>
+              <li>Club Med</li>
+              <li>Beach House</li>
+              <li>La Vista Azul - pick up at the Simons restaurant</li>
+            </ul>
           </Section>
 
           {/* ✅ Cancellation Policy */}

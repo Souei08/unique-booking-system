@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -61,6 +61,7 @@ const CreateBookingv2 = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [isLoadingPayment, setIsLoadingPayment] = useState(false);
   const [clientSecret, setClientSecret] = useState<string>("");
+  const [paymentRefId, setPaymentRefId] = useState<string | null>(null);
 
   // Step 1
   const [selectedTour, setSelectedTour] = useState<Tour>(
@@ -213,6 +214,9 @@ const CreateBookingv2 = ({
       throw new Error("Missing required tour or date information");
     }
 
+    // Get secure calculation with server-side promo validation
+    const secureCalculation = await calculateSecureTotal();
+
     // Format products data for the API
     const productsData = selectedProducts.map((productId) => {
       const product = availableProducts.find((p) => p.id === productId);
@@ -236,16 +240,18 @@ const CreateBookingv2 = ({
       booking_date: formatToDateString(selectedDate) || "",
       selected_time: selectedTime,
       slots: numberOfPeople,
-      total_price: calculateTotal(),
+      total_price: secureCalculation.total,
       payment_method: paymentInformation.payment_method,
       payment_id: paymentId,
       products: productsData,
       slot_details: slotDetails,
       promo_code_id: appliedPromo?.id || null,
       promo_code: appliedPromo?.code || null,
-      sub_total: calculateTotal(),
-      discount_amount: appliedPromo?.discount_amount || null,
+      sub_total: secureCalculation.subtotal,
+      discount_amount: secureCalculation.discountAmount,
     };
+
+    console.log(bookingData);
 
     try {
       // Create booking first
@@ -258,7 +264,10 @@ const CreateBookingv2 = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             paymentIntentId: paymentIntentId,
-            metadata: { booking_id: response.booking_id },
+            metadata: {
+              booking_id: response.booking_id,
+              payment_ref_id: response.email_response.payment_ref_id,
+            },
           }),
         });
 
@@ -279,7 +288,7 @@ const CreateBookingv2 = ({
     }
   };
 
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     let total = 0;
 
     // Calculate tour price based on slot types if they exist
@@ -307,12 +316,127 @@ const CreateBookingv2 = ({
 
     // Apply promo code discount if available
     if (appliedPromo) {
-      total = appliedPromo.final_amount;
+      total -= appliedPromo.discount_amount;
     }
 
     // Round to 2 decimal places to avoid floating point issues
     return Math.round(total * 100) / 100;
-  };
+  }, [
+    customSlotTypes,
+    slotDetails,
+    selectedTour,
+    numberOfPeople,
+    selectedProducts,
+    productQuantities,
+    availableProducts,
+    appliedPromo,
+  ]);
+
+  const calculateSubtotal = useCallback(() => {
+    let subtotal = 0;
+
+    // Calculate tour price based on slot types if they exist
+    if (customSlotTypes && customSlotTypes.length > 0) {
+      // Sum up prices from slot details
+      subtotal = slotDetails.reduce((sum, slot) => {
+        const slotType = customSlotTypes.find(
+          (type: CustomSlotType) => type.name === slot.type
+        );
+        return sum + (slotType?.price || 0);
+      }, 0);
+    } else {
+      // Use regular tour rate if no custom slot types
+      subtotal = selectedTour.rate * numberOfPeople;
+    }
+
+    // Add product prices
+    selectedProducts.forEach((productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      if (product) {
+        const quantity = productQuantities[productId] || 1;
+        subtotal += product.price * quantity;
+      }
+    });
+
+    // Round to 2 decimal places to avoid floating point issues
+    return Math.round(subtotal * 100) / 100;
+  }, [
+    customSlotTypes,
+    slotDetails,
+    selectedTour,
+    numberOfPeople,
+    selectedProducts,
+    productQuantities,
+    availableProducts,
+  ]);
+
+  // Secure calculation function that validates promo codes server-side
+  const calculateSecureTotal = useCallback(async (): Promise<{
+    subtotal: number;
+    discountAmount: number;
+    total: number;
+    promoValidation: any;
+  }> => {
+    const subtotal = calculateSubtotal();
+
+    if (!appliedPromo) {
+      return {
+        subtotal,
+        discountAmount: 0,
+        total: subtotal,
+        promoValidation: null,
+      };
+    }
+
+    try {
+      // Validate promo code server-side and get secure discount calculation
+      const response = await fetch("/api/validate-promo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: appliedPromo.code,
+          totalAmount: subtotal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        // If promo validation fails, remove the promo and recalculate
+        setAppliedPromo(null);
+        toast.error("Promo code validation failed", {
+          description:
+            data.error || "Please try again or remove the promo code.",
+        });
+        return {
+          subtotal,
+          discountAmount: 0,
+          total: subtotal,
+          promoValidation: null,
+        };
+      }
+
+      return {
+        subtotal,
+        discountAmount: data.promo.discount_amount,
+        total: data.promo.final_amount,
+        promoValidation: data.promo,
+      };
+    } catch (error) {
+      console.error("Error validating promo code:", error);
+      toast.error("Failed to validate promo code", {
+        description: "Please try again or remove the promo code.",
+      });
+      return {
+        subtotal,
+        discountAmount: 0,
+        total: subtotal,
+        promoValidation: null,
+      };
+    }
+  }, [calculateSubtotal, appliedPromo]);
 
   const fetchClientSecret = async (bookingId: string | null) => {
     if (isLoadingPayment) return;
@@ -320,12 +444,16 @@ const CreateBookingv2 = ({
     try {
       setIsLoadingPayment(true);
 
+      // Get secure calculation with server-side promo validation
+      const secureCalculation = await calculateSecureTotal();
+
       const response = await fetch("/api/create-payment-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: Math.round(calculateTotal() * 100),
+          amount: Math.round(secureCalculation.total * 100),
           paymentIntentId: paymentIntentId || null,
+          paymentRefId: paymentRefId || null,
           bookingId: bookingId || null,
           name:
             customerInformation.first_name +
@@ -427,6 +555,7 @@ const CreateBookingv2 = ({
             appliedPromo={appliedPromo}
             onPromoApplied={handlePromoApplied}
             onPromoRemoved={handlePromoRemoved}
+            calculateSubtotal={calculateSubtotal}
           />
         );
       case 4:
@@ -453,10 +582,13 @@ const CreateBookingv2 = ({
             selectedDate={selectedDate}
             selectedTime={selectedTime}
             calculateTotal={calculateTotal}
+            calculateSubtotal={calculateSubtotal}
+            calculateSecureTotal={calculateSecureTotal}
             isLoadingPayment={isLoadingPayment}
             setBookingId={setBookingId}
             setIsBookingComplete={setIsBookingComplete}
             appliedPromo={appliedPromo}
+            setPaymentRefId={setPaymentRefId}
           />
         );
       default:
@@ -475,7 +607,7 @@ const CreateBookingv2 = ({
                 <Button
                   variant="outline"
                   onClick={handleBack}
-                  className="flex items-center gap-1.5 md:gap-2 text-strong hover:bg-strong/10 transition-colors text-sm md:text-base -ml-1.5 md:-ml-2 px-3 md:px-4 py-1.5 md:py-2 border-strong/20 hover:border-strong/30"
+                  className="text-strong border-stroke-strong hover:border-strong hover:bg-fill transition-colors text-sm md:text-body px-3 md:px-4 py-1.5 md:py-2"
                 >
                   <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
                   <span className="hidden sm:inline">Back</span>
@@ -484,32 +616,31 @@ const CreateBookingv2 = ({
                 <div className="w-12 md:w-16" />
               )}
               <div className="flex items-center gap-2.5 md:gap-4">
-                <h2 className="text-base md:text-xl lg:text-2xl font-bold text-strong">
+                <h2 className="text-h2 font-bold text-strong">
                   {currentStep === 1 && "Select Tour"}
                   {currentStep === 2 && "Choose Date & Time"}
                   {currentStep === 3 && "Complete Booking"}
                   {currentStep === 4 && "Complete Your Payment"}
                 </h2>
 
-                <div className="flex items-center justify-center w-6 h-6 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-strong text-primary-foreground font-semibold text-xs md:text-base">
+                <div className="flex items-center justify-center w-6 h-6 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-brand   text-primary-foreground font-semibold text-xs md:text-base">
                   {currentStep}
                 </div>
               </div>
               {/* <div className="w-12 md:w-16" /> */}
             </div>
           </div>
-          <div className="relative h-1 md:h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+          <div className="relative h-1 md:h-2 bg-stroke-weak rounded-full overflow-hidden">
             <div
-              className="absolute top-0 left-0 h-full bg-brand dark:bg-brand transition-all duration-300 ease-in-out"
+              className="absolute top-0 left-0 h-full bg-brand transition-all duration-300 ease-in-out"
               style={{ width: `${(currentStep / 4) * 100}%` }}
             />
           </div>
         </div>
 
         {/* Main Content */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-2xl sm:rounded-3xl" />
-          <div className="relative p-4 sm:p-6">{renderStep()}</div>
+        <div className="relative px-4 sm:px-6 md:px-10 py-6 sm:py-8">
+          {renderStep()}
         </div>
       </div>
 

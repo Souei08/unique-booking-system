@@ -27,7 +27,7 @@ const buttonVariants = cva(
           "bg-red-600 text-white shadow-xs hover:bg-red-700 focus-visible:ring-red-500/20",
 
         outline:
-          "border border-stroke-strong bg-background shadow-xs hover:bg-neutral hover:text-strong",
+          "border border-stroke-strong bg-background shadow-xs hover:bg-neutral text-strong",
 
         secondary: "bg-neutral text-text shadow-xs hover:bg-neutral/80",
 

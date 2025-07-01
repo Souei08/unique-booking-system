@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { createClient } from "@/supabase/client";
@@ -24,9 +24,8 @@ import { ChevronLeft } from "lucide-react";
 // Booking Steps
 import CheckForm from "../CreateBookingv2/booking-steps/CheckForm";
 import BookingSuccess from "../CreateBookingv2/booking-steps/BookingSuccess";
-import TourTimeAndDate from "../CreateBookingv2/booking-steps/TourTimeAndDate";
+import AdminTourTimeAndDate from "../CreateBookingv2/booking-steps/AdminTourTimeAndDate";
 import SelectTours from "../CreateBookingv2/booking-steps/SelectTours";
-import PromoCodeInput from "../CreateBookingv2/booking-steps/PromoCodeInput";
 
 // Types
 import { DateValue, parseDate } from "@internationalized/date";
@@ -142,21 +141,20 @@ const QuickBooking = ({
     }
   }, [selectedTour]);
 
-  // Update step if all required information becomes available
-  useEffect(() => {
-    // Only update step if we're not already on step 3 and all info is available
-    if (
-      initialSelectedTour?.id &&
-      initialSelectedDate &&
-      initialSelectedTime &&
-      currentStep !== 3
-    ) {
-      // Prevent infinite loop by checking if we're not already on step 3
-      setCurrentStep(3);
-    }
-  }, [initialSelectedTour, initialSelectedDate, initialSelectedTime]);
+  // useEffect(() => {
+  //   // Only update step if we're not already on step 3 and all info is available
+  //   if (
+  //     initialSelectedTour?.id &&
+  //     initialSelectedDate &&
+  //     initialSelectedTime &&
+  //     currentStep !== 3
+  //   ) {
+  //     // Prevent infinite loop by checking if we're not already on step 3
+  //     setCurrentStep(3);
+  //   }
+  // }, [initialSelectedTour, initialSelectedDate, initialSelectedTime]);
 
-  const calculateTotal = () => {
+  const calculateTotal = useCallback(() => {
     let total = 0;
 
     if (!selectedTour) return total;
@@ -186,14 +184,23 @@ const QuickBooking = ({
 
     // Apply promo code discount if available
     if (appliedPromo) {
-      total = appliedPromo.final_amount;
+      total -= appliedPromo.discount_amount;
     }
 
     // Round to 2 decimal places to avoid floating point issues
     return Math.round(total * 100) / 100;
-  };
+  }, [
+    selectedTour,
+    customSlotTypes,
+    slotDetails,
+    numberOfPeople,
+    selectedProducts,
+    productQuantities,
+    availableProducts,
+    appliedPromo,
+  ]);
 
-  const calculateSubtotal = () => {
+  const calculateSubtotal = useCallback(() => {
     let total = 0;
 
     if (!selectedTour) return total;
@@ -223,7 +230,83 @@ const QuickBooking = ({
 
     // Round to 2 decimal places to avoid floating point issues
     return Math.round(total * 100) / 100;
-  };
+  }, [
+    selectedTour,
+    customSlotTypes,
+    slotDetails,
+    numberOfPeople,
+    selectedProducts,
+    productQuantities,
+    availableProducts,
+  ]);
+
+  // Secure calculation function that validates promo codes server-side
+  const calculateSecureTotal = useCallback(async (): Promise<{
+    subtotal: number;
+    discountAmount: number;
+    total: number;
+    promoValidation: any;
+  }> => {
+    const subtotal = calculateSubtotal();
+
+    if (!appliedPromo) {
+      return {
+        subtotal,
+        discountAmount: 0,
+        total: subtotal,
+        promoValidation: null,
+      };
+    }
+
+    try {
+      // Validate promo code server-side and get secure discount calculation
+      const response = await fetch("/api/validate-promo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: appliedPromo.code,
+          totalAmount: subtotal,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        // If promo validation fails, remove the promo and recalculate
+        setAppliedPromo(null);
+        toast.error("Promo code validation failed", {
+          description:
+            data.error || "Please try again or remove the promo code.",
+        });
+        return {
+          subtotal,
+          discountAmount: 0,
+          total: subtotal,
+          promoValidation: null,
+        };
+      }
+
+      return {
+        subtotal,
+        discountAmount: data.promo.discount_amount,
+        total: data.promo.final_amount,
+        promoValidation: data.promo,
+      };
+    } catch (error) {
+      console.error("Error validating promo code:", error);
+      toast.error("Failed to validate promo code", {
+        description: "Please try again or remove the promo code.",
+      });
+      return {
+        subtotal,
+        discountAmount: 0,
+        total: subtotal,
+        promoValidation: null,
+      };
+    }
+  }, [calculateSubtotal, appliedPromo]);
 
   const handlePromoApplied = (promoData: any) => {
     setAppliedPromo(promoData);
@@ -242,6 +325,9 @@ const QuickBooking = ({
     }
 
     setIsLoading(true);
+
+    // Get secure calculation with server-side promo validation
+    const secureCalculation = await calculateSecureTotal();
 
     // Format products data for the API
     const productsData = selectedProducts.map((productId) => {
@@ -268,15 +354,15 @@ const QuickBooking = ({
         booking_date: formatToDateString(selectedDate) || "",
         selected_time: selectedTime,
         slots: numberOfPeople,
-        sub_total: calculateSubtotal(),
-        total_price: calculateTotal(),
+        sub_total: secureCalculation.subtotal,
+        total_price: secureCalculation.total,
         payment_method: paymentInformation.payment_method,
         payment_id: paymentId || null,
         products: productsData,
         slot_details: slotDetails,
         promo_code_id: appliedPromo?.id || null,
         promo_code: appliedPromo?.code || null,
-        discount_amount: appliedPromo?.discount_amount || null,
+        discount_amount: secureCalculation.discountAmount,
       });
 
       if (!bookingResponse.success) {
@@ -288,7 +374,6 @@ const QuickBooking = ({
         throw new Error("No booking ID returned");
       }
 
-      console.log("Booking created successfully:", bookingResponse);
       setBookingId(bookingId);
 
       // Create payment link
@@ -298,11 +383,12 @@ const QuickBooking = ({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: Math.round(calculateTotal() * 100), // Convert to cents and ensure integer
+          amount: Math.round(secureCalculation.total * 100), // Convert to cents and ensure integer
           email: customerInformation.email,
           name: `${customerInformation.first_name} ${customerInformation.last_name}`,
           phone: customerInformation.phone_number,
           booking_id: bookingId,
+          payment_ref_id: bookingResponse.email_response.payment_ref_id,
           slots: numberOfPeople,
           booking_price: selectedTour.rate, // Convert to cents and ensure integer
           tourProducts: productsData.map((product) => ({
@@ -360,6 +446,7 @@ const QuickBooking = ({
         sub_total: bookingResponse.email_response.sub_total,
         coupon_code: appliedPromo?.code || null,
         discount_amount: bookingResponse.email_response.discount_amount,
+        manage_link: `manage-booking?manage_token=${bookingResponse.email_response.manage_token}`,
       });
 
       toast.success("Booking Created", {
@@ -470,13 +557,26 @@ const QuickBooking = ({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <div className="">
         {/* Progress Bar */}
         <div className="mb-4 md:mb-8 lg:mb-12 px-3 md:px-6">
           <div className="flex flex-col gap-2 md:gap-6 mb-3 md:mb-4">
             <div className="flex items-center justify-between">
-              {currentStep > 1 &&
+              {currentStep > 1 ? (
+                <Button
+                  variant="outline"
+                  onClick={handleBack}
+                  className="flex items-center gap-1.5 md:gap-2 text-strong hover:bg-strong/10 transition-colors text-sm md:text-base -ml-1.5 md:-ml-2 px-3 md:px-4 py-1.5 md:py-2 border-strong/20 hover:border-strong/30"
+                >
+                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+                  <span className="hidden sm:inline">Back</span>
+                </Button>
+              ) : (
+                <div className="w-12 md:w-16" />
+              )}
+
+              {/* {currentStep > 1 &&
               !(
                 currentStep === 3 &&
                 selectedTour?.id &&
@@ -493,9 +593,9 @@ const QuickBooking = ({
                 </Button>
               ) : (
                 <div className="w-12 md:w-16" />
-              )}
+              )} */}
               <div className="flex items-center gap-2.5 md:gap-4">
-                <h2 className="text-base md:text-xl lg:text-2xl font-bold text-strong">
+                <h2 className="text-h2 font-bold text-strong">
                   {currentStep === 1 && "Select Tour"}
                   {currentStep === 2 && "Choose Date & Time"}
                   {currentStep === 3 && "Complete Booking"}
@@ -516,60 +616,58 @@ const QuickBooking = ({
         </div>
 
         {/* Main Content */}
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-2xl sm:rounded-3xl" />
-          <div className="relative p-4 sm:p-6">
-            {currentStep === 1 ? (
-              <SelectTours
-                setSelectedTour={handleTourSelect}
-                handleNext={() => setCurrentStep(2)}
-              />
-            ) : currentStep === 2 ? (
-              <TourTimeAndDate
-                selectedTour={selectedTour!}
-                handleNext={() => setCurrentStep(3)}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                setSelectedDate={handleDateChange}
-                setSelectedTime={handleTimeSelect}
-                numberOfPeople={numberOfPeople}
-                setNumberOfPeople={setNumberOfPeople}
-                customSlotTypes={customSlotTypes}
-                setSlotDetails={setSlotDetails}
-                slotDetails={slotDetails}
-              />
-            ) : (
-              <CheckForm
-                selectedTour={selectedTour!}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                numberOfPeople={numberOfPeople}
-                customerInformation={customerInformation}
-                paymentInformation={paymentInformation}
-                setPaymentInformation={setPaymentInformation}
-                setCustomerInformation={setCustomerInformation}
-                handleCompleteBooking={handleCompleteBooking}
-                selectedProducts={selectedProducts}
-                setSelectedProducts={setSelectedProducts}
-                productQuantities={productQuantities}
-                setProductQuantities={setProductQuantities}
-                availableProducts={availableProducts}
-                setAvailableProducts={setAvailableProducts}
-                isAdmin={true}
-                isLoading={isLoading}
-                setNumberOfPeople={setNumberOfPeople}
-                calculateTotal={calculateTotal}
-                setSlotDetails={setSlotDetails}
-                slotDetails={slotDetails}
-                customSlotTypes={customSlotTypes}
-                customSlotFields={customSlotFields}
-                handleNext={() => {}}
-                appliedPromo={appliedPromo}
-                onPromoApplied={handlePromoApplied}
-                onPromoRemoved={handlePromoRemoved}
-              />
-            )}
-          </div>
+        <div className="relative px-4 sm:px-6 md:px-10 py-6 sm:py-8">
+          {currentStep === 1 ? (
+            <SelectTours
+              setSelectedTour={handleTourSelect}
+              handleNext={() => setCurrentStep(2)}
+            />
+          ) : currentStep === 2 ? (
+            <AdminTourTimeAndDate
+              selectedTour={selectedTour!}
+              handleNext={() => setCurrentStep(3)}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              setSelectedDate={handleDateChange}
+              setSelectedTime={handleTimeSelect}
+              numberOfPeople={numberOfPeople}
+              setNumberOfPeople={setNumberOfPeople}
+              customSlotTypes={customSlotTypes}
+              setSlotDetails={setSlotDetails}
+              slotDetails={slotDetails}
+            />
+          ) : (
+            <CheckForm
+              selectedTour={selectedTour!}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              numberOfPeople={numberOfPeople}
+              customerInformation={customerInformation}
+              paymentInformation={paymentInformation}
+              setPaymentInformation={setPaymentInformation}
+              setCustomerInformation={setCustomerInformation}
+              handleCompleteBooking={handleCompleteBooking}
+              selectedProducts={selectedProducts}
+              setSelectedProducts={setSelectedProducts}
+              productQuantities={productQuantities}
+              setProductQuantities={setProductQuantities}
+              availableProducts={availableProducts}
+              setAvailableProducts={setAvailableProducts}
+              isAdmin={true}
+              isLoading={isLoading}
+              setNumberOfPeople={setNumberOfPeople}
+              calculateTotal={calculateTotal}
+              setSlotDetails={setSlotDetails}
+              slotDetails={slotDetails}
+              customSlotTypes={customSlotTypes}
+              customSlotFields={customSlotFields}
+              handleNext={() => {}}
+              appliedPromo={appliedPromo}
+              onPromoApplied={handlePromoApplied}
+              onPromoRemoved={handlePromoRemoved}
+              calculateSubtotal={calculateSubtotal}
+            />
+          )}
         </div>
       </div>
 

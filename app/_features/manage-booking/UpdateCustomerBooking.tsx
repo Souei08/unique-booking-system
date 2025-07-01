@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getBookingByToken } from "../booking/api/get-booking/getBookingByToken";
 import { BookingTable } from "../booking/types/booking-types";
 import CustomerUpdateBookingForm from "./CustomerUpdateBookingForm";
 import { getOneBooking } from "../booking/api/get-booking/getOneBooking";
@@ -130,7 +129,7 @@ export default function UpdateCustomerBooking() {
   return (
     <div className="pt-10">
       <CustomerUpdateBookingForm
-        bookingId={booking.id}
+        bookingId={booking.booking_id}
         manageToken={manageToken || ""}
         onClose={() => {}}
         onSuccess={() => {}}

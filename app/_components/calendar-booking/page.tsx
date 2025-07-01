@@ -26,6 +26,8 @@ import {
   Calendar,
   Clock,
   RefreshCw,
+  Filter,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getAllTours } from "@/app/_features/tours/api/getAllTours";
@@ -44,6 +46,14 @@ import { formatTime } from "@/app/_lib/utils/formatTime";
 import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CalendarSkeleton } from "./CalendarSkeleton";
+import { CalendarCellCard } from "./CalendarCellCard";
+import { CalendarFilters } from "./CalendarFilters";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { fetchCalendarSlotSummaryV2 } from "@/app/_features/calendar/api/fetchCalendarSlotSummaryV2";
 
 interface Slot {
   tour_type: string;
@@ -51,6 +61,7 @@ interface Slot {
   slot_time?: string;
   booked: number | string;
   available: number;
+  added: number;
 }
 
 function formatDateKey(date: Date): string {
@@ -132,6 +143,11 @@ const CalendarBookingPage: React.FC = () => {
     useState<BookingResponse | null>(null);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
+
+  // Add a state to track if tours have been loaded
+  const [toursLoaded, setToursLoaded] = useState(false);
+
   const fetchSlotBookings = async (
     tourTitle: string,
     date: string,
@@ -153,6 +169,7 @@ const CalendarBookingPage: React.FC = () => {
     }
   };
 
+  // First useEffect: Load tours and set default tour
   useEffect(() => {
     async function loadTours() {
       try {
@@ -162,8 +179,10 @@ const CalendarBookingPage: React.FC = () => {
         if (data.length > 0) {
           setSelectedTour(data[0].title);
         }
+        setToursLoaded(true);
       } catch (error) {
         console.error("Error loading tours:", error);
+        setToursLoaded(true); // Set to true even on error to prevent infinite loading
       }
     }
     loadTours();
@@ -174,11 +193,15 @@ const CalendarBookingPage: React.FC = () => {
     ...Array.from(new Set(tours.map((tour) => tour.title))),
   ];
 
+  // Second useEffect: Load calendar data only after tours are loaded and selectedTour is set
   useEffect(() => {
+    // Only fetch calendar data if tours are loaded and selectedTour is set
+    if (!toursLoaded || !selectedTour) return;
+
     async function load() {
       setIsLoading(true);
       try {
-        const data: Slot[] = await fetchCalendarSlotSummary({
+        const data: Slot[] = await fetchCalendarSlotSummaryV2({
           month,
           year,
           tourTitle: selectedTour === "All" ? null : selectedTour,
@@ -191,8 +214,9 @@ const CalendarBookingPage: React.FC = () => {
         setIsLoading(false);
       }
     }
+
     load();
-  }, [month, year, selectedTour, onlyAvailable]);
+  }, [month, year, selectedTour, onlyAvailable, toursLoaded]);
 
   useEffect(() => {
     const matrix = generateMonthMatrix(year, month);
@@ -248,22 +272,22 @@ const CalendarBookingPage: React.FC = () => {
     return date < today;
   };
 
-  const isDateFullyBooked = (dateKey: string): boolean => {
-    const daySlots = getDaySlots(dateKey);
-    if (daySlots.length === 0) return false;
+  // const isDateFullyBooked = (dateKey: string): boolean => {
+  //   const daySlots = getDaySlots(dateKey);
+  //   if (daySlots.length === 0) return false;
 
-    // Check if all slots for the selected tour type are fully booked
-    const selectedTourSlots =
-      selectedTour === "All"
-        ? daySlots
-        : daySlots.filter((slot) => slot.tour_type === selectedTour);
+  //   // Check if all slots for the selected tour type are fully booked
+  //   const selectedTourSlots =
+  //     selectedTour === "All"
+  //       ? daySlots
+  //       : daySlots.filter((slot) => slot.tour_type === selectedTour);
 
-    if (selectedTourSlots.length === 0) return false;
+  //   if (selectedTourSlots.length === 0) return false;
 
-    return selectedTourSlots.every(
-      (slot) => typeof slot.booked === "number" && slot.available === 0
-    );
-  };
+  //   return selectedTourSlots.every(
+  //     (slot) => typeof slot.booked === "number" && slot.available === 0
+  //   );
+  // };
 
   const handleDateCardClick = async (
     dateKey: string | null,
@@ -369,329 +393,95 @@ const CalendarBookingPage: React.FC = () => {
     });
   };
 
+  // New: handle filter changes from popover
+  const handleFiltersChange = (filters: {
+    month: number;
+    year: number;
+    selectedTour: string;
+    onlyAvailable: boolean;
+  }) => {
+    setMonth(filters.month);
+    setYear(filters.year);
+    setSelectedTour(filters.selectedTour);
+    setOnlyAvailable(filters.onlyAvailable);
+  };
+
   return (
-    <div className="w-full mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
-      {/* Filters Section */}
-      <div className="bg-background rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
-        <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-          <div className="w-full sm:flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-strong mb-1">
-              Month
-            </label>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePrevMonth}
-                className="h-10 w-10 shrink-0"
-                disabled={isLoading || isRefreshing}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <select
-                value={month}
-                onChange={(e) => setMonth(parseInt(e.target.value))}
-                className="flex-1 px-3 py-2 rounded-lg border border-gray-200 bg-background text-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all"
-                disabled={isLoading || isRefreshing}
-              >
-                {[
-                  "January",
-                  "February",
-                  "March",
-                  "April",
-                  "May",
-                  "June",
-                  "July",
-                  "August",
-                  "September",
-                  "October",
-                  "November",
-                  "December",
-                ].map((m, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleNextMonth}
-                className="h-10 w-10 shrink-0"
-                disabled={isLoading || isRefreshing}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="w-full sm:flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-strong mb-1">
-              Year
-            </label>
-            <select
-              value={year}
-              onChange={(e) => setYear(parseInt(e.target.value))}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-background text-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all"
-              disabled={isLoading || isRefreshing}
-            >
-              {[2024, 2025, 2026].map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="w-full sm:flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-strong mb-1">
-              Tour Type
-            </label>
-            <select
-              value={selectedTour}
-              onChange={(e) => setSelectedTour(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-background text-sm focus:ring-2 focus:ring-brand focus:border-brand transition-all"
-              disabled={isLoading || isRefreshing}
-            >
-              {tourOptions.map((tour) => (
-                <option key={tour} value={tour}>
-                  {tour}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-3 mt-2 sm:mt-6">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={onlyAvailable}
-                onChange={() => setOnlyAvailable(!onlyAvailable)}
-                className="sr-only peer"
-                disabled={isLoading || isRefreshing}
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand disabled:opacity-50 disabled:cursor-not-allowed"></div>
-              <span className="ml-3 text-sm font-medium text-strong">
-                Show only available
-              </span>
-            </label>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
-              className="ml-2"
-            >
-              <RefreshCw
-                className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              {isRefreshing ? "Refreshing..." : "Refresh"}
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div className="w-full mx-auto mt-15">
+      {/* Calendar Header (now in CalendarFilters) */}
+      <CalendarFilters
+        month={month}
+        year={year}
+        selectedTour={selectedTour}
+        onlyAvailable={onlyAvailable}
+        isLoading={isLoading}
+        tourOptions={tourOptions}
+        tours={tours}
+        onFiltersChange={handleFiltersChange}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+      />
 
       {/* Calendar Grid */}
-      <div className="bg-background rounded-xl shadow-sm border border-gray-200 p-2 sm:p-3 md:p-4 lg:p-6 overflow-x-auto">
-        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3 md:gap-4 min-w-[280px]">
-          {/* Weekday Headers */}
-          <div className="hidden lg:grid grid-cols-7 col-span-7 gap-2 sm:gap-3 md:gap-4">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-              <div
-                key={d}
-                className="text-center py-2 sm:py-3 font-semibold text-weak bg-fill rounded-lg text-xs sm:text-sm"
-              >
-                {d}
-              </div>
-            ))}
-          </div>
-
+      <div className="border border-stroke-strong rounded-lg bg-background overflow-x-auto">
+        <div className="grid grid-cols-7 gap-px">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+            <div
+              key={d}
+              className="text-center py-3 font-semibold text-base text-weak bg-fill"
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-px bg-stroke-weak">
           {isLoading ? (
             <CalendarSkeleton />
           ) : (
-            monthMatrix.flat().map((dateKey, i) => (
-              <div
-                key={i}
-                className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] lg:min-h-[140px] p-2 sm:p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-all bg-background cursor-pointer ${
-                  dateKey ? "hover:shadow-md" : "opacity-0 pointer-events-none"
-                }`}
-              >
-                {dateKey ? (
-                  <>
-                    <div
-                      className={`font-semibold mb-1 sm:mb-2 text-xs sm:text-sm flex items-center gap-1 ${
-                        isPastDate(dateKey) ? "text-gray-500" : "text-strong"
-                      }`}
-                    >
-                      <span className="hidden lg:inline">
-                        {new Date(dateKey).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
-                      <span className="lg:hidden">
-                        {new Date(dateKey).toLocaleDateString("en-US", {
-                          month: "numeric",
-                          day: "numeric",
-                        })}
-                      </span>
-                      {isPastDate(dateKey) && (
-                        <span className="ml-1 text-[10px] font-normal text-gray-400">
-                          (Past)
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-1 sm:space-y-2">
-                      {getDaySlots(dateKey).length > 0 ? (
-                        <>
-                          {getDaySlots(dateKey)
-                            .slice(
-                              0,
-                              expandedDates.has(dateKey) ? undefined : 2
-                            )
-                            .map((slot, idx) => (
-                              <div
-                                key={idx}
-                                className={`p-1.5 sm:p-2 rounded-lg border transition-all ${
-                                  isFullyBooked(slot)
-                                    ? "bg-red-50 border-red-200"
-                                    : isPartiallyBooked(slot)
-                                      ? "bg-amber-50 border-amber-200"
-                                      : isPastDate(dateKey)
-                                        ? "bg-gray-50 border-gray-200"
-                                        : "bg-fill border-gray-200"
-                                } hover:shadow-sm`}
-                                onClick={() =>
-                                  handleDateCardClick(
-                                    dateKey,
-                                    slot.slot_time || "",
-                                    slot.tour_type || ""
-                                  )
-                                }
-                              >
-                                {slot.slot_time && (
-                                  <div className="font-medium text-strong text-[10px] xs:text-xs sm:text-sm mb-0.5 sm:mb-1 flex flex-col gap-0.5 sm:gap-1">
-                                    <span className="truncate">
-                                      {formatTime(slot.slot_time)}
-                                    </span>
-                                    <span className="text-[9px] xs:text-[10px] sm:text-xs text-gray-600 truncate">
-                                      {slot.tour_type}
-                                    </span>
-                                    <div className="flex flex-wrap gap-0.5 sm:gap-1">
-                                      {isFullyBooked(slot) && (
-                                        <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-red-600 bg-red-100 px-1 py-0.5 rounded-full whitespace-nowrap">
-                                          Fully Booked
-                                        </span>
-                                      )}
-                                      {isPartiallyBooked(slot) && (
-                                        <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-amber-600 bg-amber-100 px-1 py-0.5 rounded-full whitespace-nowrap">
-                                          Partially Booked
-                                        </span>
-                                      )}
-                                      {isPastDate(dateKey) && (
-                                        <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-500 bg-gray-100 px-1 py-0.5 rounded-full whitespace-nowrap">
-                                          Past Date
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                )}
-                                <div className="flex flex-col justify-between text-[9px] xs:text-[10px] sm:text-xs text-weak">
-                                  <span className="flex items-center">
-                                    <span
-                                      className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
-                                        isFullyBooked(slot)
-                                          ? "bg-red-500"
-                                          : isPastDate(dateKey)
-                                            ? "bg-gray-400"
-                                            : "bg-emerald-500"
-                                      }`}
-                                    ></span>
-                                    <span
-                                      className={
-                                        isFullyBooked(slot)
-                                          ? "text-red-600 font-medium"
-                                          : isPastDate(dateKey)
-                                            ? "text-gray-500"
-                                            : "text-emerald-600"
-                                      }
-                                    >
-                                      Booked: {slot.booked}
-                                    </span>
-                                  </span>
-                                  <span className="flex items-center">
-                                    <span
-                                      className={`w-1 h-1 xs:w-1.5 xs:h-1.5 sm:w-2 sm:h-2 rounded-full mr-1 ${
-                                        isFullyBooked(slot)
-                                          ? "bg-red-300"
-                                          : isPastDate(dateKey)
-                                            ? "bg-gray-300"
-                                            : "bg-blue-400"
-                                      }`}
-                                    ></span>
-                                    <span
-                                      className={
-                                        isFullyBooked(slot)
-                                          ? "text-red-500"
-                                          : isPastDate(dateKey)
-                                            ? "text-gray-500"
-                                            : "text-blue-600"
-                                      }
-                                    >
-                                      Available: {slot.available}
-                                    </span>
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          {getDaySlots(dateKey).length > 2 && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleDateExpansion(dateKey);
-                              }}
-                              className="w-full text-[9px] xs:text-[10px] sm:text-xs text-brand hover:text-brand/80 font-medium py-0.5 sm:py-1 hover:bg-brand/5 rounded-lg transition-colors"
-                            >
-                              {expandedDates.has(dateKey)
-                                ? "Show Less"
-                                : `Show ${
-                                    getDaySlots(dateKey).length - 2
-                                  } More`}
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-[9px] xs:text-[10px] sm:text-xs text-gray-400 italic">
-                          No bookings
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            ))
+            monthMatrix.map((week, weekIdx) =>
+              week.map((dateKey, i) => (
+                <div
+                  key={weekIdx + "-" + i}
+                  className="bg-background min-h-[160px] h-full w-full"
+                >
+                  {dateKey ? (
+                    <CalendarCellCard
+                      dateKey={dateKey}
+                      isPastDate={isPastDate}
+                      getDaySlots={getDaySlots}
+                      expandedDates={expandedDates}
+                      toggleDateExpansion={toggleDateExpansion}
+                      handleDateCardClick={handleDateCardClick}
+                      formatTime={formatTime}
+                      isFullyBooked={isFullyBooked}
+                      isPartiallyBooked={isPartiallyBooked}
+                    />
+                  ) : null}
+                </div>
+              ))
+            )
           )}
         </div>
       </div>
 
       {/* Booking Details Drawer */}
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <DrawerContent className="h-screen">
+        <DrawerContent className="h-screen max-w-[85vw] sm:max-w-[55vw] md:max-w-[45vw] lg:max-w-[40vw] xl:max-w-[35vw]">
           <div className="flex flex-col h-full">
-            <DrawerHeader className="border-b flex flex-row items-center justify-between p-4">
+            <DrawerHeader className="border-b border-stroke-strong flex flex-row items-center justify-between pb-3">
               <div className="space-y-1">
-                <DrawerTitle className="text-xl sm:text-2xl font-bold">
+                <DrawerTitle className="text-lg sm:text-xl font-semibold text-strong">
                   Booking Details
                 </DrawerTitle>
                 {selectedTourForBooking && (
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-weak font-medium">
                       {selectedTourForBooking.title}
                     </p>
                   </div>
                 )}
               </div>
-              <DrawerClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+              <DrawerClose className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-fill data-[state=open]:text-weak">
                 <X className="h-4 w-4" />
                 <span className="sr-only">Close</span>
               </DrawerClose>
@@ -699,45 +489,82 @@ const CalendarBookingPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-4">
               {/* Tour Details Section */}
               {selectedTourForBooking && (
-                <div className="mb-6 bg-card rounded-xl border p-4">
-                  <div className="flex gap-4">
-                    <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={
-                          JSON.parse(selectedTourForBooking.images).find(
-                            (image: any) => image.isFeature
-                          ).url
-                        }
-                        alt={selectedTourForBooking.title}
-                        className="w-full h-full object-cover"
-                      />
+                <div className="mb-4 bg-background rounded-lg border border-stroke-weak overflow-hidden">
+                  {/* Full width image at the top */}
+                  <div className="w-full h-32 relative">
+                    <img
+                      src={
+                        JSON.parse(selectedTourForBooking.images).find(
+                          (image: any) => image.isFeature
+                        ).url
+                      }
+                      alt={selectedTourForBooking.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  {/* Content below the image */}
+                  <div className="p-3">
+                    <h3 className="text-base font-semibold mb-2 text-strong">
+                      {selectedTourForBooking.title}
+                    </h3>
+                    <div className="space-y-1 text-xs text-weak mb-3">
+                      <p className="flex items-center gap-2">
+                        <Calendar className="w-3 h-3" />
+                        {selectedDate &&
+                          format(new Date(selectedDate), "MMM d, yyyy")}
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Clock className="w-3 h-3" />
+                        {formatTime(selectedTimeForBooking)}
+                      </p>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-2">
-                        {selectedTourForBooking.title}
-                      </h3>
-                      <div className="space-y-1 text-sm text-muted-foreground">
-                        <p className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4" />
-                          {selectedDate &&
-                            format(new Date(selectedDate), "MMMM d, yyyy")}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          {formatTime(selectedTimeForBooking)}
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <UserPlus className="w-4 h-4" />
-                          Remaining Slots:{" "}
-                          {slots.find(
-                            (slot) =>
-                              slot.date === selectedDate &&
-                              slot.slot_time === selectedTimeForBooking &&
-                              slot.tour_type === selectedTourForBooking.title
-                          )?.available || "N/A"}
-                        </p>
-                      </div>
-                    </div>
+
+                    {/* Compact Slot Summary */}
+                    {(() => {
+                      const currentSlot = slots.find(
+                        (slot) =>
+                          slot.date === selectedDate &&
+                          slot.slot_time === selectedTimeForBooking &&
+                          slot.tour_type === selectedTourForBooking.title
+                      );
+
+                      const totalBooked =
+                        typeof currentSlot?.booked === "number"
+                          ? currentSlot.booked + currentSlot.added
+                          : 0;
+                      const totalAvailable = currentSlot?.available || 0;
+                      const totalCapacity = totalBooked + totalAvailable;
+
+                      return (
+                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stroke-weak">
+                          <div className="text-center">
+                            <div className="text-sm font-bold text-strong mb-1">
+                              {totalBooked}
+                            </div>
+                            <div className="text-xs text-weak uppercase tracking-wide">
+                              Booked
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm font-bold text-strong mb-1">
+                              {totalAvailable}
+                            </div>
+                            <div className="text-xs text-weak uppercase tracking-wide">
+                              Available
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-sm font-bold text-strong mb-1">
+                              {totalCapacity}
+                            </div>
+                            <div className="text-xs text-weak uppercase tracking-wide">
+                              Total
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
@@ -745,75 +572,138 @@ const CalendarBookingPage: React.FC = () => {
               {/* Bookings Section */}
               {selectedDate && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">
-                    Current Bookings
-                  </h3>
-                  <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-base font-semibold text-strong mb-1">
+                        Current Bookings
+                      </h3>
+                      <p className="text-xs text-weak">
+                        Manage bookings for this time slot
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-strong">
+                        {selectedSlotBookings.length}
+                      </div>
+                      <div className="text-xs text-weak uppercase tracking-wide">
+                        {selectedSlotBookings.length === 1
+                          ? "Booking"
+                          : "Bookings"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
                     {isLoadingBookings ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
+                      <div className="flex items-center justify-center py-12">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand"></div>
+                          <div className="text-center">
+                            <p className="text-sm font-medium text-strong mb-1">
+                              Loading bookings...
+                            </p>
+                            <p className="text-xs text-weak">
+                              Please wait while we fetch the data
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     ) : selectedSlotBookings.length > 0 ? (
                       selectedSlotBookings.map((booking) => (
                         <div
                           key={booking.id}
-                          className="p-4 rounded-lg border border-gray-200 bg-white hover:shadow-md transition-shadow cursor-pointer"
+                          className="group bg-background rounded-lg border border-stroke-weak hover:border-stroke-strong hover:shadow-sm transition-all duration-200 cursor-pointer overflow-hidden p-4"
                           onClick={() => {
                             setSelectedBookingToUpdate(booking);
                             setIsUpdateBookingDialogOpen(true);
                           }}
                         >
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-semibold text-lg">
-                                {booking.users.full_name}
-                              </h3>
-                              <p className="text-sm text-gray-600">
-                                {booking.tours.title}
-                              </p>
+                          {/* Top Row: Customer Name & Amount Due */}
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-base font-semibold text-strong truncate">
+                              {booking.users.full_name || "Walk-Up Customer"}
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                              <StatusBadge
-                                status={booking.status.toLowerCase() as any}
-                                type="booking"
-                              />
+                            {/* Amount Due Badge */}
+                            <div>
+                              <span
+                                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${booking.status === "pending" || booking.status === "unpaid" ? "bg-yellow-100 text-yellow-700 border border-yellow-200" : "bg-green-100 text-green-700 border border-green-200"}`}
+                              >
+                                $
+                                {typeof booking.total_price === "string"
+                                  ? parseFloat(booking.total_price).toFixed(2)
+                                  : booking.total_price.toFixed(2)}{" "}
+                                {booking.status === "pending" ||
+                                booking.status === "unpaid"
+                                  ? "Pending"
+                                  : "Paid"}
+                              </span>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <p className="text-gray-600">Reference Number</p>
-                              <p className="font-medium">
-                                {booking.reference_number}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Slots</p>
-                              <p className="font-medium">
-                                {booking.slots} people
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Total Price</p>
-                              <p className="font-medium">
-                                ${booking.total_price}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Email</p>
-                              <p className="font-medium truncate">
-                                {booking.users.email}
-                              </p>
-                            </div>
+
+                          {/* Subtitle: Number of people */}
+                          <div className="text-xs text-weak mb-2">
+                            {booking.slots}{" "}
+                            {booking.slots === 1 ? "Adult" : "Adults"}
+                          </div>
+
+                          {/* Booking Type & Date/Time Row */}
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm flex items-center gap-1">
+                              <span className="text-yellow-600">
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  fill="currentColor"
+                                  viewBox="0 0 20 20"
+                                >
+                                  <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 12H9v-2h2v2zm0-4H9V6h2v4z" />
+                                </svg>
+                              </span>
+                              {booking.tours.title || "General Admission"}
+                            </span>
+                          </div>
+
+                          {/* Status Badge + Date/Time */}
+                          <div className="flex items-center gap-2 mb-1">
+                            {/* Status Badge */}
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${isPastDate(booking.booking_date) ? "bg-orange-100 text-orange-700 border border-orange-200" : "bg-green-100 text-green-700 border border-green-200"}`}
+                            >
+                              {isPastDate(booking.booking_date)
+                                ? "Past"
+                                : booking.status.charAt(0).toUpperCase() +
+                                  booking.status.slice(1)}
+                            </span>
+                            <span className="text-xs text-strong">
+                              {format(
+                                new Date(booking.booking_date),
+                                "EEEE, MMMM do yyyy @ h:mmaaa"
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Meta Info */}
+                          <div className="text-xs text-weak mt-2">
+                            {format(
+                              new Date(booking.created_at),
+                              "M/d/yy @ h:mmaaa"
+                            )}{" "}
+                            by {booking.users.full_name || "System"}
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                        <p>No bookings for this slot</p>
-                        <p className="text-sm mt-1">
+                      <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="w-12 h-12 bg-fill rounded-full flex items-center justify-center mb-4">
+                          <UserPlus className="h-6 w-6 text-weak" />
+                        </div>
+                        <h4 className="text-base font-semibold text-strong mb-2">
+                          No bookings found
+                        </h4>
+                        <p className="text-xs text-weak max-w-sm leading-relaxed">
                           {selectedDate && isPastDate(selectedDate)
-                            ? "Cannot create bookings for past dates"
-                            : "Select another slot to view bookings"}
+                            ? "This date has passed and cannot accept new bookings."
+                            : "There are no bookings for this time slot yet. You can create the first booking using the button below."}
                         </p>
                       </div>
                     )}
@@ -831,20 +721,20 @@ const CalendarBookingPage: React.FC = () => {
                     slot.tour_type === selectedTourForBooking?.title &&
                     slot.available > 0
                 ) && (
-                  <div className="mt-6">
+                  <div className="mt-4">
                     <div
-                      className="bg-background rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-all cursor-pointer group"
+                      className="bg-background rounded-lg shadow-sm border border-stroke-strong p-3 hover:shadow-md transition-all cursor-pointer group"
                       onClick={() => setIsCreateBookingOpen(true)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="bg-brand/10 p-3 rounded-lg group-hover:bg-brand/20 transition-colors">
-                          <Plus className="h-6 w-6 text-brand" />
+                        <div className="bg-brand/10 p-2 rounded-lg group-hover:bg-brand/20 transition-colors">
+                          <Plus className="h-4 w-4 text-brand" />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg group-hover:text-brand transition-colors">
+                          <h3 className="font-semibold text-sm group-hover:text-brand transition-colors text-strong">
                             Create New Booking
                           </h3>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-xs text-weak">
                             Click to create a new booking for this date and tour
                           </p>
                         </div>
