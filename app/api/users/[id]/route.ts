@@ -3,10 +3,10 @@ import { updateUserServerAction } from "@/app/_features/users/api/updateUser";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user_id = params.id;
+    const { id: user_id } = await params;
     const body = await request.json();
     const { first_name, last_name, role, phone_number } = body;
 

@@ -26,10 +26,13 @@ import UpsertProductV2 from "./UpsertProductV2";
 
 interface ProductTableProps {
   products: Product[];
-  tours: { id: string; title: string }[];
+  tours?: { id: string; title: string }[];
 }
 
-const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
+const ProductTable: React.FC<ProductTableProps> = ({
+  products,
+  tours = [],
+}) => {
   const router = useRouter();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
