@@ -13,6 +13,7 @@ const protectedRoutes = new Map([
   ["/api/reviews", ["admin", "reservation_agent"]],
   ["/api/tours/manage", ["admin", "reservation_agent"]],
   ["/api/admin", ["admin"]],
+  ["/api/users/", ["admin"]], // User update API - admin only
 ]);
 
 // Cache for user roles to avoid repeated database calls
@@ -42,8 +43,6 @@ async function getUserRole(userId: string, supabase: any) {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
-      console.log("user", user);
 
       if (user?.user_metadata?.role) {
         const role = user.user_metadata.role;

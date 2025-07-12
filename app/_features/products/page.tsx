@@ -11,23 +11,13 @@ export default async function ProductsPage() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  const { data: tours } = await supabase
-    .from("tours")
-    .select("id, name")
-    .order("name");
-
-  const mappedTours = (tours || []).map((tour: any) => ({
-    id: tour.id,
-    title: tour.name,
-  }));
-
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Products</h1>
         <CreateProduct />
       </div>
-      <ProductTable products={products || []} tours={mappedTours} />
+      <ProductTable products={products || []} />
     </div>
   );
 }

@@ -217,18 +217,18 @@ const UpdateBookingPage = () => {
           self.findIndex((b) => b.additional_id === booking.additional_id)
       );
 
-      console.log("Original additional bookings:", additionalData);
-      console.log(
-        "Filtered unique additional bookings:",
-        uniqueAdditionalBookings
-      );
+      // console.log("Original additional bookings:", additionalData);
+      // console.log(
+      //   "Filtered unique additional bookings:",
+      //   uniqueAdditionalBookings
+      // );
 
       // Additional debugging to check for duplicate keys
       const keys = uniqueAdditionalBookings.map(
         (booking, index) =>
           `additional-${booking.additional_id}-${booking.additional_created_at}-${index}`
       );
-      console.log("Generated keys:", keys);
+      // console.log("Generated keys:", keys);
       const duplicateKeys = keys.filter(
         (key, index) => keys.indexOf(key) !== index
       );

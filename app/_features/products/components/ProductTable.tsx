@@ -11,13 +11,18 @@ import { Pencil, Trash2, ZoomIn } from "lucide-react";
 import { toast } from "sonner";
 import { deleteProduct } from "../api/deleteProduct";
 import { useRouter } from "next/navigation";
-import UpdateProduct from "./UpdateProduct";
 import AssignProductToTour from "./AssignProductToTour";
 import { Tooltip } from "@/components/ui/tooltip";
-import MainModal, {
-  ImagePreviewModal,
-} from "@/app/_components/custom-modals/main-modal";
+
 import { DeleteAlertDialog } from "@/app/_components/custom-modals/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import UpsertProductV2 from "./UpsertProductV2";
 
 interface ProductTableProps {
   products: Product[];
@@ -36,6 +41,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
@@ -61,6 +67,7 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
     } finally {
       setIsDeleting(false);
       setProductToDelete(null);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -71,12 +78,11 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
 
   const columns: ColumnDef<Product>[] = [
     {
-      accessorKey: "image_url",
-      header: "Product Image",
-      size: 120,
+      accessorKey: "name",
+      header: "Product Name",
       cell: ({ row }) => (
-        <div className="flex justify-center items-center w-full">
-          <div className="relative h-24 w-full flex items-center justify-center rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+        <div className="flex items-center space-x-3">
+          <div className="relative h-14 w-14 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
             {row.original.image_url ? (
               <>
                 <Image
@@ -84,8 +90,9 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
                   alt={`${row.original.name} product image`}
                   fill
                   className="object-cover hover:scale-105 transition-transform duration-200"
-                  sizes="96px"
+                  sizes="56px"
                   priority={false}
+                  quality={90}
                 />
                 <div
                   className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center"
@@ -96,33 +103,25 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
                     )
                   }
                 >
-                  <ZoomIn className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <ZoomIn className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </div>
               </>
             ) : (
-              <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center mb-1">
-                  <span className="text-gray-500 text-xs">📷</span>
+              <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                <div className="w-7 h-7 bg-gray-300 rounded-full flex items-center justify-center">
+                  <span className="text-gray-500 text-sm">📷</span>
                 </div>
-                <span className="text-gray-500 text-xs font-medium text-center px-2">
-                  No Image
-                </span>
               </div>
             )}
           </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "name",
-      header: "Product Name",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ row }) => (
-        <div className="max-w-xs truncate">
-          {row.original.description || "No description"}
+          <div className="flex-1 min-w-0">
+            <div className="font-semibold text-gray-900 text-base leading-tight truncate">
+              {row.original.name}
+            </div>
+            <div className="text-sm text-gray-600 leading-relaxed mt-1 line-clamp-2">
+              {row.original.description || "No description available"}
+            </div>
+          </div>
         </div>
       ),
     },
@@ -133,7 +132,6 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
         <div className="font-medium">${row.original.price.toFixed(2)}</div>
       ),
     },
-
     {
       accessorKey: "created_at",
       header: "Date Created",
@@ -146,46 +144,39 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <MainModal
-            isOpen={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            title="Edit Product"
-            description="Edit the product details"
-            maxWidth="2xl"
-            trigger={
-              <Tooltip content="Edit product details">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(row.original)}
-                  className="h-8 px-3 text-xs font-medium text-weak"
-                >
-                  <Pencil className="h-2 w-2 mr-1 text-weak" />
-                  Edit Product
-                </Button>
-              </Tooltip>
-            }
-            onClose={() => setIsEditDialogOpen(false)}
-          >
-            {editingProduct && (
-              <UpdateProduct
-                product={editingProduct}
-                onSuccess={() => setIsEditDialogOpen(false)}
-                onCancel={() => setIsEditDialogOpen(false)}
-              />
-            )}
-          </MainModal>
-          <AssignProductToTour product={row.original} tours={tours as any} />
+          <Tooltip content="Edit this product">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEdit(row.original)}
+              className="h-8 px-3 text-xs font-medium"
+            >
+              <Pencil className="h-4 w-4 mr-1" />
+              Edit
+            </Button>
+          </Tooltip>
+
+          <Tooltip content="Assign to tours">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAssignDialogOpen(true)}
+              className="h-8 px-3 text-xs font-medium"
+            >
+              Assign to tour
+            </Button>
+          </Tooltip>
+
           <Tooltip content="Permanently delete this product">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleDeleteClick(row.original.id)}
               disabled={isDeleting}
-              className="h-8 px-3 text-xs font-medium text-weak"
+              className="h-8 px-3 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50"
             >
-              <Trash2 className="h-4 w-4 text-weak" />
-              Remove Product
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
             </Button>
           </Tooltip>
         </div>
@@ -202,46 +193,55 @@ const ProductTable: React.FC<ProductTableProps> = ({ products, tours }) => {
         filterPlaceholder="Filter products..."
       />
 
-      {/* Image Preview Modal */}
-      <ImagePreviewModal
-        isOpen={isPreviewOpen}
-        onOpenChange={setIsPreviewOpen}
-        imageSrc={previewImage?.url || ""}
-        imageAlt={previewImage?.name || "Product image"}
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>Edit the product details</DialogDescription>
+          </DialogHeader>
+
+          <UpsertProductV2
+            product={editingProduct || undefined}
+            onSuccess={() => setIsEditDialogOpen(false)}
+            onCancel={() => setIsEditDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Product to Tour Dialog */}
+      <AssignProductToTour
+        product={
+          products.find((p) => p.id === editingProduct?.id) || products[0]
+        }
+        open={isAssignDialogOpen}
+        onOpenChange={setIsAssignDialogOpen}
       />
-      {/* <MainModal
-        isOpen={isPreviewOpen}
-        onOpenChange={setIsPreviewOpen}
-        title="Product Image Preview"
-        maxWidth="4xl"
-        showCloseButton={true}
-        className="p-0 overflow-hidden"
-      >
-        <div className="relative">
-          {previewImage && (
-            <div className="relative w-full flex items-center justify-center">
-              <div className="relative max-w-full max-h-[80vh]">
+
+      {/* Image Preview Modal */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          <DialogHeader className="sr-only">
+            <DialogTitle className="sr-only">Product Image Preview</DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full flex items-center justify-center bg-gray-50">
+            {previewImage && (
+              <div className="relative max-w-full max-h-[80vh] ">
                 <Image
                   src={previewImage.url}
                   alt={`${previewImage.name} product image`}
                   width={0}
                   height={0}
-                  className="w-auto h-auto max-w-full max-h-[80vh] object-contain"
+                  className="w-auto h-auto max-w-full max-h-[80vh] object-contain rounded-lg"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, (max-width: 1600px) 80vw, 1600px"
                   priority={true}
                   quality={95}
-                  unoptimized={false}
                 />
               </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-6">
-                <h3 className="text-white text-lg font-semibold">
-                  {previewImage.name}
-                </h3>
-              </div>
-            </div>
-          )}
-        </div>
-      </MainModal> */}
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <DeleteAlertDialog

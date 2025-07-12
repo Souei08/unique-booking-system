@@ -1,16 +1,7 @@
 import { UsersTable } from "@/app/_features/users/components/UsersTable";
-
 import { getAllUsers } from "@/app/_features/users/api/getAllUsers";
 import ContentLayout from "../ContentLayout";
-
-interface User {
-  id: string;
-  full_name: string;
-  email: string;
-  role: string;
-  created_at: string;
-  last_login: string;
-}
+import { User } from "@/app/_features/users/types";
 
 export default async function UsersPage() {
   const { users, error } = await getAllUsers();

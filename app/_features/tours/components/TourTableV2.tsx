@@ -3,15 +3,20 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Tour } from "@/app/_features/tours/tour-types";
 import { format } from "date-fns";
+import Image from "next/image";
 import {
-  Eye,
   MoreHorizontal,
   Pencil,
-  Trash2,
   Calendar,
-  Link,
   LinkIcon,
   MapPin,
+  Settings,
+  ImageIcon,
+  DollarSign,
+  FileText,
+  Users,
+  MessageSquare,
+  Copy,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,8 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { TableV2 } from "@/app/_components/common/TableV2";
-import { redirect, useRouter } from "next/navigation";
-import UpsertTourV2 from "../forms/upsert-tour-v2/UpsertTourV2";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
@@ -37,9 +41,11 @@ import {
 import { useState, useEffect } from "react";
 import { TourScheduleV2 } from "../forms/tour-schedule-v2/TourScheduleV2";
 import UpsertTourV2Stepped from "../forms/upsert-tour-v2/UpsertTourV2Stepped";
+import { TourSectionUpdate, TourSection } from "./TourSectionUpdate";
 
 import { TourFilters, TourFilters as TourFiltersType } from "./TourFilters";
 import { getAllToursV2 } from "../api/getAllToursV2";
+import { toast } from "sonner";
 
 interface TourTableV2Props {
   onView?: (tour: Tour) => void;
@@ -56,6 +62,10 @@ export function TourTableV2({ onView }: TourTableV2Props) {
   const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
+  const [isSectionUpdateOpen, setIsSectionUpdateOpen] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<TourSection | null>(
+    null
+  );
   const router = useRouter();
 
   // Filters state
@@ -143,18 +153,39 @@ export function TourTableV2({ onView }: TourTableV2Props) {
         }
 
         return (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8 rounded-md">
-              <AvatarImage
-                src={imageUrl}
-                alt={tour.title}
-                className="object-cover rounded-md"
-              />
-              <AvatarFallback className="text-xs font-semibold text-strong bg-brand/20 rounded-md">
-                <MapPin className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-            {tour.title}
+          <div className="flex items-center space-x-3">
+            <div className="relative h-14 w-14 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+              {imageUrl ? (
+                <>
+                  <Image
+                    src={imageUrl}
+                    alt={`${tour.title} tour image`}
+                    fill
+                    className="object-cover hover:scale-105 transition-transform duration-200"
+                    sizes="200px"
+                    priority={true as any}
+                    quality={100}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  </div>
+                </>
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+                  <div className="w-7 h-7 bg-gray-300 rounded-full flex items-center justify-center">
+                    <MapPin className="h-4 w-4 text-gray-500" />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-gray-900 text-base leading-tight truncate">
+                {tour.title}
+              </div>
+              <div className="text-sm text-gray-600 leading-relaxed mt-1 line-clamp-2 text-ellipsis w-full max-w-s whitespace-pre-line break-words">
+                {tour.description || "No description available"}
+              </div>
+            </div>
           </div>
         );
       },
@@ -247,24 +278,114 @@ export function TourTableV2({ onView }: TourTableV2Props) {
                 className="cursor-pointer"
               >
                 <LinkIcon className="mr-2 h-4 w-4" />
-                View Tour Booking Widget
+                View Tour
               </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => {
-                  setSelectedTour(tour);
-                  setIsTourDialogOpen(true);
+                  const tourLink = `${window.location.origin}/widget?booking_id=${tour.id}`;
+                  navigator.clipboard.writeText(tourLink);
+                  toast.success("Tour link copied to clipboard!");
                 }}
                 className="cursor-pointer"
               >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit Tour
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Link to Tour
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Quick Updates</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setSelectedSection("basic-info");
+                  setIsSectionUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Update Basic Info
               </DropdownMenuItem>
 
               <DropdownMenuItem
                 onClick={() => {
                   setSelectedTour(tour);
-                  setIsScheduleDialogOpen(true);
+                  setSelectedSection("tour-details");
+                  setIsSectionUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Update Tour Details
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setSelectedSection("pricing");
+                  setIsSectionUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <DollarSign className="mr-2 h-4 w-4" />
+                Update Pricing
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setSelectedSection("location");
+                  setIsSectionUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                Update Location
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setSelectedSection("features");
+                  setIsSectionUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Update Features
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setSelectedSection("additional-info");
+                  setIsSectionUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Update Additional Info
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setSelectedSection("images");
+                  setIsSectionUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <ImageIcon className="mr-2 h-4 w-4" />
+                Update Images
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTour(tour);
+                  setSelectedSection("schedule");
+                  setIsSectionUpdateOpen(true);
                 }}
                 className="cursor-pointer"
               >
@@ -353,6 +474,22 @@ export function TourTableV2({ onView }: TourTableV2Props) {
           {selectedTour && <TourScheduleV2 selectedTour={selectedTour} />}
         </DialogContent>
       </Dialog>
+
+      {/* Section Update Dialog */}
+      {selectedTour && selectedSection && (
+        <TourSectionUpdate
+          tour={selectedTour}
+          section={selectedSection}
+          isOpen={isSectionUpdateOpen}
+          onClose={() => {
+            setIsSectionUpdateOpen(false);
+            setSelectedSection(null);
+          }}
+          onSuccess={() => {
+            handleRefresh(); // Refresh the tours list after successful update
+          }}
+        />
+      )}
     </div>
   );
 }

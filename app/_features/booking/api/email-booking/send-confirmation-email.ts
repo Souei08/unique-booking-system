@@ -31,7 +31,7 @@ export async function sendBookingConfirmationEmail(bookingData: {
 }) {
   try {
     const data = await resend.emails.send({
-      from: "Unique Tours And Rentals <onboarding@resend.dev>", // ✅ Use a verified sender domain
+      from: "Unique Tours And Rentals <info@uniquetoursandrentals.com>", // ✅ Use a verified sender domain
       to: "jubet.sode.5@gmail.com",
       subject: `Booking Confirmation - ${bookingData.tour_name}`,
       react: ConfirmationEmailTemplate({ bookingData }),

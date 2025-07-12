@@ -5,7 +5,7 @@ export async function getAllUsers() {
     const supabase = await createClient();
 
     const { data: users, error } = await supabase
-      .from("users")
+      .from("users_with_auth")
       .select("*")
       .order("created_at", { ascending: false });
 

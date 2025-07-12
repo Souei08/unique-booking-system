@@ -29,15 +29,11 @@ export default function AcceptInvitePage() {
       try {
         const token_hash = searchParams.get("token_hash");
 
-        console.log("token_hash", token_hash);
-
         if (!token_hash) {
           setStatus("error");
           setErrorMessage("Missing invite token.");
           return;
         }
-
-        console.log("token_hash", token_hash);
 
         // Sign out current user to prevent auth conflicts
         // await supabase.auth.signOut();

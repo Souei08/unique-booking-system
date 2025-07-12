@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,14 @@ import { AlertCircle } from "lucide-react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
 import { inviteUserServerAction } from "../api/inviteUserRole";
+import CustomPhoneInput from "@/app/_components/common/PhoneInput";
 
 const userFormSchema = z.object({
-  full_name: z.string().min(2, {
-    message: "Full name must be at least 2 characters.",
+  first_name: z.string().min(2, {
+    message: "First name must be at least 2 characters.",
+  }),
+  last_name: z.string().min(2, {
+    message: "Last name must be at least 2 characters.",
   }),
   email: z.string().email({
     message: "Please enter a valid email address.",
@@ -37,6 +41,7 @@ const userFormSchema = z.object({
   role: z.enum(["reservation_agent", "reseller", "ADMIN"], {
     required_error: "Please select a role.",
   }),
+  phone_number: z.string().optional(),
 });
 
 type UserFormValues = z.infer<typeof userFormSchema>;
@@ -51,9 +56,11 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
-      full_name: "",
+      first_name: "",
+      last_name: "",
       email: "",
       role: undefined,
+      phone_number: "",
     },
   });
 
@@ -96,31 +103,52 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
 
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 mt-5 w-full"
-      >
-        <FormField
-          control={form.control}
-          name="full_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter full name"
-                  {...field}
-                  className={
-                    form.formState.errors.root
-                      ? "border-destructive text-destructive"
-                      : ""
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 w-full">
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="first_name"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter first name"
+                    {...field}
+                    className={
+                      form.formState.errors.root
+                        ? "border-destructive text-destructive"
+                        : ""
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="last_name"
+            render={({ field }) => (
+              <FormItem className="flex-1">
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Enter last name"
+                    {...field}
+                    className={
+                      form.formState.errors.root
+                        ? "border-destructive text-destructive"
+                        : ""
+                    }
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <FormField
           control={form.control}
@@ -173,6 +201,31 @@ export function UpsertUser({ onSuccess }: UpsertUserProps) {
                   <SelectItem value="ADMIN">Admin</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="phone_number"
+          render={({ field, fieldState }) => (
+            <FormItem>
+              <FormLabel>Phone Number</FormLabel>
+              <FormControl>
+                <Controller
+                  name="phone_number"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <CustomPhoneInput
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

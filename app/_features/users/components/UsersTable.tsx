@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { MoreHorizontal, Pencil, Trash2, User } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, User as UserIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,19 +22,11 @@ import {
 import { useState } from "react";
 import { RoleAvatar } from "@/app/_components/common/RoleAvatar";
 import { UpsertUser } from "../form/UpsertUser";
+import { UpdateUser } from "../form/UpdateUser";
 import { createServerClient } from "@supabase/ssr";
 import { inviteUserServerAction } from "../api/inviteUserRole";
 import { showErrorToast, showSuccessToast } from "@/utils/toastUtils";
-
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  created_at: string;
-  last_login?: string;
-  avatar_url?: string;
-}
+import { User } from "../types";
 
 interface UsersTableProps {
   users: User[];
@@ -44,6 +36,7 @@ interface UsersTableProps {
 export function UsersTable({ users, onView }: UsersTableProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const columns: ColumnDef<User>[] = [
     {
@@ -67,6 +60,14 @@ export function UsersTable({ users, onView }: UsersTableProps) {
       header: "Email",
     },
     {
+      accessorKey: "phone_number",
+      header: "Phone",
+      cell: ({ row }) => {
+        const phoneNumber = row.getValue("phone_number");
+        return phoneNumber || <span className="text-weak">Not provided</span>;
+      },
+    },
+    {
       accessorKey: "role",
       header: "Role",
     },
@@ -75,6 +76,17 @@ export function UsersTable({ users, onView }: UsersTableProps) {
       header: "Date Created",
       cell: ({ row }) => {
         return format(new Date(row.getValue("created_at")), "MMM dd, yyyy");
+      },
+    },
+    {
+      accessorKey: "last_sign_in_at",
+      header: "Last Sign In",
+      cell: ({ row }) => {
+        const lastSignIn = row.getValue("last_sign_in_at");
+        if (!lastSignIn) {
+          return <span className="text-weak">Waiting for verification</span>;
+        }
+        return format(new Date(lastSignIn as string), "MMM dd, yyyy HH:mm");
       },
     },
     {
@@ -93,49 +105,16 @@ export function UsersTable({ users, onView }: UsersTableProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {/* <DropdownMenuItem
-                onClick={async () => {
+              <DropdownMenuItem
+                onClick={() => {
                   setSelectedUser(user);
-
-                  try {
-                    const res = await inviteUserServerAction({
-                      email: user.email,
-                      full_name: user.full_name,
-                      role: user.role,
-                    });
-
-                    console.log(res);
-
-                    if (res.success === false) {
-                      showErrorToast(res.error || "Failed to send invitation.");
-
-                      // Set form errors based on the response
-                      if (res.error) {
-                        // If there's a specific field error, you can set it like this:
-                        // form.setError("email", { message: res.error });
-
-                        showErrorToast(
-                          res.error || "Failed to send invitation."
-                        );
-                      }
-
-                      return false;
-                    }
-
-                    showSuccessToast("Invitation sent successfully!");
-                  } catch (error: any) {
-                    console.error("Error sending invite:", error);
-                    showErrorToast(
-                      error.message || "Failed to send invitation."
-                    );
-                  }
+                  setIsEditDialogOpen(true);
                 }}
                 className="cursor-pointer"
               >
                 <Pencil className="mr-2 h-4 w-4" />
-                Resend Invite
-              </DropdownMenuItem> */}
-
+                Edit User
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
@@ -174,6 +153,31 @@ export function UsersTable({ users, onView }: UsersTableProps) {
           {/* Add your user form component here */}
           {/* <UserForm onSuccess={() => setIsUserDialogOpen(false)} /> */}
           <UpsertUser onSuccess={() => setIsUserDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-xl sm:max-w-lg md:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+
+          {selectedUser && (
+            <UpdateUser
+              user={selectedUser}
+              onSuccess={() => {
+                setIsEditDialogOpen(false);
+                setSelectedUser(null);
+                // Optionally refresh the page or update the users list
+                window.location.reload();
+              }}
+              onCancel={() => {
+                setIsEditDialogOpen(false);
+                setSelectedUser(null);
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

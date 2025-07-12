@@ -7,29 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import React, { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import React from "react";
+import { useModal } from "./useModal";
+import { useRouter } from "next/navigation";
 
-import UpsertTourV2 from "../../_features/tours/forms/upsert-tour-v2/UpsertTourV2";
-import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/CreateBookingv2";
-import { UpsertUser } from "@/app/_features/users/form/UpsertUser";
-import CreateProduct from "@/app/_features/products/components/CreateProduct";
-import QuickBooking from "@/app/_features/booking/components/QuickBooking/QuickBooking";
-import CreatePromo from "@/app/_features/promos/components/CreatePromo";
-import UpsertTourV2Stepped from "@/app/_features/tours/forms/upsert-tour-v2/UpsertTourV2Stepped";
-import { Tooltip } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+// import UpsertTourV2 from "../../_features/tours/forms/upsert-tour-v2/UpsertTourV2";
+// import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/CreateBookingv2";
+
 import MainModal from "@/app/_components/custom-modals/main-modal";
+import { MODAL_CONFIGS } from "./modalConfigs";
 
 interface ContentLayoutProps {
   title: string;
@@ -40,46 +26,223 @@ interface ContentLayoutProps {
   modalTitle?: string;
   modalDescription?: string;
   modalRoute?: "booking" | "tours" | "users" | "products" | "promos";
+  displayMode?: "modal" | "page" | "redirect";
+  redirectUrl?: string;
 }
+
+// Reusable Modal Component
+interface ModalWrapperProps {
+  isOpen: boolean;
+  onClose: () => void;
+  modalRoute: string;
+  modalTitle?: string;
+  modalDescription?: string;
+}
+
+const ModalWrapper: React.FC<ModalWrapperProps> = ({
+  isOpen,
+  onClose,
+  modalRoute,
+  modalTitle,
+  modalDescription,
+}) => {
+  const config = MODAL_CONFIGS[modalRoute];
+
+  if (!config) return null;
+
+  const {
+    component: Component,
+    props,
+    useMainModal,
+    dialogClassName,
+    disableCloseOnOutside,
+    showCloseConfirmation,
+  } = config;
+
+  // Handle success callback
+  const handleSuccess = () => {
+    onClose();
+  };
+
+  // Handle cancel callback
+  const handleCancel = () => {
+    onClose();
+  };
+
+  // Component props with callbacks
+  const componentProps = {
+    ...props,
+    onSuccess: handleSuccess,
+    onCancel: handleCancel,
+    onClose: onClose,
+  };
+
+  // Use MainModal for booking
+  if (useMainModal) {
+    return (
+      <MainModal
+        isOpen={isOpen}
+        onOpenChange={(open) => !open && onClose()}
+        title={modalTitle || "Booking"}
+        description={modalDescription || "Book a tour"}
+        maxWidth="responsive"
+        onClose={onClose}
+      >
+        <Component {...componentProps} />
+      </MainModal>
+    );
+  }
+
+  // Use regular Dialog for other modals
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent
+        className={dialogClassName}
+        disableCloseOnOutside={disableCloseOnOutside}
+        showCloseConfirmation={showCloseConfirmation}
+        onCloseConfirmCallback={onClose}
+      >
+        <DialogHeader>
+          <DialogTitle className="text-strong text-xl font-bold">
+            {modalTitle}
+          </DialogTitle>
+          <DialogDescription className="text-weak text-sm">
+            {modalDescription}
+          </DialogDescription>
+        </DialogHeader>
+        <Component {...componentProps} />
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Page Content Component
+interface PageContentWrapperProps {
+  modalRoute: string;
+  modalTitle?: string;
+  modalDescription?: string;
+  onBack: () => void;
+}
+
+const PageContentWrapper: React.FC<PageContentWrapperProps> = ({
+  modalRoute,
+  modalTitle,
+  modalDescription,
+  onBack,
+}) => {
+  const config = MODAL_CONFIGS[modalRoute];
+
+  if (!config) return null;
+
+  const { component: Component, props } = config;
+
+  // Handle success callback
+  const handleSuccess = () => {
+    onBack();
+  };
+
+  // Handle cancel callback
+  const handleCancel = () => {
+    onBack();
+  };
+
+  // Component props with callbacks
+  const componentProps = {
+    ...props,
+    onSuccess: handleSuccess,
+    onCancel: handleCancel,
+    onClose: onBack,
+  };
+
+  return (
+    <div className="mt-6">
+      {/* Back button */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand"
+        >
+          <svg
+            className="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back
+        </button>
+      </div>
+
+      {/* Page header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-strong">{modalTitle}</h2>
+        {modalDescription && (
+          <p className="text-text mt-2">{modalDescription}</p>
+        )}
+      </div>
+
+      {/* Component content */}
+      <div className="bg-white rounded-lg shadow">
+        <Component {...componentProps} />
+      </div>
+    </div>
+  );
+};
 
 const ContentLayout = ({
   title,
   description,
   children,
   modalTitle,
-
   buttonText,
   modalDescription,
   modalRoute,
+  displayMode = "modal",
+  redirectUrl,
 }: ContentLayoutProps) => {
-  const [isTourDialogOpen, setIsTourDialogOpen] = useState(false);
-  const [isUserDialogOpen, setIsUserDialogOpen] = useState(false);
-  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
-  const [isPromoDialogOpen, setIsPromoDialogOpen] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+  const { isOpen: isModalOpen, openModal, closeModal } = useModal();
+  const [isPageMode, setIsPageMode] = React.useState(false);
+  const router = useRouter();
 
   const handleButtonClick = () => {
-    if (modalRoute === "users") {
-      setIsUserDialogOpen(true);
-    } else if (modalRoute === "products") {
-      setIsProductDialogOpen(true);
-    } else if (modalRoute === "promos") {
-      setIsPromoDialogOpen(true);
-    } else if (modalRoute === "tours") {
-      setIsTourDialogOpen(true);
-    } else if (modalRoute === "booking") {
-      setIsBookingDialogOpen(true);
+    if (displayMode === "redirect" && redirectUrl) {
+      // Handle redirect
+      router.push(redirectUrl);
+    } else if (modalRoute) {
+      if (displayMode === "page") {
+        setIsPageMode(true);
+      } else {
+        openModal();
+      }
     }
   };
 
-  // const handleDialogClose = (setDialogOpen: (value: boolean) => void) => {
-  //   if (modalRoute === "booking") {
-  //     setShowConfirmDialog(true);
-  //   } else {
-  //     setDialogOpen(false);
-  //   }
-  // };
+  const handleBackToMain = () => {
+    setIsPageMode(false);
+  };
+
+  // If in page mode, show the form content
+  if (isPageMode && modalRoute) {
+    return (
+      <main className="flex-1">
+        <div className="px-4 sm:px-6 lg:px-8 py-10 min-h-dvh">
+          <PageContentWrapper
+            modalRoute={modalRoute}
+            modalTitle={modalTitle}
+            modalDescription={modalDescription}
+            onBack={handleBackToMain}
+          />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1">
@@ -94,166 +257,32 @@ const ContentLayout = ({
             </p>
           </div>
 
-          {buttonText && (
-            <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-              <button
-                type="button"
-                className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand cursor-pointer"
-                onClick={handleButtonClick}
-              >
-                {buttonText}
-              </button>
-            </div>
-          )}
+          {buttonText &&
+            (modalRoute || (displayMode === "redirect" && redirectUrl)) && (
+              <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                <button
+                  type="button"
+                  className="block rounded-md bg-brand px-3 py-2 text-center text-sm font-semibold text-white shadow-xs hover:bg-brand-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand cursor-pointer"
+                  onClick={handleButtonClick}
+                >
+                  {buttonText}
+                </button>
+              </div>
+            )}
         </div>
 
         {children}
       </div>
 
-      <Dialog
-        open={isPromoDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsPromoDialogOpen(false);
-          } else {
-            setIsPromoDialogOpen(true);
-          }
-        }}
-      >
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5 text-center items-center">
-            <DialogTitle className="text-strong text-lg font-bold">
-              {modalTitle}
-            </DialogTitle>
-            <DialogDescription className="text-weak text-sm">
-              {modalDescription}
-            </DialogDescription>
-          </DialogHeader>
-
-          <CreatePromo onSuccess={() => setIsPromoDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={isTourDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsTourDialogOpen(false);
-          } else {
-            setIsTourDialogOpen(true);
-          }
-        }}
-      >
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5 text-center items-center border-b border-gray-200 pb-5">
-            <DialogTitle className="text-strong text-3xl font-bold">
-              {modalTitle}
-            </DialogTitle>
-            <DialogDescription className="text-weak text-sm">
-              {modalDescription}
-            </DialogDescription>
-          </DialogHeader>
-
-          {modalRoute === "tours" && (
-            <UpsertTourV2Stepped onSuccess={() => setIsTourDialogOpen(false)} />
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <MainModal
-        isOpen={isBookingDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsBookingDialogOpen(false);
-          } else {
-            setIsBookingDialogOpen(true);
-          }
-        }}
-        title={modalTitle || "Booking"}
-        description={modalDescription || "Book a tour"}
-        maxWidth="responsive"
-        onClose={() => setIsBookingDialogOpen(false)}
-      >
-        <QuickBooking
-          onClose={() => setIsBookingDialogOpen(false)}
-          selectedTour={null as any}
-          selectedDate={null as any}
-          selectedTime={null as any}
+      {modalRoute && displayMode === "modal" && (
+        <ModalWrapper
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          modalRoute={modalRoute}
+          modalTitle={modalTitle}
+          modalDescription={modalDescription}
         />
-      </MainModal>
-
-      {/* <Dialog
-        open={isBookingDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsBookingDialogOpen(false);
-          } else {
-            setIsBookingDialogOpen(true);
-          }
-        }}
-      >
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5 text-center items-center">
-            <DialogTitle className="text-strong text-xl font-bold">
-              {modalTitle}
-            </DialogTitle>
-            <DialogDescription className="text-weak text-sm">
-              {modalDescription}
-            </DialogDescription>
-          </DialogHeader>
-
-          {modalRoute === "booking" && (
-            <QuickBooking
-              onClose={() => setIsBookingDialogOpen(false)}
-              selectedTour={null as any}
-              selectedDate={null as any}
-              selectedTime={null as any}
-            />
-          )}
-        </DialogContent>
-      </Dialog> */}
-
-      <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader className="mb-5 text-center items-center">
-            <DialogTitle className="text-strong text-xl font-bold">
-              {modalTitle}
-            </DialogTitle>
-
-            <UpsertUser onSuccess={() => setIsUserDialogOpen(false)} />
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader className="mb-5 text-center items-center">
-            <DialogTitle className="text-strong text-xl font-bold">
-              {modalTitle}
-            </DialogTitle>
-          </DialogHeader>
-
-          <CreateProduct onSuccess={() => setIsProductDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to leave?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your booking progress will be lost if you leave this page. Are you
-              sure you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => setIsBookingDialogOpen(false)}>
-              Yes, leave page
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      )}
     </main>
   );
 };

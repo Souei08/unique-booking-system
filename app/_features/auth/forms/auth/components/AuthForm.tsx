@@ -42,20 +42,31 @@ export default function AuthForm<T extends FieldValues>({
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {fields.map(({ name, type, placeholder, label }) => (
-        <div key={String(name)}>
+        <div key={String(name)} className="space-y-1.5">
           <label
             className={`block mb-1 text-sm/6 font-medium ${
               errors[name] ? "text-red-500" : "text-strong"
-            }`}
+            } flex items-center justify-between`}
           >
-            {label}
+            <span>{label}</span>
+            {name === "password" && (
+              <a
+                href="/auth/set-password"
+                className="text-xs text-blue-600 hover:underline ml-2"
+                tabIndex={0}
+                style={{ float: "right" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                Forgot password?
+              </a>
+            )}
           </label>
           <input
             type={type}
             {...register(name as Path<T>)}
-            className={`block w-full rounded-md bg-white px-3 py-1.5 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
+            className={`block w-full rounded-md bg-white px-3 py-2 text-base text-strong outline-1 -outline-offset-1 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 sm:text-sm/6 ${
               errors[name]
                 ? "outline-red-500"
                 : "outline-gray-300 focus:outline-indigo-600"

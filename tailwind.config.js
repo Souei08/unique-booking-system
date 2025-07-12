@@ -18,6 +18,12 @@ module.exports = {
         background: "#FFFFFF", // Pure white for base
         neutral: "#F9FAFB", // Neutral light gray for cards/sections (gray-50)
         text: "#172554", // Dark slate for main body text (slate-900)
+
+        // Input border design system
+        "input-border": "#E4E4E7", // Default input border (very soft gray, neutral, unobtrusive)
+        "input-border-focus": "#3B82F6", // Focused input border (clean blue, sky-500 / primary blue)
+        "input-border-error": "#EF4444", // Error input border (light red for invalid input)
+        "input-border-disabled": "#E4E4E7", // Disabled input border (same as default with opacity)
       },
 
       spacing: {

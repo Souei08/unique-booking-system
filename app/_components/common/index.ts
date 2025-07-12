@@ -6,6 +6,7 @@ export { TableV2 } from "./TableV2";
 export { ViewToggle } from "./ViewToggle";
 export { default as CompanyLogo } from "./logo";
 export { default as Steps } from "./steps";
+export { default as DatePickerInput } from "./DatePickerInput";
 
 // Loader components
 export {

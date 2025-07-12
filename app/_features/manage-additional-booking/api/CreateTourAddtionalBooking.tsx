@@ -82,7 +82,7 @@ export async function createTourAdditionalBooking(
       payment_id && payment_id.trim() !== "" ? String(payment_id) : null,
   };
 
-  console.log("Serialized input data:", serializedInput);
+  // console.log("Serialized input data:", serializedInput);
 
   try {
     const { data: result, error } = await supabase.rpc(
@@ -133,7 +133,7 @@ export async function createTourAdditionalBooking(
       },
     };
 
-    console.log("Serialized response:", serializedResponse);
+    // console.log("Serialized response:", serializedResponse);
     return serializedResponse;
   } catch (err: any) {
     console.error("Unhandled Error in Additional Booking:", err);
