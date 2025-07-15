@@ -1,15 +1,21 @@
-# 🧭 Unique Booking System
+# 🧭 Wentech – Tour Management System
 
-This is a **Tours Booking System** built using [Next.js](https://nextjs.org), designed to allow users to explore and book tours with ease. The project leverages modern frontend technologies to provide a fast, SEO-friendly, and scalable web application.
+**Wentech** is a full-stack **Tour Management System** built with **Next.js** and **Supabase**, designed to help users manage, browse, and book tours efficiently. The platform supports scalable architecture, real-time features, and server-side rendering – all hosted seamlessly on **Vercel**.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend Framework**: [Next.js](https://nextjs.org) (React)
+- **Backend & Database**: [Supabase](https://supabase.com) (PostgreSQL, Auth, Realtime)
+- **Hosting**: [Vercel](https://vercel.com)
 
 ---
 
 ## 🚀 Getting Started
 
-To run this project locally, follow these steps:
-
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/your-username/wentech.git
+cd wentech
