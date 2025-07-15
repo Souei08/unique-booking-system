@@ -8,6 +8,8 @@
 
 - **Frontend Framework**: [Next.js](https://nextjs.org) (React)
 - **Backend & Database**: [Supabase](https://supabase.com) (PostgreSQL, Auth, Realtime)
+- **Payments**: [Stripe](https://stripe.com)
+- **Email Services**: [Resend](https://resend.com)
 - **Hosting**: [Vercel](https://vercel.com)
 
 ---
@@ -19,3 +21,4 @@
 ```bash
 git clone https://github.com/your-username/wentech.git
 cd wentech
+npm install
