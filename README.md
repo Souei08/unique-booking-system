@@ -1,4 +1,4 @@
-# 🧭 Tours Booking System
+# 🧭 Unique Booking System
 
 This is a **Tours Booking System** built using [Next.js](https://nextjs.org), designed to allow users to explore and book tours with ease. The project leverages modern frontend technologies to provide a fast, SEO-friendly, and scalable web application.
 
