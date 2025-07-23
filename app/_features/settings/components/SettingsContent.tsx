@@ -40,7 +40,7 @@ export default function SettingsContent() {
   };
 
   return (
-    <div className="min-h-full bg-neutral">
+    <div className="min-h-full bg-white mt-7 p-6 rounded-lg">
       <header className="border-b border-stroke-weak">
         {/* Secondary navigation */}
         <nav className="flex overflow-x-auto py-4">

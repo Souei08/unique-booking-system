@@ -7,8 +7,8 @@ export default function BookingsPage() {
       title="Bookings"
       description="View and manage all current bookings for tours."
       buttonText="Create Direct Booking"
-      modalTitle="Create a Direct Booking"
-      modalDescription="Create a direct booking for a customer."
+      modalTitle="Admin Direct Booking"
+      modalDescription="Easily create a direct booking for a customer with just a few clicks."
       modalRoute="booking"
     >
       <BookingTableV2 />;

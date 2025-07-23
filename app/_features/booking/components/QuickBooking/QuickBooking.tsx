@@ -4,22 +4,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { createClient } from "@/supabase/client";
+import { getUser } from "@/app/_api/actions/auth/actions";
 
 // Components
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
 
 // Icons
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 
 // Booking Steps
 import CheckForm from "../CreateBookingv2/booking-steps/CheckForm";
@@ -45,6 +36,9 @@ import { sendBookingConfirmationEmail } from "../../api/email-booking/send-confi
 // Utils
 import { formatToDateString } from "@/app/_lib/utils/utils";
 import { CustomSlotType } from "../CreateBookingv2/booking-steps/SlotDetails";
+
+// Confirmation Dialog
+import { AlertDialog } from "@/components/ui/dialog";
 
 interface QuickBookingProps {
   onClose: () => void;
@@ -77,8 +71,8 @@ const QuickBooking = ({
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [numberOfPeople, setNumberOfPeople] = useState<number>(1);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<DateValue>(
-    initialSelectedDate || parseDate(new Date().toISOString().split("T")[0])
+  const [selectedDate, setSelectedDate] = useState<DateValue | null>(
+    initialSelectedDate || null
   );
   const [selectedTime, setSelectedTime] = useState<string>(
     initialSelectedTime || ""
@@ -111,6 +105,7 @@ const QuickBooking = ({
   >({});
   const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [authenticatedUser, setAuthenticatedUser] = useState<any>(null);
 
   const customSlotTypes =
     selectedTour?.custom_slot_types && selectedTour.custom_slot_types !== "[]"
@@ -121,6 +116,20 @@ const QuickBooking = ({
     selectedTour?.custom_slot_fields && selectedTour.custom_slot_fields !== "[]"
       ? JSON.parse(selectedTour.custom_slot_fields)
       : [];
+
+  // Get authenticated user on component mount
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getUser();
+        console.log(user);
+        setAuthenticatedUser(user);
+      } catch (error) {
+        console.error("Error fetching authenticated user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   // Update slot details when selectedTour changes
   useEffect(() => {
@@ -363,6 +372,7 @@ const QuickBooking = ({
         promo_code_id: appliedPromo?.id || null,
         promo_code: appliedPromo?.code || null,
         discount_amount: secureCalculation.discountAmount,
+        created_by: authenticatedUser?.id || "quick_booking",
       });
 
       if (!bookingResponse.success) {
@@ -471,15 +481,6 @@ const QuickBooking = ({
   // Add handler for back navigation
   const handleBack = () => {
     if (currentStep > 1) {
-      // If we're on step 3 and all info is available, stay on step 3
-      if (
-        currentStep === 3 &&
-        selectedTour?.id &&
-        selectedDate &&
-        selectedTime
-      ) {
-        return;
-      }
       setCurrentStep(currentStep - 1);
     } else {
       onClose();
@@ -557,137 +558,152 @@ const QuickBooking = ({
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="">
-        {/* Progress Bar */}
-        <div className="mb-4 md:mb-8 lg:mb-12 px-3 md:px-6">
-          <div className="flex flex-col gap-2 md:gap-6 mb-3 md:mb-4">
-            <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Professional Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* Left Section - Back Button */}
+            <div className="flex items-center gap-4">
               {currentStep > 1 ? (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={handleBack}
-                  className="flex items-center gap-1.5 md:gap-2 text-strong hover:bg-strong/10 transition-colors text-sm md:text-base -ml-1.5 md:-ml-2 px-3 md:px-4 py-1.5 md:py-2 border-strong/20 hover:border-strong/30"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-200 px-3 py-2 rounded-md font-medium"
                 >
-                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="hidden sm:inline">Back</span>
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="text-sm">Back</span>
                 </Button>
               ) : (
-                <div className="w-12 md:w-16" />
+                <div className="w-24" />
               )}
+            </div>
 
-              {/* {currentStep > 1 &&
-              !(
-                currentStep === 3 &&
-                selectedTour?.id &&
-                selectedDate &&
-                selectedTime
-              ) ? (
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  className="flex items-center gap-1.5 md:gap-2 text-strong hover:bg-strong/10 transition-colors text-sm md:text-base -ml-1.5 md:-ml-2 px-3 md:px-4 py-1.5 md:py-2 border-strong/20 hover:border-strong/30"
-                >
-                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="hidden sm:inline">Back</span>
-                </Button>
-              ) : (
-                <div className="w-12 md:w-16" />
-              )} */}
-              <div className="flex items-center gap-2.5 md:gap-4">
-                <h2 className="text-h2 font-bold text-strong">
-                  {currentStep === 1 && "Select Tour"}
+            {/* Center Section - Title and Progress */}
+            <div className="flex-1 flex flex-col items-center justify-center px-4">
+              <div className="text-center max-w-2xl">
+                <h1 className="text-lg lg:text-xl font-semibold text-gray-900 mb-1">
+                  {currentStep === 1 && "Select Your Tour"}
                   {currentStep === 2 && "Choose Date & Time"}
                   {currentStep === 3 && "Complete Booking"}
-                </h2>
-
-                <div className="flex items-center justify-center w-6 h-6 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-strong text-primary-foreground font-semibold text-xs md:text-base">
-                  {currentStep}
-                </div>
+                </h1>
+                <p className="text-xs lg:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+                  {currentStep === 1 &&
+                    "Browse our curated tours and select your perfect adventure"}
+                  {currentStep === 2 &&
+                    "Pick your preferred date, time, and number of participants"}
+                  {currentStep === 3 &&
+                    "Enter your details and complete the booking process"}
+                </p>
               </div>
             </div>
-          </div>
-          <div className="relative h-1 md:h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-            <div
-              className="absolute top-0 left-0 h-full bg-brand dark:bg-brand transition-all duration-300 ease-in-out"
-              style={{ width: `${(currentStep / 3) * 100}%` }}
-            />
+
+            {/* Right Section - Progress and Close */}
+            <div className="flex items-center gap-3">
+              {/* Progress Indicator */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3].map((step) => (
+                    <div
+                      key={step}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                        currentStep >= step
+                          ? "bg-blue-600 scale-125 shadow-sm"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-medium text-gray-500 hidden sm:block">
+                  {currentStep}/3
+                </span>
+              </div>
+
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCloseAttempt}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all duration-200 p-2 rounded-md"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Main Content */}
-        <div className="relative px-4 sm:px-6 md:px-10 py-6 sm:py-8">
-          {currentStep === 1 ? (
-            <SelectTours
-              setSelectedTour={handleTourSelect}
-              handleNext={() => setCurrentStep(2)}
-            />
-          ) : currentStep === 2 ? (
-            <AdminTourTimeAndDate
-              selectedTour={selectedTour!}
-              handleNext={() => setCurrentStep(3)}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              setSelectedDate={handleDateChange}
-              setSelectedTime={handleTimeSelect}
-              numberOfPeople={numberOfPeople}
-              setNumberOfPeople={setNumberOfPeople}
-              customSlotTypes={customSlotTypes}
-              setSlotDetails={setSlotDetails}
-              slotDetails={slotDetails}
-            />
-          ) : (
-            <CheckForm
-              selectedTour={selectedTour!}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              numberOfPeople={numberOfPeople}
-              customerInformation={customerInformation}
-              paymentInformation={paymentInformation}
-              setPaymentInformation={setPaymentInformation}
-              setCustomerInformation={setCustomerInformation}
-              handleCompleteBooking={handleCompleteBooking}
-              selectedProducts={selectedProducts}
-              setSelectedProducts={setSelectedProducts}
-              productQuantities={productQuantities}
-              setProductQuantities={setProductQuantities}
-              availableProducts={availableProducts}
-              setAvailableProducts={setAvailableProducts}
-              isAdmin={true}
-              isLoading={isLoading}
-              setNumberOfPeople={setNumberOfPeople}
-              calculateTotal={calculateTotal}
-              setSlotDetails={setSlotDetails}
-              slotDetails={slotDetails}
-              customSlotTypes={customSlotTypes}
-              customSlotFields={customSlotFields}
-              handleNext={() => {}}
-              appliedPromo={appliedPromo}
-              onPromoApplied={handlePromoApplied}
-              onPromoRemoved={handlePromoRemoved}
-              calculateSubtotal={calculateSubtotal}
-            />
-          )}
+      {/* Main Content */}
+      <main className="flex-1 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="p-6 sm:p-8">
+            {currentStep === 1 ? (
+              <SelectTours
+                setSelectedTour={handleTourSelect}
+                handleNext={() => setCurrentStep(2)}
+              />
+            ) : currentStep === 2 ? (
+              <AdminTourTimeAndDate
+                selectedTour={selectedTour!}
+                handleNext={() => setCurrentStep(3)}
+                selectedDate={selectedDate || null}
+                selectedTime={selectedTime}
+                setSelectedDate={handleDateChange}
+                setSelectedTime={handleTimeSelect}
+                numberOfPeople={numberOfPeople}
+                setNumberOfPeople={setNumberOfPeople}
+                customSlotTypes={customSlotTypes}
+                setSlotDetails={setSlotDetails}
+                slotDetails={slotDetails}
+              />
+            ) : (
+              <CheckForm
+                selectedTour={selectedTour!}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                numberOfPeople={numberOfPeople}
+                customerInformation={customerInformation}
+                paymentInformation={paymentInformation}
+                setPaymentInformation={setPaymentInformation}
+                setCustomerInformation={setCustomerInformation}
+                handleCompleteBooking={handleCompleteBooking}
+                selectedProducts={selectedProducts}
+                setSelectedProducts={setSelectedProducts}
+                productQuantities={productQuantities}
+                setProductQuantities={setProductQuantities}
+                availableProducts={availableProducts}
+                setAvailableProducts={setAvailableProducts}
+                isAdmin={true}
+                isLoading={isLoading}
+                setNumberOfPeople={setNumberOfPeople}
+                calculateTotal={calculateTotal}
+                setSlotDetails={setSlotDetails}
+                slotDetails={slotDetails}
+                customSlotTypes={customSlotTypes}
+                customSlotFields={customSlotFields}
+                handleNext={() => {}}
+                appliedPromo={appliedPromo}
+                onPromoApplied={handlePromoApplied}
+                onPromoRemoved={handlePromoRemoved}
+                calculateSubtotal={calculateSubtotal}
+              />
+            )}
+          </div>
         </div>
-      </div>
-
-      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to leave?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your booking progress will be lost if you leave this page. Are you
-              sure you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmClose}>
-              Yes, leave page
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      </main>
+      <AlertDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        type="error"
+        config={{
+          title: "Do you really want to exit?",
+          message: "Exiting now will discard any unsaved changes.",
+          confirmText: "Confirm",
+          cancelText: "Cancel",
+        }}
+        onConfirm={handleConfirmClose}
+        onCancel={() => setShowConfirmDialog(false)}
+      />
     </div>
   );
 };

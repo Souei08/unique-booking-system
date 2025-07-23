@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, Copy, Mail, Calendar, Clock, User } from "lucide-react";
+import { CheckCircle2, Copy, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tour } from "@/app/_features/tours/tour-types";
 import { DateValue, getLocalTimeZone } from "@internationalized/date";
-import { formatToDateString } from "@/app/_lib/utils/utils";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
 import { getOneBooking } from "@/app/_features/booking/api/get-booking/getOneBooking";
 import { BookingTable } from "@/app/_features/booking/types/booking-types";
 import { formatTime } from "@/app/_lib/utils/formatTime";
@@ -13,7 +11,7 @@ import { format } from "date-fns";
 
 interface BookingSuccessProps {
   selectedTour: Tour;
-  selectedDate: DateValue;
+  selectedDate: DateValue | null;
   selectedTime: string;
   bookingId: string;
   onClose: () => void;
@@ -61,174 +59,145 @@ const BookingSuccess = ({
     }
   }, [bookingId]);
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
-
   const getSuccessMessage = () => {
     if (isAdmin) {
-      return "Booking has been successfully created. A confirmation has been sent to the customer's email.";
+      return "Booking created successfully. Confirmation sent to customer.";
     }
-    return "Thank you for booking with us. Your reservation has been successfully processed and a confirmation has been sent to your email.";
+    return "Your booking has been recorded successfully. Please check your email for confirmation details.";
   };
 
   return (
-    <motion.div
-      className="max-w-3xl mx-auto px-4 py-8 sm:py-12"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
+    <div className="max-w-2xl mx-auto px-6 py-8">
       {/* Success Header */}
-      <motion.div
-        className="text-center space-y-6 mb-12"
-        variants={itemVariants}
-      >
-        <div className="flex justify-center">
-          <motion.div
-            className="rounded-full bg-green-100 p-4"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 10 }}
-          >
-            <CheckCircle2 className="w-16 h-16 text-green-600" />
-          </motion.div>
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+            <CheckCircle2 className="w-6 h-6 text-green-600" />
+          </div>
         </div>
-        <div className="space-y-3">
-          <h2 className="text-3xl font-bold tracking-tight text-strong">
-            Booking Created !
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {getSuccessMessage()}
-          </p>
-        </div>
-      </motion.div>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+          Booking Confirmed
+        </h1>
+        <p className="text-gray-600">{getSuccessMessage()}</p>
+      </div>
 
       {/* Booking Details */}
-      <motion.div
-        className="bg-card rounded-2xl border shadow-lg p-6 sm:p-8 mb-8"
-        variants={itemVariants}
-      >
-        <h3 className="text-xl font-semibold text-strong mb-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Booking Details
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="flex items-start space-x-4">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <User className="w-5 h-5 text-primary" />
-            </div>
+        </h2>
+
+        <div className="space-y-4">
+          {/* Tour Info */}
+          <div className="flex items-center gap-3">
+            <Calendar className="w-4 h-4 text-gray-500" />
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Tour</p>
-              <p className="font-medium text-strong">{selectedTour.title}</p>
+              <p className="text-sm text-gray-500">Tour</p>
+              <p className="font-medium">{selectedTour.title}</p>
             </div>
           </div>
-          <div className="flex items-start space-x-4">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <Calendar className="w-5 h-5 text-primary" />
-            </div>
+
+          {/* Date */}
+          <div className="flex items-center gap-3">
+            <Calendar className="w-4 h-4 text-gray-500" />
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Date</p>
-              <p className="font-medium text-strong">
+              <p className="text-sm text-gray-500">Date</p>
+              <p className="font-medium">
                 {format(
-                  selectedDate.toDate(getLocalTimeZone()),
-                  "MMMM d, yyyy"
+                  selectedDate?.toDate(getLocalTimeZone()) || new Date(),
+                  "EEEE, MMMM d, yyyy"
                 )}
               </p>
             </div>
           </div>
-          <div className="flex items-start space-x-4">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <Clock className="w-5 h-5 text-primary" />
-            </div>
+
+          {/* Time */}
+          <div className="flex items-center gap-3">
+            <Clock className="w-4 h-4 text-gray-500" />
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Time</p>
-              <p className="font-medium text-strong">
-                {formatTime(selectedTime)}
-              </p>
+              <p className="text-sm text-gray-500">Time</p>
+              <p className="font-medium">{formatTime(selectedTime)}</p>
             </div>
           </div>
-          <div className="flex items-start space-x-4">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <Mail className="w-5 h-5 text-primary" />
-            </div>
+
+          {/* Email */}
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 text-gray-500">@</div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Confirmation Sent To
-              </p>
-              <p className="font-medium text-strong">
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-medium break-all">
                 {bookingDetails?.email || "Loading..."}
               </p>
             </div>
           </div>
-        </div>
-      </motion.div>
 
-      {/* Payment Link Section */}
-      {isLoading ? (
-        <motion.div
-          className="animate-pulse bg-card rounded-2xl border p-6 sm:p-8 mb-8"
-          variants={itemVariants}
-        >
-          <div className="h-8 bg-muted rounded-lg mb-4 w-1/3"></div>
-          <div className="h-24 bg-muted rounded-lg"></div>
-        </motion.div>
-      ) : paymentLink ? (
-        <motion.div
-          className="bg-card rounded-2xl border shadow-lg p-6 sm:p-8 mb-8"
-          variants={itemVariants}
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-semibold text-strong">
-                Payment Link
-              </h3>
-              <span className="text-sm text-muted-foreground">
-                Share with customer
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              A payment link has been generated for this booking. The customer
-              can use this link to complete their payment securely.
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={paymentLink}
-                  readOnly
-                  className="w-full px-4 py-3 bg-background border rounded-xl text-sm pr-24 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <Button
-                  onClick={() => {
-                    navigator.clipboard.writeText(paymentLink);
-                    toast.success("Payment link copied to clipboard");
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-primary/10"
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy
-                </Button>
-              </div>
-            </div>
+          {/* Booking ID */}
+          <div className="pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-500">Booking ID: {bookingId}</p>
           </div>
-        </motion.div>
+        </div>
+      </div>
+
+      {/* Payment Link */}
+      {isLoading ? (
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded mb-2 w-1/3"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      ) : paymentLink ? (
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+            Payment Link
+          </h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={paymentLink}
+              readOnly
+              className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded text-sm"
+            />
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(paymentLink);
+                toast.success("Payment link copied");
+              }}
+              variant="outline"
+              size="sm"
+            >
+              <Copy className="w-4 h-4 mr-1" />
+              Copy
+            </Button>
+          </div>
+        </div>
       ) : null}
-    </motion.div>
+
+      {/* Next Steps */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="font-semibold text-blue-900 mb-3">Next Steps</h3>
+        <div className="space-y-2 text-sm text-blue-800">
+          <div className="flex items-start gap-2">
+            <span className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+              1
+            </span>
+            <p>Check your email for booking confirmation</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+              2
+            </span>
+            <p>Complete payment if payment link is provided</p>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">
+              3
+            </span>
+            <p>Review tour details and prepare for your experience</p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

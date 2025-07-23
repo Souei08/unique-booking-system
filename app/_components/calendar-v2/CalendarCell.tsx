@@ -36,7 +36,7 @@ export function CalendarCell({
     <td
       {...cellProps}
       className={cn(
-        "p-2 text-center align-middle",
+        "p-2 text-center align-middle border border-slate-200",
         isFocusVisible ? "z-10" : "z-0"
       )}
     >
@@ -52,16 +52,21 @@ export function CalendarCell({
       >
         <div
           className={cn(
-            "w-full h-full flex items-center justify-center p-4 rounded-md",
+            "w-full h-full flex items-center justify-center p-4 rounded-md cursor-pointer",
             "text-sm font-medium",
             "transition-all duration-200 ease-in-out",
-            finalIsDisabled && "text-gray-300 cursor-not-allowed",
-            isFocusVisible && "ring-2 ring-brand ring-offset-2",
-            isSelected && "bg-brand text-white",
+            finalIsDisabled && "text-slate-300 cursor-not-allowed",
+            isFocusVisible && "ring-2 ring-blue-500 ring-offset-2",
+            isSelected && "bg-blue-600 text-white",
             !isSelected &&
               !finalIsDisabled &&
-              "hover:bg-gray-100 text-gray-700 bg-fill",
-            isOutsideMonth && "text-gray-300"
+              !isOutsideMonth &&
+              "hover:bg-green-50 text-blue-700 bg-white border-2 border-blue-200",
+            !isSelected &&
+              !finalIsDisabled &&
+              isOutsideMonth &&
+              "hover:bg-slate-100 text-slate-400 bg-white",
+            isOutsideMonth && "text-slate-300"
             // isDateToday && !isSelected && "text-brand font-semibold"
           )}
         >

@@ -1,21 +1,178 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import {
+  getUserWithProfile,
+  updateUserProfile,
+  uploadProfileImage,
+  deleteProfileImage,
+} from "@/app/_api/actions/auth/actions";
+import { showSuccessToast, showErrorToast } from "@/utils/toastUtils";
 
 export default function ProfileSettings() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     firstName: "",
     lastName: "",
     email: "",
-    username: "",
-    timezone: "Pacific Standard Time",
   });
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle profile update logic here
-    console.log("Profile updated:", profile);
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await getUserWithProfile();
+        if (userData) {
+          setUser(userData);
+          setProfileImage(userData.avatar_url || null);
+
+          setProfile({
+            firstName: userData.first_name || "",
+            lastName: userData.last_name || "",
+            email: userData.email || "",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (2MB max)
+      if (file.size > 2 * 1024 * 1024) {
+        showErrorToast("Image size must be less than 2MB");
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        showErrorToast("Please upload a valid image file (PNG, JPG, or WEBP)");
+        return;
+      }
+
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setProfileImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (saving) return;
+
+    try {
+      setSaving(true);
+
+      let newAvatarUrl = profileImage;
+
+      // Upload new image if provided
+      if (imageFile) {
+        newAvatarUrl = await uploadProfileImage(imageFile);
+      }
+
+      // Update profile
+      const result = await updateUserProfile({
+        first_name: profile.firstName,
+        last_name: profile.lastName,
+        email: profile.email,
+        avatar_url: newAvatarUrl || undefined,
+      });
+
+      if (result.success) {
+        showSuccessToast("Profile updated successfully");
+        setProfileImage(newAvatarUrl);
+        setImageFile(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      } else {
+        showErrorToast(result.error || "Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      showErrorToast("An unexpected error occurred");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getCurrentImage = () => {
+    if (imagePreview) return imagePreview;
+    if (profileImage) return profileImage;
+    return "/auth/photo-1522075469751-3a6694fb2f61 (1).avif"; // Default fallback
+  };
+
+  if (loading) {
+    return (
+      <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-16 md:grid-cols-3">
+        <div>
+          <h2 className="text-base/7 font-semibold text-strong">
+            Personal Information
+          </h2>
+          <p className="mt-1 text-sm/6 text-weak">
+            Use a permanent address where you can receive mail.
+          </p>
+        </div>
+        <div className="md:col-span-2">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10 py-16 md:grid-cols-3">
+        <div>
+          <h2 className="text-base/7 font-semibold text-strong">
+            Personal Information
+          </h2>
+          <p className="mt-1 text-sm/6 text-weak">
+            Use a permanent address where you can receive mail.
+          </p>
+        </div>
+        <div className="md:col-span-2">
+          <p className="text-weak">Unable to load user information.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid max-w-7xl grid-cols-1 gap-x-8 gap-y-10  py-16  md:grid-cols-3">
@@ -31,20 +188,51 @@ export default function ProfileSettings() {
       <form className="md:col-span-2" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
           <div className="col-span-full flex items-center gap-x-8">
-            <img
-              alt=""
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-              className="size-24 flex-none rounded-lg bg-neutral object-cover"
-            />
+            <div className="relative">
+              <img
+                alt="Profile"
+                src={getCurrentImage()}
+                className="size-24 flex-none rounded-lg bg-neutral object-cover"
+              />
+              {(imageFile || profileImage) && (
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
             <div>
-              <button
-                type="button"
-                className="rounded-md bg-brand/10 px-3 py-2 text-sm font-semibold text-brand shadow-xs hover:bg-brand/20"
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                id="profile-image"
+              />
+              <label
+                htmlFor="profile-image"
+                className="rounded-md bg-brand/10 px-3 py-2 text-sm font-semibold text-brand shadow-xs hover:bg-brand/20 cursor-pointer inline-block"
               >
                 Change avatar
-              </button>
+              </label>
               <p className="mt-2 text-xs/5 text-weak">
-                JPG, GIF or PNG. 1MB max.
+                JPG, PNG or WEBP. 2MB max.
               </p>
             </div>
           </div>
@@ -114,77 +302,15 @@ export default function ProfileSettings() {
               />
             </div>
           </div>
-
-          <div className="col-span-full">
-            <label
-              htmlFor="username"
-              className="block text-sm/6 font-medium text-strong"
-            >
-              Username
-            </label>
-            <div className="mt-2">
-              <div className="flex items-center rounded-md bg-background border border-stroke-weak pl-3 outline-1 -outline-offset-1 outline-brand/10 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-brand">
-                <div className="shrink-0 text-base text-weak select-none sm:text-sm/6">
-                  example.com/
-                </div>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder="janesmith"
-                  value={profile.username}
-                  onChange={(e) =>
-                    setProfile({ ...profile, username: e.target.value })
-                  }
-                  className="block min-w-0 grow bg-transparent py-1.5 pr-3 pl-1 text-base text-text placeholder:text-weak focus:outline-none sm:text-sm/6"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="col-span-full">
-            <label
-              htmlFor="timezone"
-              className="block text-sm/6 font-medium text-strong"
-            >
-              Timezone
-            </label>
-            <div className="mt-2 grid grid-cols-1">
-              <select
-                id="timezone"
-                name="timezone"
-                value={profile.timezone}
-                onChange={(e) =>
-                  setProfile({ ...profile, timezone: e.target.value })
-                }
-                className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-background border border-stroke-weak py-1.5 pr-8 pl-3 text-base text-text outline-1 -outline-offset-1 outline-brand/10 *:bg-neutral focus:outline-2 focus:-outline-offset-2 focus:outline-brand sm:text-sm/6"
-              >
-                <option>Pacific Standard Time</option>
-                <option>Eastern Standard Time</option>
-                <option>Greenwich Mean Time</option>
-              </select>
-              <svg
-                className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-weak sm:size-4"
-                aria-hidden="true"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
         </div>
 
         <div className="mt-8 flex">
           <button
             type="submit"
-            className="rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-brand/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            disabled={saving}
+            className="rounded-md bg-brand px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-brand/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </form>

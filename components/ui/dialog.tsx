@@ -131,7 +131,9 @@ interface DialogContentProps
   alertConfig?: Partial<AlertConfig>;
   disableCloseOnOutside?: boolean;
   showCloseConfirmation?: boolean;
-  closeConfirmationMessage?: string;
+  closeConfirmationType?: AlertType;
+  closeConfirmationTitle?: string;
+  closeConfirmationDescription?: string;
   onCloseConfirmCallback?: (shouldClose: boolean) => void;
 }
 
@@ -145,14 +147,27 @@ function DialogContent({
   alertConfig,
   disableCloseOnOutside = false,
   showCloseConfirmation = false,
-  closeConfirmationMessage,
+  closeConfirmationType = "warning",
+  closeConfirmationTitle,
+  closeConfirmationDescription,
   onCloseConfirmCallback,
   ...props
 }: DialogContentProps) {
   const [showCloseAlert, setShowCloseAlert] = React.useState(false);
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+  const [mounted, setMounted] = React.useState(false);
+
+  // Ensure component is mounted before rendering portal content
+  React.useEffect(() => {
+    setMounted(true);
+    return () => {
+      setMounted(false);
+    };
+  }, []);
 
   const handleClose = async (event: React.MouseEvent) => {
+    if (!mounted) return; // Prevent action if component is unmounting
+
     if (showCloseConfirmation) {
       event.preventDefault();
       setShowCloseAlert(true);
@@ -169,12 +184,14 @@ function DialogContent({
   };
 
   const handleCloseConfirm = () => {
+    if (!mounted) return; // Prevent action if component is unmounting
     setShowCloseAlert(false);
     // Call the callback to let parent handle the closing
     onCloseConfirmCallback?.(true);
   };
 
   const handleCloseCancel = () => {
+    if (!mounted) return; // Prevent action if component is unmounting
     setShowCloseAlert(false);
     // Call the callback to let parent know user cancelled
     // onCloseConfirmCallback?.(false);
@@ -186,6 +203,11 @@ function DialogContent({
       <XIcon className="w-4 h-4 text-text" strokeWidth={2} />
     </span>
   );
+
+  // Don't render portal content until mounted
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <>
@@ -205,7 +227,7 @@ function DialogContent({
           {...props}
         >
           {children}
-          {showCloseButton && (
+          {showCloseButton && mounted && (
             <DialogPrimitive.Close
               ref={closeButtonRef}
               className="absolute top-4 right-4 p-0 bg-transparent border-none outline-none"
@@ -219,16 +241,16 @@ function DialogContent({
       </DialogPortal>
 
       {/* Close Confirmation Alert Dialog */}
-      {showCloseConfirmation && (
+      {showCloseConfirmation && mounted && (
         <AlertDialog
           open={showCloseAlert}
           onOpenChange={setShowCloseAlert}
-          type="warning"
+          type={closeConfirmationType}
           config={{
-            title: "Are you sure you want to close?",
+            title: closeConfirmationTitle || "Do you really want to exit?",
             message:
-              closeConfirmationMessage ||
-              "When closing, the changes you made will not be saved.",
+              closeConfirmationDescription ||
+              "Exiting now will discard any unsaved changes.",
             confirmText: "Confirm",
             cancelText: "Cancel",
           }}
@@ -353,14 +375,15 @@ function AlertDialog({
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0 mt-0.5">{alertConfig.icon}</div>
           <div className="flex-1">
-            <DialogHeader>
+            <DialogHeader className="border-0">
               <DialogTitle className="text-lg font-semibold mb-2">
                 {title}
               </DialogTitle>
-              <DialogDescription className="text-muted-foreground text-sm">
+              <DialogDescription className="text-weak text-sm">
                 {description}
               </DialogDescription>
             </DialogHeader>
+
             <DialogFooter>
               <Button
                 variant="outline"
@@ -371,7 +394,7 @@ function AlertDialog({
                 {alertConfig.cancelText}
               </Button>
               <Button
-                className={`bg-${alertConfig.color} text-white cursor-pointer hover:bg-${alertConfig.color}/80 disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`bg-brand text-white cursor-pointer hover:bg-${alertConfig.color}/80 disabled:opacity-50 disabled:cursor-not-allowed`}
                 size="sm"
                 onClick={handleConfirm}
                 disabled={isLoading}

@@ -87,10 +87,7 @@ const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Tag className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium text-strong">Promo Code</span>
-      </div>
+      <h2 className="text-lg font-bold text-strong mb-4">Promo Code</h2>
 
       {appliedPromo ? (
         <div className="space-y-3">
@@ -112,9 +109,9 @@ const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
               variant="ghost"
               size="sm"
               onClick={handleRemovePromo}
-              className="h-8 w-8 p-0 text-green-600 hover:text-green-800 hover:bg-green-100"
+              className="h-7 w-7 p-0 text-green-600 hover:text-green-800 hover:bg-green-100"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
           </div>
         </div>
@@ -126,17 +123,17 @@ const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
               onKeyPress={handleKeyPress}
-              className="flex-1"
+              className="flex-1 h-9 text-sm"
               disabled={isLoading}
             />
             <Button
               onClick={handleApplyPromo}
               disabled={isLoading || !promoCode.trim()}
-              className="px-4"
+              className="px-3 h-9 text-sm"
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                   Applying...
                 </div>
               ) : (

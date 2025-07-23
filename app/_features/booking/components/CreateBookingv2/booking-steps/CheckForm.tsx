@@ -24,39 +24,11 @@ import AdditionalProducts from "./AdditionalProducts";
 import PromoCodeInput from "./PromoCodeInput";
 import OrderSummary from "./OrderSummary";
 import { Card, CardContent } from "@/components/ui/card";
+import { useSafeState, useMountedRef } from "@/app/_lib/utils/useSafeState";
 
-const CheckForm = ({
-  selectedTour,
-  selectedDate,
-  selectedTime,
-  numberOfPeople,
-  setNumberOfPeople,
-  customerInformation,
-  paymentInformation,
-  setPaymentInformation,
-  setCustomerInformation,
-  handleCompleteBooking,
-  selectedProducts,
-  setSelectedProducts,
-  productQuantities,
-  setProductQuantities,
-  availableProducts,
-  setAvailableProducts,
-  isAdmin = false,
-  isLoading = false,
-  setSlotDetails,
-  slotDetails,
-  customSlotTypes,
-  customSlotFields,
-  handleNext,
-  calculateTotal,
-  appliedPromo,
-  onPromoApplied,
-  onPromoRemoved,
-  calculateSubtotal,
-}: {
+interface CheckFormProps {
   selectedTour: Tour;
-  selectedDate: DateValue;
+  selectedDate: DateValue | null;
   selectedTime: string;
   numberOfPeople: number;
   setNumberOfPeople: (number: number) => void;
@@ -98,9 +70,42 @@ const CheckForm = ({
   onPromoApplied?: (promoData: any) => void;
   onPromoRemoved?: () => void;
   calculateSubtotal: () => number;
+}
+
+const CheckForm = ({
+  selectedTour,
+  selectedDate,
+  selectedTime,
+  numberOfPeople,
+  customerInformation,
+  paymentInformation,
+  setPaymentInformation,
+  setCustomerInformation,
+  handleCompleteBooking,
+  selectedProducts,
+  setSelectedProducts,
+  productQuantities,
+  setProductQuantities,
+  availableProducts,
+  setAvailableProducts,
+  isAdmin,
+  isLoading,
+  setNumberOfPeople,
+  calculateTotal,
+  setSlotDetails,
+  slotDetails,
+  customSlotTypes,
+  customSlotFields,
+  handleNext,
+  appliedPromo,
+  onPromoApplied,
+  onPromoRemoved,
+  calculateSubtotal,
+}: CheckFormProps & {
+  calculateSubtotal: () => number;
 }) => {
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [validationErrors, setValidationErrors] = useState<{
+  const [isLoadingProducts, setIsLoadingProducts] = useSafeState(true);
+  const [validationErrors, setValidationErrors] = useSafeState<{
     personalInfo: string[];
     slots: string[];
     payment: string[];
@@ -111,16 +116,18 @@ const CheckForm = ({
   });
 
   // Add state for secure promo calculations
-  const [securePromoData, setSecurePromoData] = useState<{
+  const [securePromoData, setSecurePromoData] = useSafeState<{
     subtotal: number;
     discountAmount: number;
     total: number;
   } | null>(null);
 
+  const mountedRef = useMountedRef();
+
   // Calculate secure promo data when appliedPromo changes
   useEffect(() => {
     const calculateSecurePromo = async () => {
-      if (!appliedPromo) {
+      if (!appliedPromo || !mountedRef.current) {
         setSecurePromoData(null);
         return;
       }
@@ -139,6 +146,8 @@ const CheckForm = ({
 
         const data = await response.json();
 
+        if (!mountedRef.current) return; // Check again after async operation
+
         if (response.ok && data.success) {
           const subtotal = calculateSubtotal();
 
@@ -154,12 +163,14 @@ const CheckForm = ({
         }
       } catch (error) {
         console.error("Error calculating secure promo:", error);
-        setSecurePromoData(null);
+        if (mountedRef.current) {
+          setSecurePromoData(null);
+        }
       }
     };
 
     calculateSecurePromo();
-  }, [appliedPromo, calculateSubtotal, onPromoRemoved]);
+  }, [appliedPromo, calculateSubtotal, onPromoRemoved, mountedRef]);
 
   // Update number of people when slot details change
   // useEffect(() => {
@@ -168,11 +179,13 @@ const CheckForm = ({
   //   }
   // }, [slotDetails, customSlotTypes]);
 
-  // Handle slot details change
+  // Handle slot details change with safety checks
   const handleSlotDetailsChange = (
     details: SlotDetail[],
     totalPrice: number
   ) => {
+    if (!mountedRef.current) return;
+
     // Update slot details with prices
     const updatedSlotDetails = details.map((slot) => ({
       ...slot,
@@ -189,8 +202,10 @@ const CheckForm = ({
     // });
   };
 
-  // Handle adding a new slot
+  // Handle adding a new slot with safety checks
   const handleAddSlot = () => {
+    if (!mountedRef.current) return;
+
     if (
       selectedTour.group_size_limit &&
       numberOfPeople >= selectedTour.group_size_limit
@@ -205,18 +220,26 @@ const CheckForm = ({
     setSlotDetails((prev) => [
       ...prev,
       {
+        id: `slot-${Date.now()}-${Math.random()}`, // Add unique ID
         type: customSlotTypes?.[0]?.name || "",
         price: customSlotTypes?.[0]?.price || 0,
       },
     ]);
   };
 
-  // Handle removing a slot
+  // Handle removing a slot with safety checks
   const handleRemoveSlot = (index: number) => {
-    if (numberOfPeople <= 1) return;
+    if (
+      !mountedRef.current ||
+      numberOfPeople <= 1 ||
+      index < 0 ||
+      index >= slotDetails.length
+    )
+      return;
 
     setNumberOfPeople(numberOfPeople - 1);
     setSlotDetails((prev) => {
+      if (index >= prev.length) return prev; // Additional safety check
       const newSlots = [...prev];
       newSlots.splice(index, 1);
       return newSlots;
@@ -258,18 +281,16 @@ const CheckForm = ({
 
     // Validate each slot
     slots.forEach((slot, index) => {
-      // Validate custom slot fields
+      // Validate all custom slot fields as required
       customSlotFields.forEach((field) => {
-        if (field.required) {
-          const value = slot[field.name];
-          if (value === undefined || value === null || value === "") {
-            errors.push(`Slot ${index + 1}: ${field.label} is required`);
-          }
+        const value = slot[field.name];
+        if (value === undefined || value === null || value === "") {
+          errors.push(`Slot ${index + 1}: ${field.label} is required`);
         }
       });
 
-      // Validate slot type if custom slot types exist
-      if (customSlotTypes) {
+      // Validate slot type if custom slot types exist and are not empty
+      if (customSlotTypes && customSlotTypes.length > 0) {
         if (!slot.type) {
           errors.push(`Slot ${index + 1}: Type is required`);
         } else if (!customSlotTypes.find((t) => t.name === slot.type)) {
@@ -419,17 +440,21 @@ const CheckForm = ({
     url: string;
     isFeature: boolean;
   }[];
-  const featuredImage = tourImages.find((image) => image.isFeature);
+  // const featuredImage = tourImages.find((image) => image.isFeature);
 
-  const formattedDate = format(
-    new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day),
-    "MMMM dd, yyyy"
-  );
+  // const formattedDate = format(
+  //   new Date(
+  //     selectedDate?.year || new Date().getFullYear(),
+  //     (selectedDate?.month || new Date().getMonth()) - 1,
+  //     selectedDate?.day || new Date().getDate()
+  //   ),
+  //   "MMMM dd, yyyy"
+  // );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-12 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 sm:gap-4 lg:gap-8">
       {/* Main Content - Left Column */}
-      <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+      <div className="lg:col-span-2 space-y-2 sm:space-y-4 lg:space-y-8">
         {/* User Information Section */}
         <PersonalInformation
           customerInformation={customerInformation}
@@ -466,7 +491,7 @@ const CheckForm = ({
 
       {/* Order Summary - Right Column */}
       <div className="lg:col-span-1">
-        <div className="space-y-6 sm:space-y-8">
+        <div className="space-y-2 sm:space-y-4 lg:space-y-8">
           <OrderSummary
             selectedTour={selectedTour}
             selectedDate={selectedDate}
@@ -488,7 +513,7 @@ const CheckForm = ({
           />
 
           {/* Promo Code Section */}
-          <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
+          <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
             <PromoCodeInput
               calculateTotal={calculateTotal}
               totalAmount={calculateSubtotal()}
@@ -499,19 +524,21 @@ const CheckForm = ({
           </div>
 
           {/* Continue to Payment Button */}
-          <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
+          <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
             {isAdmin ? (
               <div className="space-y-4">
                 <div className="bg-muted/50 p-4 rounded-lg">
-                  <h3 className="font-medium text-strong mb-2">Payment Link</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="text-base font-semibold text-[#1a1a1a] mb-2">
+                    Payment Link
+                  </h3>
+                  <p className="text-sm text-[#666666]">
                     A payment link will be sent to the customer's email. Booking
                     will be pending until payment is completed.
                   </p>
                 </div>
                 <button
                   onClick={() => validateAndCompleteBooking()}
-                  className="w-full bg-brand text-white hover:bg-brand/90 px-4 py-2 rounded-lg font-medium flex items-center justify-center disabled:bg-gray-400 disabled:hover:bg-gray-400"
+                  className="w-full bg-[#0066cc] text-white hover:bg-[#0052a3] px-4 py-3 rounded-lg text-base font-semibold flex items-center justify-center disabled:bg-gray-400 disabled:hover:bg-gray-400 transition-all duration-300"
                   disabled={isLoading}
                 >
                   {isLoading ? (
@@ -527,7 +554,7 @@ const CheckForm = ({
             ) : (
               <button
                 type="button"
-                className="w-full rounded-lg sm:rounded-xl lg:rounded-2xl bg-brand px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-5 text-sm sm:text-base lg:text-lg font-semibold text-white hover:bg-brand/90 focus:ring-4 focus:ring-brand focus:ring-offset-4 focus:outline-none disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300"
+                className="w-full rounded-lg bg-[#0066cc] px-6 py-3 text-base font-semibold text-white hover:bg-[#0052a3] focus:ring-2 focus:ring-[#0066cc] focus:ring-offset-2 focus:outline-none disabled:bg-gray-400 disabled:hover:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300"
                 disabled={!selectedTime || !numberOfPeople}
                 onClick={() => validateAndCompleteBooking(null)}
               >

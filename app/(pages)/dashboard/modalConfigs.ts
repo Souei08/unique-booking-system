@@ -8,10 +8,13 @@ import UpsertProductV2 from "@/app/_features/products/components/UpsertProductV2
 export interface ModalConfig {
   component: React.ComponentType<any>;
   props: Record<string, any>;
-  useMainModal?: boolean;
   dialogClassName?: string;
   disableCloseOnOutside?: boolean;
   showCloseConfirmation?: boolean;
+  hideHeader?: boolean;
+  closeConfirmationTitle?: string;
+  closeConfirmationDescription?: string;
+  closeConfirmationType?: "success" | "error" | "warning" | "info" | "custom";
 }
 
 // Modal configurations
@@ -47,7 +50,15 @@ export const MODAL_CONFIGS: Record<string, ModalConfig> = {
       selectedDate: null,
       selectedTime: null,
     },
-    useMainModal: true,
+    dialogClassName:
+      "bg-neutral max-w-[98vw] sm:max-w-[95vw] md:max-w-[1200px] lg:max-w-[1200px] xl:max-w-[1200px] max-h-[95vh] overflow-y-auto p-0",
+    hideHeader: true,
+    disableCloseOnOutside: true,
+    showCloseConfirmation: true,
+    closeConfirmationTitle: "Cancel Booking?",
+    closeConfirmationDescription:
+      "Are you sure you want to cancel this booking? All entered information will be lost.",
+    closeConfirmationType: "error",
   },
 };
 

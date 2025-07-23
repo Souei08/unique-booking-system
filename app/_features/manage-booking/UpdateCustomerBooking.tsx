@@ -127,7 +127,7 @@ export default function UpdateCustomerBooking() {
   }
 
   return (
-    <div className="pt-10">
+    <div className="pt-10 bg-neutral">
       <CustomerUpdateBookingForm
         bookingId={booking.booking_id}
         manageToken={manageToken || ""}

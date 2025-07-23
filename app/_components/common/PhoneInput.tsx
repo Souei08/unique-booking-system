@@ -8,6 +8,9 @@ interface Props {
   onBlur?: () => void;
   error?: string;
   disabled?: boolean;
+  className?: string;
+  customInputStyle?: React.CSSProperties;
+  customButtonStyle?: React.CSSProperties;
 }
 
 export const CustomPhoneInput: React.FC<Props> = ({
@@ -16,16 +19,28 @@ export const CustomPhoneInput: React.FC<Props> = ({
   onBlur,
   error,
   disabled,
+  className,
+  customInputStyle,
+  customButtonStyle,
 }) => (
   <div>
+    <style jsx>{`
+      .react-tel-input .selected-flag:focus {
+        background-color: #f9fafb;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        outline: none;
+      }
+    `}</style>
     <PhoneInput
       country={"us"}
       value={value}
       onChange={onChange}
       onBlur={onBlur}
       disabled={disabled}
-      inputClass={error ? "border-destructive text-destructive" : ""}
-      inputStyle={{ width: "100%" }}
+      inputClass={`${className || ""} ${error ? "border-destructive text-destructive" : ""}`}
+      inputStyle={{ width: "100%", ...customInputStyle }}
+      buttonStyle={{ ...customButtonStyle }}
       enableSearch
       autoFormat
       disableDropdown={false}

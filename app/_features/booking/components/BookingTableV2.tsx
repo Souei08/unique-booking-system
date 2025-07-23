@@ -479,9 +479,13 @@ export function BookingTableV2() {
         open={isUpdateBookingDialogOpen}
         onOpenChange={setIsUpdateBookingDialogOpen}
       >
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Update Booking</DialogTitle>
+        <DialogContent
+          disableCloseOnOutside={true}
+          showCloseButton={false}
+          className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1200px] max-h-[95vh] overflow-y-auto p-4 sm:p-6"
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>Update Booking</DialogTitle>
           </DialogHeader>
           {selectedBooking && (
             <UpdateBooking

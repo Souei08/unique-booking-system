@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 // import UpsertTourV2 from "../../_features/tours/forms/upsert-tour-v2/UpsertTourV2";
 // import CreateBookingv2 from "../../_features/booking/components/CreateBookingv2/CreateBookingv2";
 
-import MainModal from "@/app/_components/custom-modals/main-modal";
 import { MODAL_CONFIGS } from "./modalConfigs";
 
 interface ContentLayoutProps {
@@ -53,10 +52,13 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
   const {
     component: Component,
     props,
-    useMainModal,
     dialogClassName,
     disableCloseOnOutside,
     showCloseConfirmation,
+    hideHeader,
+    closeConfirmationTitle,
+    closeConfirmationDescription,
+    closeConfirmationType,
   } = config;
 
   // Handle success callback
@@ -77,39 +79,36 @@ const ModalWrapper: React.FC<ModalWrapperProps> = ({
     onClose: onClose,
   };
 
-  // Use MainModal for booking
-  if (useMainModal) {
-    return (
-      <MainModal
-        isOpen={isOpen}
-        onOpenChange={(open) => !open && onClose()}
-        title={modalTitle || "Booking"}
-        description={modalDescription || "Book a tour"}
-        maxWidth="responsive"
-        onClose={onClose}
-      >
-        <Component {...componentProps} />
-      </MainModal>
-    );
-  }
-
-  // Use regular Dialog for other modals
+  // Use regular Dialog for all modals
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className={dialogClassName}
+        className={`${dialogClassName}`}
         disableCloseOnOutside={disableCloseOnOutside}
         showCloseConfirmation={showCloseConfirmation}
         onCloseConfirmCallback={onClose}
+        closeConfirmationTitle={closeConfirmationTitle}
+        closeConfirmationDescription={closeConfirmationDescription}
+        closeConfirmationType={closeConfirmationType}
+        // alertConfig={
+        //   closeConfirmationTitle || closeConfirmationDescription
+        //     ? {
+        //         title: closeConfirmationTitle,
+        //         message: closeConfirmationDescription,
+        //       }
+        //     : undefined
+        // }
       >
-        <DialogHeader>
-          <DialogTitle className="text-strong text-xl font-bold">
+        {/* {!hideHeader && ( */}
+        <DialogHeader className={hideHeader ? "sr-only" : ""}>
+          <DialogTitle className="text-strong text-xl font-bold ">
             {modalTitle}
           </DialogTitle>
           <DialogDescription className="text-weak text-sm">
             {modalDescription}
           </DialogDescription>
         </DialogHeader>
+        {/* )} */}
         <Component {...componentProps} />
       </DialogContent>
     </Dialog>

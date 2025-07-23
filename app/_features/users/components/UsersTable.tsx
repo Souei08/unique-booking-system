@@ -64,7 +64,11 @@ export function UsersTable({ users, onView }: UsersTableProps) {
       header: "Phone",
       cell: ({ row }) => {
         const phoneNumber = row.getValue("phone_number");
-        return phoneNumber || <span className="text-weak">Not provided</span>;
+        return (
+          phoneNumber || (
+            <span className="text-gray-400 font-semibold">Not provided</span>
+          )
+        );
       },
     },
     {
@@ -84,7 +88,11 @@ export function UsersTable({ users, onView }: UsersTableProps) {
       cell: ({ row }) => {
         const lastSignIn = row.getValue("last_sign_in_at");
         if (!lastSignIn) {
-          return <span className="text-weak">Waiting for verification</span>;
+          return (
+            <span className="text-yellow-400 font-bold">
+              Waiting for verification
+            </span>
+          );
         }
         return format(new Date(lastSignIn as string), "MMM dd, yyyy HH:mm");
       },

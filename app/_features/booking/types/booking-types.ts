@@ -110,7 +110,8 @@ export interface PaymentInformation {
 }
 
 export interface SlotDetail {
+  id?: string; // Optional unique identifier for stable keys
   type: string;
   price: number;
-  [key: string]: string | number; // Allow dynamic string properties
+  [key: string]: any; // Allow additional dynamic fields
 }

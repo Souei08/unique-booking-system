@@ -43,6 +43,7 @@ export interface SlotDetailsProps {
   handleRemoveSlot?: (index: number) => void;
 }
 
+// Minimal Slot Details with Card Layout and Pagination
 const SlotDetails = ({
   numberOfPeople,
   customSlotTypes,
@@ -60,7 +61,8 @@ const SlotDetails = ({
   const [slotErrors, setSlotErrors] = useState<{
     [key: string]: string[];
   }>({});
-  const [activeSlot, setActiveSlot] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const slotsPerPage = 2; // Show 2 slots per page
 
   // Update slot details when numberOfPeople changes
   useEffect(() => {
@@ -150,10 +152,9 @@ const SlotDetails = ({
       if (!typeExists) return false;
     }
 
-    // Check required custom fields
+    // Check all custom fields as required
     return !customSlotFields.some(
-      (field) =>
-        field.required && (!slot[field.name] || slot[field.name] === "")
+      (field) => !slot[field.name] || slot[field.name] === ""
     );
   };
 
@@ -163,13 +164,11 @@ const SlotDetails = ({
     slotDetails.forEach((slot, idx) => {
       const slotErrors: string[] = [];
 
-      // Validate custom slot fields
+      // Validate all custom slot fields as required
       customSlotFields.forEach((field) => {
-        if (field.required) {
-          const value = slot[field.name];
-          if (value === undefined || value === null || value === "") {
-            slotErrors.push(`${field.label} is required`);
-          }
+        const value = slot[field.name];
+        if (value === undefined || value === null || value === "") {
+          slotErrors.push(`${field.label} is required`);
         }
       });
 
@@ -190,47 +189,69 @@ const SlotDetails = ({
     return Object.keys(errors).length === 0;
   };
 
-  // Get errors for current slot
-  const getCurrentSlotErrors = () => {
-    return slotErrors[`slot-${activeSlot}`] || [];
+  // Pagination calculations
+  const totalPages = Math.ceil(slotDetails.length / slotsPerPage);
+  const startIndex = (currentPage - 1) * slotsPerPage;
+  const endIndex = startIndex + slotsPerPage;
+  const currentSlots = slotDetails.slice(startIndex, endIndex);
+
+  // Get errors for a specific slot
+  const getSlotErrors = (slotIndex: number) => {
+    return slotErrors[`slot-${slotIndex}`] || [];
   };
 
   const content = (
     <>
       {showHeader && (
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-strong">
-              Slot Details
-            </h2>
-            <p className="text-xs text-weak mt-0.5">
-              {readOnly
-                ? "View booking slot information"
-                : "Manage booking slots and their details"}
-            </p>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-bold text-strong">Slot Details</h2>
+              <p className="text-xs text-gray-600 mt-1">
+                {readOnly
+                  ? "View booking slot information"
+                  : "Configure each slot with required information"}
+              </p>
+            </div>
+            {!readOnly && (
+              <Button
+                variant="outline"
+                onClick={() => handleAddSlot?.()}
+                className="h-9 px-4"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Slot
+              </Button>
+            )}
           </div>
-          {!readOnly && (
-            <div className="flex items-center gap-3 justify-end">
-              <div className="flex items-center gap-2 text-xs">
-                <div className="text-gray-600">
-                  {slotDetails.filter(isSlotComplete).length}/
-                  {slotDetails.length} slots completed
-                </div>
-                <div className="h-1 w-16 bg-gray-100 rounded-full overflow-hidden">
+
+          {/* Progress Summary */}
+          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-700">
+                {slotDetails.filter(isSlotComplete).length} of{" "}
+                {slotDetails.length} slots complete
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-brand transition-all duration-300"
+                    className="h-full bg-gray-600 transition-all duration-300"
                     style={{
-                      width: `${
-                        (slotDetails.filter(isSlotComplete).length /
-                          slotDetails.length) *
-                        100
-                      }%`,
+                      width: `${(slotDetails.filter(isSlotComplete).length / slotDetails.length) * 100}%`,
                     }}
                   />
                 </div>
+                <span className="text-xs text-gray-500">
+                  {Math.round(
+                    (slotDetails.filter(isSlotComplete).length /
+                      slotDetails.length) *
+                      100
+                  )}
+                  %
+                </span>
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -239,29 +260,33 @@ const SlotDetails = ({
           {slotDetails.map((slot, idx) => (
             <div
               key={`slot-${idx}`}
-              className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center">
-                    <span className="text-brand font-semibold">{idx + 1}</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
+                    <span className="text-gray-700 font-semibold text-xs">
+                      {idx + 1}
+                    </span>
                   </div>
-                  <h3 className="font-bold text-strong text-base">
+                  <h3 className="font-semibold text-gray-900 text-xs">
                     Slot {idx + 1}
                   </h3>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-weak">Price</div>
-                  <div className="text-base font-bold text-brand">
+                  <div className="text-xs text-gray-500">Price</div>
+                  <div className="text-xs font-semibold text-gray-900">
                     ${getSlotPrice(slot)}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                  <div className="text-sm text-weak mb-1">Selected Type</div>
-                  <div className="font-medium text-strong">
+                  <div className="text-xs text-gray-500 mb-1">
+                    Selected Type
+                  </div>
+                  <div className="font-medium text-gray-900 text-xs">
                     {slot.type || "Not selected"}
                   </div>
                 </div>
@@ -272,10 +297,10 @@ const SlotDetails = ({
                       key={field.name}
                       className="bg-gray-50 rounded-lg p-3 border border-gray-100"
                     >
-                      <div className="text-sm text-weak mb-1">
+                      <div className="text-xs text-gray-500 mb-1">
                         {field.label}
                       </div>
-                      <div className="text-strong">
+                      <div className="text-gray-900 text-xs">
                         {slot[field.name] || "-"}
                       </div>
                     </div>
@@ -286,310 +311,272 @@ const SlotDetails = ({
           ))}
         </div>
       ) : (
-        <>
-          {/* Slot Navigation */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-base font-semibold text-strong">
-                Select Slot
-              </h3>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleAddSlot?.()}
-                  className="h-8 text-xs"
+        <div className="space-y-6">
+          {/* Current Slots */}
+          <div className="space-y-4">
+            {currentSlots.map((slot, idx) => {
+              const actualIndex = startIndex + idx;
+              const slotErrors = getSlotErrors(actualIndex);
+              const isComplete = isSlotComplete(slot);
+
+              return (
+                <div
+                  key={`slot-${actualIndex}`}
+                  className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
                 >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Slot
-                </Button>
-              </div>
-            </div>
-            <div
-              className={`grid gap-2 ${
-                slotDetails.length === 2
-                  ? "grid-cols-2"
-                  : slotDetails.length === 3
-                    ? "grid-cols-1 sm:grid-cols-3"
-                    : slotDetails.length === 4
-                      ? "grid-cols-2 sm:grid-cols-4"
-                      : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
-              }`}
-            >
-              {slotDetails.map((slot, idx) => (
-                <div key={`slot-nav-${idx}`} className="group relative">
-                  <div
-                    onClick={() => setActiveSlot(idx)}
-                    className={`flex flex-col items-center p-2 rounded-lg border transition-all ${
-                      activeSlot === idx
-                        ? "bg-blue-50 text-brand border-blue-200 shadow-sm"
-                        : isSlotComplete(slot)
-                          ? "bg-green-50/50 text-green-700 border-green-200 hover:bg-green-50"
-                          : slotErrors[`slot-${idx}`]?.length > 0
-                            ? "bg-red-50/50 text-red-600 border-red-200 hover:bg-red-50"
-                            : "bg-gray-50 hover:bg-gray-100 border-gray-200"
-                    } cursor-pointer`}
-                  >
-                    <div
-                      className={`flex items-center justify-center w-7 h-7 rounded-full mb-1 transition-colors ${
-                        activeSlot === idx
-                          ? "bg-brand/50 text-white"
-                          : isSlotComplete(slot)
-                            ? "bg-green-100 text-green-700"
-                            : slotErrors[`slot-${idx}`]?.length > 0
-                              ? "bg-red-100 text-red-600"
-                              : "bg-gray-100 text-weak"
-                      }`}
-                    >
-                      <span className="font-medium text-sm">{idx + 1}</span>
+                  {/* Slot Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                        <span className="text-gray-700 font-bold text-xs">
+                          {actualIndex + 1}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 text-sm">
+                          Slot {actualIndex + 1}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {isComplete ? "Complete" : "Incomplete"}
+                        </p>
+                      </div>
                     </div>
-                    <span
-                      className={`text-xs font-medium transition-colors ${
-                        activeSlot === idx
-                          ? "text-brand"
-                          : isSlotComplete(slot)
-                            ? "text-green-700"
-                            : slotErrors[`slot-${idx}`]?.length > 0
-                              ? "text-red-600"
-                              : "text-weak"
-                      }`}
-                    >
-                      Slot {idx + 1}
-                    </span>
-                    {slot?.type && (
-                      <span
-                        className={`text-xs mt-0.5 transition-colors ${
-                          activeSlot === idx
-                            ? "text-brand/80"
-                            : isSlotComplete(slot)
-                              ? "text-green-600/80"
-                              : slotErrors[`slot-${idx}`]?.length > 0
-                                ? "text-red-500/80"
-                                : "text-weak/70"
-                        } line-clamp-1`}
-                      >
-                        {slot.type}
-                      </span>
-                    )}
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500">Price</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        ${getSlotPrice(slot)}
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Slot Type Selection */}
+                  {customSlotTypes && customSlotTypes.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <h4 className="text-xs font-semibold text-gray-900">
+                          Select Type
+                        </h4>
+                        {slotErrors.includes("Type is required") && (
+                          <span className="text-red-500 text-xs">*</span>
+                        )}
+                      </div>
+                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                        {customSlotTypes.map((type) => (
+                          <label
+                            key={`slot-type-${type.name}-${actualIndex}`}
+                            className={`relative cursor-pointer transition-all duration-200 `}
+                          >
+                            <div
+                              className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                                slot.type === type.name
+                                  ? "bg-blue-50 border-blue-400"
+                                  : "bg-white border-blue-200 hover:border-blue-300"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <input
+                                      type="radio"
+                                      name={`slot-type-${actualIndex}`}
+                                      checked={slot.type === type.name}
+                                      onChange={() =>
+                                        handleSlotFieldChange(
+                                          actualIndex,
+                                          "type",
+                                          type.name
+                                        )
+                                      }
+                                      className="w-4 h-4 text-gray-600 border-gray-300 focus:ring-gray-500"
+                                    />
+                                    <h5 className="font-semibold text-gray-900 capitalize text-xs">
+                                      {type.name}
+                                    </h5>
+                                  </div>
+                                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                                    {type.description}
+                                  </p>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm font-bold text-gray-900">
+                                      ${type.price}
+                                    </span>
+                                    {slot.type === type.name && (
+                                      <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+                                        <Check className="w-4 h-4 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                      {slotErrors.includes("Type is required") && (
+                        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+                          <p className="text-xs text-red-600">
+                            Please select a slot type
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Custom Fields */}
+                  {customSlotFields.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-xs font-semibold text-gray-900 mb-3">
+                        Additional Information
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {customSlotFields.map((field) => (
+                          <div
+                            key={`slot-field-${field.name}-${actualIndex}`}
+                            className="space-y-2"
+                          >
+                            <div className="flex items-center gap-2">
+                              <label className="text-xs font-medium text-gray-800">
+                                {field.label}
+                              </label>
+                              <span className="text-red-500 text-xs">*</span>
+                            </div>
+                            <input
+                              className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-xs text-gray-800 placeholder:text-gray-400 transition-all duration-200 ${
+                                slotErrors.includes(
+                                  `${field.label} is required`
+                                )
+                                  ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50"
+                                  : "border-gray-300 hover:border-gray-400"
+                              }`}
+                              type={field.type}
+                              value={slot[field.name] || ""}
+                              onChange={(e) =>
+                                handleSlotFieldChange(
+                                  actualIndex,
+                                  field.name,
+                                  e.target.value
+                                )
+                              }
+                              required={true}
+                              placeholder={field.placeholder}
+                            />
+                            {slotErrors.includes(
+                              `${field.label} is required`
+                            ) && (
+                              <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-md">
+                                <p className="text-xs text-red-600">
+                                  {field.label} is required
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Remove Button */}
                   {slotDetails.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveSlot?.(idx);
-                      }}
-                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-100 text-red-600 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => handleRemoveSlot?.(actualIndex)}
+                        className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                        Remove Slot
+                      </button>
+                    </div>
                   )}
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
-          {/* Active Slot Form */}
-          <div className="space-y-4">
-            <div className="border border-gray-200 rounded-lg p-4 bg-white">
-              <div className="mb-10">
-                <div className="space-y-0.5">
-                  <h4 className="text-base font-semibold text-strong">
-                    Slot {activeSlot + 1} Information
-                  </h4>
-                  {!readOnly && (
-                    <p className="text-xs text-weak">
-                      {isSlotComplete(slotDetails[activeSlot])
-                        ? "✓ All information completed"
-                        : "Please fill in the required fields"}
-                    </p>
-                  )}
-                </div>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-blue-50 rounded-lg p-3 ">
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span>
+                  Showing {startIndex + 1}-
+                  {Math.min(endIndex, slotDetails.length)} of{" "}
+                  {slotDetails.length} slots
+                </span>
               </div>
-
-              {customSlotTypes && customSlotTypes.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <label className="text-sm font-medium text-gray-800">
-                      Select Slot Type
-                    </label>
-                    <Tooltip content="Choose the type of slot for this booking">
-                      <InfoIcon className="w-3.5 h-3.5 text-gray-500" />
-                    </Tooltip>
-                    {!readOnly &&
-                      getCurrentSlotErrors().includes("Type is required") && (
-                        <span className="text-red-500">*</span>
-                      )}
-                  </div>
-                  <div
-                    className={`grid gap-2 ${
-                      customSlotTypes.length === 2
-                        ? "grid-cols-1 sm:grid-cols-2"
-                        : customSlotTypes.length === 3
-                          ? "grid-cols-1 sm:grid-cols-3"
-                          : customSlotTypes.length === 4
-                            ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4"
-                            : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3"
-                    }`}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+                >
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
                   >
-                    {customSlotTypes.map((type) => (
-                      <label
-                        key={`slot-type-${type.name}`}
-                        className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-all ${
-                          slotDetails[activeSlot]?.type === type.name
-                            ? "bg-brand/5 border-brand/80"
-                            : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  Previous
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-6 h-6 rounded-lg text-xs font-medium transition-colors ${
+                          currentPage === page
+                            ? "bg-blue-600 text-white"
+                            : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name={`slot-type-${activeSlot}`}
-                          checked={slotDetails[activeSlot]?.type === type.name}
-                          onChange={() =>
-                            handleSlotFieldChange(activeSlot, "type", type.name)
-                          }
-                          className="w-4 h-4 text-brand border-gray-300 focus:ring-brand"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm text-strong truncate">
-                            {type.name}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            ${type.price}
-                          </div>
-                        </div>
-                        {slotDetails[activeSlot]?.type === type.name && (
-                          <div className="w-5 h-5 rounded-full bg-brand/10 flex items-center justify-center flex-shrink-0">
-                            <Check className="w-3 h-3 text-brand" />
-                          </div>
-                        )}
-                      </label>
-                    ))}
-                  </div>
-                  {!readOnly &&
-                    getCurrentSlotErrors().includes("Type is required") && (
-                      <p className="mt-1.5 text-xs text-red-500">
-                        Please select a slot type
-                      </p>
-                    )}
+                        {page}
+                      </button>
+                    )
+                  )}
                 </div>
-              )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-                {customSlotFields.map((field) => (
-                  <div key={`slot-field-${field.name}`} className="space-y-1">
-                    <div className="flex items-center gap-1.5">
-                      <label className="text-sm font-medium text-gray-800">
-                        {field.label}
-                      </label>
-                      {!readOnly && field.required && (
-                        <span className="text-red-500">*</span>
-                      )}
-                      <Tooltip content={field.placeholder}>
-                        <InfoIcon className="w-3.5 h-3.5 text-gray-500" />
-                      </Tooltip>
-                    </div>
-                    {readOnly ? (
-                      <div className="w-full px-3 py-2 bg-gray-50 border rounded-lg border-gray-200 text-sm text-strong">
-                        {slotDetails[activeSlot][field.name] || "-"}
-                      </div>
-                    ) : (
-                      <>
-                        <input
-                          className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm text-strong placeholder:text-gray-400 ${
-                            getCurrentSlotErrors().includes(
-                              `${field.label} is required`
-                            )
-                              ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                              : "border-gray-200"
-                          }`}
-                          type={field.type}
-                          value={slotDetails[activeSlot]?.[field.name] || ""}
-                          onChange={(e) =>
-                            handleSlotFieldChange(
-                              activeSlot,
-                              field.name,
-                              e.target.value
-                            )
-                          }
-                          required={field.required}
-                          placeholder={field.placeholder}
-                        />
-                        {getCurrentSlotErrors().includes(
-                          `${field.label} is required`
-                        ) && (
-                          <p className="text-xs text-red-500">
-                            {field.label} is required
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
+                >
+                  Next
+                  <svg
+                    className="w-3 h-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
               </div>
-
-              {/* Navigation Buttons */}
-              {!readOnly && (
-                <div className="mt-6 pt-4 border-t border-gray-200 flex items-center justify-between">
-                  <button
-                    onClick={() =>
-                      setActiveSlot((prev) => Math.max(0, prev - 1))
-                    }
-                    disabled={activeSlot === 0}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                    Previous Slot
-                  </button>
-                  <button
-                    onClick={() =>
-                      setActiveSlot((prev) =>
-                        Math.min(numberOfPeople - 1, prev + 1)
-                      )
-                    }
-                    disabled={activeSlot === numberOfPeople - 1}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
-                  >
-                    Next Slot
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              )}
             </div>
-          </div>
-        </>
+          )}
+        </div>
       )}
     </>
   );
 
   if (showCard) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-4 sm:p-6">
-        {content}
-      </div>
+      <div className="rounded-xl border bg-white shadow-sm p-6">{content}</div>
     );
   }
 

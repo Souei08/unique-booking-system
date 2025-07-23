@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getAllToursClient } from "../../../../tours/api/client/getAllToursClient";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tour } from "@/app/_features/tours/tour-types";
 import { Clock, DollarSign } from "lucide-react";
 
@@ -32,68 +33,46 @@ const SelectTours = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <div className="text-center space-y-2 px-4 sm:px-0">
-        <h2 className="text-2xl sm:text-3xl font-bold text-strong">
-          Select Your Tour
-        </h2>
-        <p className="text-base sm:text-lg text-weak">
-          Choose from our curated selection of unforgettable experiences
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-3 sm:gap-4">
         {tours?.map((tour: Tour) => {
           const images = tour.images ? JSON.parse(tour.images) : [];
           const featuredImage =
             images.find((img: any) => img.isFeature)?.url || images[0]?.url;
 
           return (
-            <div
+            <Card
               key={tour.id}
-              className="group relative h-[350px] sm:h-[450px] rounded-xl overflow-hidden bg-card shadow-md hover:shadow-lg transition-all duration-300"
+              className="hover:shadow-md transition-shadow duration-200 overflow-hidden h-full flex flex-col pt-0"
             >
-              <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                style={{
-                  backgroundImage: `url(${
+              <div className="aspect-video overflow-hidden">
+                <img
+                  src={
                     featuredImage ||
                     "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1473&q=80"
-                  })`,
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 space-y-3 sm:space-y-4 text-left">
-                <div className="space-y-2 sm:space-y-3">
-                  <h3 className="text-lg sm:text-xl font-semibold text-white">
-                    {tour.title}
-                  </h3>
-                  <p className="text-white/90 text-sm sm:text-base leading-relaxed line-clamp-2 text-left">
-                    {tour.description}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 sm:gap-4 text-white/90 text-xs sm:text-sm">
-                  <div className="flex items-center sm:gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="font-medium">{tour.rate}</span>
-                  </div>
-                  <div className="flex items-center gap-1 sm:gap-1.5">
-                    <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                    <span className="font-medium">{tour.duration} hrs</span>
-                  </div>
-                </div>
-
+                  }
+                  alt={tour.title}
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                />
+              </div>
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold line-clamp-2">
+                  {tour.title}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 min-h-[3rem] max-h-[4.5rem] flex-1">
+                  {tour.description}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3 flex-1 flex flex-col">
                 <Button
-                  className="w-full bg-white text-black hover:bg-white/90 font-medium transition-colors text-sm sm:text-base py-2 sm:py-2.5"
+                  className="w-full text-xs py-1.5 mt-auto"
                   onClick={() => {
                     setSelectedTour(tour);
                     handleNext();
@@ -101,8 +80,8 @@ const SelectTours = ({
                 >
                   Book Now
                 </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>

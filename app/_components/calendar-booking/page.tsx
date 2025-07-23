@@ -143,8 +143,6 @@ const CalendarBookingPage: React.FC = () => {
     useState<BookingResponse | null>(null);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
-  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
-
   // Add a state to track if tours have been loaded
   const [toursLoaded, setToursLoaded] = useState(false);
 
@@ -230,6 +228,8 @@ const CalendarBookingPage: React.FC = () => {
         setBookings(data);
       } catch (error) {
         console.error("Error loading bookings:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadBookings();

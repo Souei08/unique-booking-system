@@ -62,29 +62,29 @@ const AdditionalProducts = ({
   const content = (
     <>
       {showHeader && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-strong">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-4">
+          <h2 className="text-lg font-bold text-strong mb-4">
             Additional Products
           </h2>
-          <span className="text-small text-weak">
+          <span className="text-xs text-[#666666]">
             {selectedProducts.length} selected
           </span>
         </div>
       )}
       {isLoadingProducts ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-stroke-strong"></div>
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0066cc]"></div>
         </div>
       ) : availableProducts.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
           {availableProducts.map((product) => (
             <div
               key={product.id}
-              className={`border rounded-2xl overflow-hidden shadow-md border-gray-200 relative`}
+              className={`border rounded-xl overflow-hidden shadow-sm border-gray-200 relative`}
             >
               <div className="flex flex-col sm:flex-row">
                 {/* Product Image */}
-                <div className="w-full sm:w-48 h-40 sm:h-auto flex-shrink-0 order-first sm:order-last">
+                <div className="w-full sm:w-40 h-32 sm:h-auto flex-shrink-0 order-first sm:order-last">
                   <img
                     src={product.image_url || ""}
                     alt={product.name}
@@ -93,23 +93,23 @@ const AdditionalProducts = ({
                 </div>
 
                 {/* Product Details */}
-                <div className="flex-1 p-4 sm:p-6">
-                  <div className="flex flex-col h-full justify-between gap-4 sm:gap-6">
+                <div className="flex-1 p-4 sm:p-5">
+                  <div className="flex flex-col h-full justify-between gap-3 sm:gap-4">
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-body font-bold text-strong truncate">
+                          <h3 className="text-sm font-semibold text-[#1a1a1a] truncate">
                             {product.name}
                           </h3>
-                          <p className="text-small text-weak mt-1.5 line-clamp-2 sm:line-clamp-none">
+                          <p className="text-xs text-[#666666] mt-1 line-clamp-2 sm:line-clamp-none">
                             {product.description}
                           </p>
                         </div>
                         {!isReadOnly &&
                           selectedProducts.includes(product.id) && (
                             <div className="flex-shrink-0">
-                              <div className="w-6 h-6 rounded-full bg-brand/10 flex items-center justify-center">
-                                <Check className="w-4 h-4 text-brand" />
+                              <div className="w-5 h-5 rounded-full bg-[#0066cc]/10 flex items-center justify-center">
+                                <Check className="w-3 h-3 text-[#0066cc]" />
                               </div>
                             </div>
                           )}
@@ -119,15 +119,15 @@ const AdditionalProducts = ({
                     <div className="flex flex-col gap-3">
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-body-lg font-bold text-strong">
+                          <span className="text-sm font-semibold text-[#1a1a1a]">
                             ${parseFloat(product.price.toString()).toFixed(2)}
                           </span>
-                          <span className="text-small text-weak">
+                          <span className="text-xs text-[#666666]">
                             / per item
                           </span>
                         </div>
                         {!isReadOnly && (
-                          <div className="flex items-center space-x-1 bg-background rounded-lg px-2 py-1 border border-stroke-weak">
+                          <div className="flex items-center space-x-1 bg-white rounded-lg px-2 py-1 border border-gray-300">
                             <button
                               onClick={() =>
                                 updateProductQuantity(
@@ -136,11 +136,11 @@ const AdditionalProducts = ({
                                   product?.product_booking_id || ""
                                 )
                               }
-                              className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center rounded-full transition-colors hover:bg-gray-50"
+                              className="w-5 h-5 flex items-center justify-center rounded-full transition-colors hover:bg-gray-50"
                             >
                               -
                             </button>
-                            <span className="w-8 sm:w-6 text-center font-medium text-strong">
+                            <span className="w-6 text-center font-medium text-[#1a1a1a] text-sm">
                               {productQuantities[product.id] || 0}
                             </span>
                             <button
@@ -151,7 +151,7 @@ const AdditionalProducts = ({
                                   product?.product_booking_id || ""
                                 )
                               }
-                              className="w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center rounded-full transition-colors hover:bg-gray-50"
+                              className="w-5 h-5 flex items-center justify-center rounded-full transition-colors hover:bg-gray-50"
                             >
                               +
                             </button>
@@ -159,17 +159,19 @@ const AdditionalProducts = ({
                         )}
                         {isReadOnly && (
                           <div className="grid grid-cols-1 sm:flex sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
-                            <div className="flex items-center justify-between gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg border border-stroke-weak">
-                              <span className="text-sm text-weak">
+                            <div className="flex items-center justify-between gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                              <span className="text-xs text-[#666666]">
                                 Quantity:
                               </span>
-                              <span className="text-sm font-medium text-strong">
+                              <span className="text-xs font-medium text-[#1a1a1a]">
                                 {productQuantities[product.id] || 0}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between gap-1.5 px-3 py-1.5 bg-slate-50 rounded-lg border border-stroke-weak">
-                              <span className="text-sm text-weak">Total:</span>
-                              <span className="text-sm font-medium text-strong">
+                            <div className="flex items-center justify-between gap-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                              <span className="text-xs text-[#666666]">
+                                Total:
+                              </span>
+                              <span className="text-xs font-medium text-[#1a1a1a]">
                                 $
                                 {(
                                   (productQuantities[product.id] || 0) *
@@ -188,10 +190,10 @@ const AdditionalProducts = ({
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6">
+        <div className="text-center py-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4">
             <svg
-              className="w-10 h-10 text-stroke-strong"
+              className="w-8 h-8 text-[#666666]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -204,10 +206,10 @@ const AdditionalProducts = ({
               />
             </svg>
           </div>
-          <h3 className="text-h2 font-semibold text-strong mb-3">
+          <h3 className="text-base font-semibold text-[#1a1a1a] mb-2">
             No Additional Products
           </h3>
-          <p className="text-body text-weak max-w-md mx-auto">
+          <p className="text-sm text-[#666666] max-w-md mx-auto">
             There are no additional products available for this tour.
           </p>
         </div>
@@ -217,7 +219,7 @@ const AdditionalProducts = ({
 
   if (showCard) {
     return (
-      <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
+      <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
         {content}
       </div>
     );

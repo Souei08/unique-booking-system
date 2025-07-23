@@ -28,28 +28,41 @@ export function CalendarHeader({
     .map((part) => part.value);
 
   return (
-    <div className="flex items-center justify-between py-2 border-b border-gray-100">
+    <div className="flex items-center justify-between px-6 py-4 bg-blue-500 rounded-t-2xl shadow-sm relative m-0">
       <VisuallyHidden>
         <h2>{calendarProps["aria-label"]}</h2>
       </VisuallyHidden>
 
-      <h2 aria-hidden className="text-xl font-semibold text-gray-800">
-        {monthName} <span className="text-gray-500 font-medium">{year}</span>
-      </h2>
-      <div className="flex items-center gap-2">
-        <CalendarButton
-          {...prevButtonProps}
-          className="p-2 hover:bg-gray-50 rounded-full transition-colors"
-        >
-          <ChevronLeftIcon className="w-5 h-5 text-gray-600 hover:text-gray-900" />
-        </CalendarButton>
-        <CalendarButton
-          {...nextButtonProps}
-          className="p-2 hover:bg-gray-50 rounded-full transition-colors"
-        >
-          <ChevronRightIcon className="w-5 h-5 text-gray-600 hover:text-gray-900" />
+      {/* Left Navigation Button */}
+      <div className="flex-shrink-0">
+        <CalendarButton {...prevButtonProps} className="p-0">
+          <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-400 hover:bg-blue-600 transition-colors duration-150">
+            <ChevronLeftIcon className="w-5 h-5 text-white" />
+          </span>
         </CalendarButton>
       </div>
+
+      {/* Centered Month and Year */}
+      <div className="flex-1 flex justify-center">
+        <h2
+          aria-hidden
+          className="text-2xl font-bold text-white tracking-wide text-center select-none"
+        >
+          {monthName} <span className="text-white font-semibold">{year}</span>
+        </h2>
+      </div>
+
+      {/* Right Navigation Button */}
+      <div className="flex-shrink-0">
+        <CalendarButton {...nextButtonProps} className="p-0">
+          <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-blue-400 hover:bg-blue-600 transition-colors duration-150">
+            <ChevronRightIcon className="w-5 h-5 text-white" />
+          </span>
+        </CalendarButton>
+      </div>
+
+      {/* Bottom Divider */}
+      <div className="absolute left-0 right-0 bottom-0 h-px bg-blue-200" />
     </div>
   );
 }

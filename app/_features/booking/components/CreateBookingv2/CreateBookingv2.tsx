@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 // Icons
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 
 // Booking Steps
 import SelectTours from "./booking-steps/SelectTours";
@@ -477,7 +477,7 @@ const CreateBookingv2 = ({
   };
 
   const handleCloseAttempt = () => {
-    if (currentStep === 4) {
+    if (currentStep > 1) {
       setShowConfirmDialog(true);
     } else {
       onClose?.();
@@ -597,52 +597,90 @@ const CreateBookingv2 = ({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="">
-        {/* Progress Bar */}
-        <div className="mb-4 md:mb-8 lg:mb-12 px-3 md:px-6">
-          <div className="flex flex-col gap-2 md:gap-6 mb-3 md:mb-4">
-            <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Professional Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 lg:h-20">
+            {/* Left Section - Back Button */}
+            <div className="flex items-center gap-4">
               {currentStep > 1 ? (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={handleBack}
-                  className="text-strong border-stroke-strong hover:border-strong hover:bg-fill transition-colors text-sm md:text-body px-3 md:px-4 py-1.5 md:py-2"
+                  className="flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-200 px-3 py-2 rounded-md font-medium"
                 >
-                  <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="hidden sm:inline">Back</span>
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="text-sm">Back</span>
                 </Button>
               ) : (
-                <div className="w-12 md:w-16" />
+                <div className="w-24" />
               )}
-              <div className="flex items-center gap-2.5 md:gap-4">
-                <h2 className="text-h2 font-bold text-strong">
-                  {currentStep === 1 && "Select Tour"}
+            </div>
+
+            {/* Center Section - Title and Progress */}
+            <div className="flex-1 flex flex-col items-center justify-center px-4">
+              <div className="text-center max-w-2xl">
+                <h1 className="text-lg lg:text-xl font-semibold text-gray-900 mb-1">
+                  {currentStep === 1 && "Select Your Tour"}
                   {currentStep === 2 && "Choose Date & Time"}
                   {currentStep === 3 && "Complete Booking"}
                   {currentStep === 4 && "Complete Your Payment"}
-                </h2>
-
-                <div className="flex items-center justify-center w-6 h-6 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full bg-brand   text-primary-foreground font-semibold text-xs md:text-base">
-                  {currentStep}
-                </div>
+                </h1>
+                <p className="text-xs lg:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+                  {currentStep === 1 &&
+                    "Browse our curated tours and select your perfect adventure"}
+                  {currentStep === 2 &&
+                    "Pick your preferred date, time, and number of participants"}
+                  {currentStep === 3 &&
+                    "Enter your details and complete the booking process"}
+                  {currentStep === 4 &&
+                    "Complete your payment to confirm your booking"}
+                </p>
               </div>
-              {/* <div className="w-12 md:w-16" /> */}
+            </div>
+
+            {/* Right Section - Progress and Close */}
+            <div className="flex items-center gap-3">
+              {/* Progress Indicator */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4].map((step) => (
+                    <div
+                      key={step}
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                        currentStep >= step
+                          ? "bg-blue-600 scale-125 shadow-sm"
+                          : "bg-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-medium text-gray-500 hidden sm:block">
+                  {currentStep}/4
+                </span>
+              </div>
+
+              {/* Close Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCloseAttempt}
+                className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all duration-200 p-2 rounded-md"
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
           </div>
-          <div className="relative h-1 md:h-2 bg-stroke-weak rounded-full overflow-hidden">
-            <div
-              className="absolute top-0 left-0 h-full bg-brand transition-all duration-300 ease-in-out"
-              style={{ width: `${(currentStep / 4) * 100}%` }}
-            />
-          </div>
         </div>
+      </header>
 
-        {/* Main Content */}
-        <div className="relative px-4 sm:px-6 md:px-10 py-6 sm:py-8">
-          {renderStep()}
+      {/* Main Content */}
+      <main className="flex-1 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="p-6 sm:p-8">{renderStep()}</div>
         </div>
-      </div>
+      </main>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>

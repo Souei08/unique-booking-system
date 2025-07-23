@@ -404,10 +404,10 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
 
   if (isFetching) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] px-4">
+      <div className="flex items-center justify-center min-h-[300px] px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-weak text-body">Loading booking details...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-3 text-weak text-sm">Loading booking details...</p>
         </div>
       </div>
     );
@@ -415,10 +415,10 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
 
   if (!booking) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] px-4">
+      <div className="flex items-center justify-center min-h-[300px] px-4">
         <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-weak text-body">No booking found</p>
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+          <p className="text-weak text-sm">No booking found</p>
         </div>
       </div>
     );
@@ -467,844 +467,846 @@ const CustomerUpdateBookingForm: React.FC<CustomerUpdateBookingFormProps> = ({
     }
   };
 
+  // Helper function to get guest information from slot_details or fallback to slots
+  const getGuestInfo = () => {
+    if (slotDetails && Array.isArray(slotDetails) && slotDetails.length > 0) {
+      const adultCount = slotDetails.filter(
+        (slot) => slot.type === "adult"
+      ).length;
+      const childCount = slotDetails.filter(
+        (slot) => slot.type === "child"
+      ).length;
+      const totalGuests = slotDetails.length;
+      const totalPrice = slotDetails.reduce(
+        (sum, slot) => sum + (slot.price || 0),
+        0
+      );
+
+      return {
+        totalGuests,
+        adultCount,
+        childCount,
+        totalPrice,
+        hasSlotDetails: true,
+        breakdown: slotDetails.reduce(
+          (acc, slot) => {
+            const type = slot.type || "adult";
+            if (!acc[type]) {
+              acc[type] = { count: 0, price: slot.price || 0 };
+            }
+            acc[type].count++;
+            return acc;
+          },
+          {} as Record<string, { count: number; price: number }>
+        ),
+      };
+    } else {
+      // Fallback to booking.slots
+      return {
+        totalGuests: booking?.slots || 0,
+        adultCount: booking?.slots || 0,
+        childCount: 0,
+        totalPrice: (booking?.tour_rate || 0) * (booking?.slots || 0),
+        hasSlotDetails: false,
+        breakdown: {
+          adult: { count: booking?.slots || 0, price: booking?.tour_rate || 0 },
+        },
+      };
+    }
+  };
+
+  const guestInfo = getGuestInfo();
+
+  // Helper function to get icon and colors based on payment status
+  const getPaymentStatusIcon = (
+    paymentStatus: string,
+    bookingStatus: string
+  ) => {
+    const status = paymentStatus?.toLowerCase();
+    const bookingStatusLower = bookingStatus?.toLowerCase();
+
+    switch (status) {
+      case "paid":
+        return {
+          icon: CheckCircle,
+          bgColor: "bg-green-50",
+          iconColor: "text-green-600",
+          title: "Booking Confirmed",
+          subtitle: "Payment verified and booking confirmed",
+        };
+      case "pending":
+        return {
+          icon: Clock,
+          bgColor: "bg-amber-50",
+          iconColor: "text-amber-600",
+          title:
+            bookingStatusLower === "confirmed"
+              ? "Booking Confirmed"
+              : "Payment Pending",
+          subtitle: "Complete payment to confirm booking",
+        };
+      case "failed":
+        return {
+          icon: XCircle,
+          bgColor: "bg-red-50",
+          iconColor: "text-red-600",
+          title: "Payment Failed",
+          subtitle: "Payment was not successful",
+        };
+      case "cancelled":
+        return {
+          icon: XCircle,
+          bgColor: "bg-gray-50",
+          iconColor: "text-gray-600",
+          title: "Booking Cancelled",
+          subtitle: "This booking has been cancelled",
+        };
+      case "refunding":
+        return {
+          icon: RefreshCw,
+          bgColor: "bg-blue-50",
+          iconColor: "text-blue-600",
+          title: "Refund Processing",
+          subtitle: "Refund is being processed",
+        };
+      case "refunded":
+        return {
+          icon: CheckCircle,
+          bgColor: "bg-purple-50",
+          iconColor: "text-purple-600",
+          title: "Booking Refunded",
+          subtitle: "Refund has been completed",
+        };
+      case "partial_refund":
+        return {
+          icon: AlertCircle,
+          bgColor: "bg-orange-50",
+          iconColor: "text-orange-600",
+          title: "Partially Refunded",
+          subtitle: "Partial refund has been processed",
+        };
+      default:
+        return {
+          icon: Info,
+          bgColor: "bg-gray-50",
+          iconColor: "text-gray-600",
+          title: `Booking ${bookingStatus || "Unknown"}`,
+          subtitle: "Status information unavailable",
+        };
+    }
+  };
+
+  const paymentStatusConfig = getPaymentStatusIcon(
+    booking?.payment_status || "",
+    booking?.booking_status || ""
+  );
+
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
-      {/* Header */}
-      <div className="bg-gradient bg-brand rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8 text-white">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="bg-white/20 p-2 sm:p-3 rounded-xl">
-              <UserRound className="w-5 h-5 sm:w-6 sm:h-6" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl lg:text-h2 font-bold truncate">
-                {booking.tour_title}
-              </h1>
-              <p className="text-stroke-weak flex items-center gap-2 mt-1 text-small">
-                <Tag className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span className="truncate">ID: {booking.reference_number}</span>
-              </p>
-            </div>
-          </div>
-        </div>
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+          Booking Details
+        </h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Review and manage your booking information
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 sm:gap-8">
-        {/* Left Column - Customer Info & Actions */}
-        <div className="space-y-4 sm:space-y-6">
-          {/* Quick Info Cards */}
-          {!(
-            booking.payment_status === "paid" &&
-            booking.booking_status === "confirmed"
-          ) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="bg-gray-100 p-2 rounded-lg">
-                    <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-tiny sm:text-small text-weak">
-                      Booked Date
-                    </p>
-                    <p className="font-semibold text-strong text-small sm:text-body truncate">
-                      {formatDate(booking.booking_date)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="bg-gray-100 p-2 rounded-lg">
-                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-tiny sm:text-small text-weak">
-                      Booked Time
-                    </p>
-                    <p className="font-semibold text-strong text-small sm:text-body">
-                      {formatTime(booking.selected_time || "")}
-                    </p>
-                  </div>
-                </div>
-              </div>
+      {/* Tour Header Card */}
+      <div className="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden">
+        <div className="p-4 sm:p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-6 h-6 bg-indigo-50 rounded-lg flex items-center justify-center">
+              <MapPin className="w-3 h-3 text-indigo-600" />
             </div>
-          )}
-
-          {/* Status Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="bg-gray-100 p-2 rounded-lg">
-                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
+            <h2 className="text-base font-bold text-gray-900">Selected Tour</h2>
+          </div>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 shadow-sm border border-gray-100 bg-gray-50">
+              <Image
+                src={booking.tour_featured_image || "/images/default-tour.png"}
+                alt={booking.tour_title}
+                width={48}
+                height={48}
+                quality={100}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2 truncate">
+                {booking.tour_title}
+              </h3>
+              <div className="flex flex-wrap items-center gap-4 text-xs mb-3">
+                <div className="flex items-center gap-1 text-gray-600">
+                  <Clock className="w-3 h-3" />
+                  <span>3 hours</span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-tiny sm:text-small text-weak">
-                    Booking Status
-                  </p>
+                <div className="flex items-center gap-1 text-gray-600">
+                  <DollarSign className="w-3 h-3" />
+                  <span>${booking.tour_rate || 0} per person</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-600">
+                  <Tag className="w-3 h-3" />
+                  <span>Adventure</span>
+                </div>
+              </div>
+
+              {/* Key Booking Details */}
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-3 h-3 text-blue-600" />
+                    <span className="text-xs font-medium text-gray-600">
+                      Tour Date
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-900">
+                    {formatDate(booking.booking_date)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3 h-3 text-green-600" />
+                    <span className="text-xs font-medium text-gray-600">
+                      Tour Time
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-900">
+                    {formatTime(booking.selected_time || "")}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-3 h-3 text-purple-600" />
+                    <span className="text-xs font-medium text-gray-600">
+                      Reference
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-900 font-mono">
+                    {booking.reference_number}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-3 h-3 text-green-600" />
+                    <span className="text-xs font-medium text-gray-600">
+                      Booking Status
+                    </span>
+                  </div>
                   <StatusBadge
-                    status={
-                      (booking.booking_status?.toLowerCase() as any) ||
-                      "pending"
-                    }
+                    status={booking.booking_status as any}
                     type="booking"
                   />
                 </div>
-              </div>
-            </div>
-            <div className="bg-background rounded-xl p-3 sm:p-4 shadow-lg border border-gray-200">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="bg-gray-100 p-2 rounded-lg">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-tiny sm:text-small text-weak">
-                    Payment Status
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-3 h-3 text-blue-600" />
+                    <span className="text-xs font-medium text-gray-600">
+                      Payment Status
+                    </span>
+                  </div>
                   <StatusBadge
-                    status={
-                      (booking.payment_status?.toLowerCase() as any) ||
-                      "pending"
-                    }
+                    status={booking.payment_status as any}
                     type="payment"
                   />
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Customer Info */}
-          <div className="bg-background rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl lg:text-h2 font-bold text-strong mb-3 sm:mb-4 flex items-center gap-2">
-              Customer Information
-            </h2>
-            <div className="space-y-2 sm:space-y-3">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
-                  <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-brand" />
+      {/* Checkout Button for Pending Payments */}
+      {booking?.payment_status === "pending" && booking?.payment_link && (
+        <div className="mb-6">
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CreditCard className="w-4 h-4 text-amber-600" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-tiny sm:text-small text-weak">Email</p>
-                  <p className="font-medium text-strong text-small sm:text-body truncate">
-                    {booking.email}
+                <div>
+                  <h3 className="text-base font-bold text-amber-900 mb-1">
+                    Payment Required
+                  </h3>
+                  <p className="text-sm text-amber-700">
+                    Complete your payment to confirm your booking. Your tour is
+                    reserved but not confirmed until payment is received.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
-                  <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-brand" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-tiny sm:text-small text-weak">Phone</p>
-                  <p className="font-medium text-strong text-small sm:text-body">
-                    {booking.phone_number || "N/A"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4 text-brand" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-tiny sm:text-small text-weak">
-                    Booked Slots
-                  </p>
-                  <p className="font-medium text-strong text-small sm:text-body">
-                    {booking.slots} {booking.slots === 1 ? "Person" : "People"}
-                  </p>
-                </div>
-              </div>
-              {booking?.promo_code && (
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="bg-green-100 p-1.5 sm:p-2 rounded-lg">
-                    <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-tiny sm:text-small text-weak">
-                      Promo Code
-                    </p>
-                    <p className="font-medium text-green-600 text-small sm:text-body">
-                      {booking.promo_code}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Actions Section */}
-          <div className="bg-background rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl lg:text-h2 font-bold text-strong mb-4 sm:mb-6 flex items-center gap-2">
-              Manage Booking
-            </h2>
-
-            <div className="space-y-3 sm:space-y-4">
-              {/* Primary Actions */}
-              <div className="grid grid-cols-1 gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  variant="outline"
-                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                  onClick={() => setIsPersonalInfoModalOpen(true)}
-                  disabled={isLoading}
+                  onClick={() => window.open(booking.payment_link, "_blank")}
+                  className="px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
                 >
-                  <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
-                    <UserCog className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="font-semibold text-body truncate">
-                      Update Contact Information
-                    </p>
-                    <p className="text-small text-weak mt-1 leading-relaxed">
-                      Change customer name, email, and phone number
-                    </p>
-                  </div>
+                  <CreditCard className="w-4 h-4" />
+                  <span>Complete Payment</span>
                 </Button>
-
                 <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(booking.payment_link);
+                    toast.success("Payment link copied to clipboard");
+                  }}
                   variant="outline"
-                  className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                  onClick={() => setIsRescheduleModalOpen(true)}
-                  disabled={
-                    isLoading ||
-                    booking.payment_status === "refunding" ||
-                    booking.payment_status === "refunded" ||
-                    booking.payment_status === "partially_refunded"
-                  }
+                  className="px-4 py-3 border border-amber-300 text-amber-700 font-medium rounded-lg hover:bg-amber-50 transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  <div className="bg-orange-50 p-2 rounded-lg flex-shrink-0">
-                    <RefreshCw className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    <p className="font-semibold text-body truncate">
-                      Change Date & Time
-                    </p>
-                    <p className="text-small text-weak mt-1 leading-relaxed">
-                      Reschedule to a different date or time slot
-                    </p>
-                  </div>
+                  <Copy className="w-4 h-4" />
+                  <span>Copy Link</span>
                 </Button>
-
-                {!(
-                  // booking.payment_status === "paid" &&
-                  (booking.booking_status === "confirmed")
-                ) && (
-                  <>
-                    {(!customSlotTypes || customSlotTypes.length === 0) &&
-                      (!customSlotFields || customSlotFields.length === 0) && (
-                        <Button
-                          variant="outline"
-                          className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                          onClick={() => setIsUpdateSlotsModalOpen(true)}
-                          disabled={
-                            isLoading || booking.payment_status !== "pending"
-                          }
-                        >
-                          <div className="bg-green-50 p-2 rounded-lg flex-shrink-0">
-                            <Users className="w-5 h-5 text-green-600" />
-                          </div>
-                          <div className="text-left min-w-0 flex-1">
-                            <p className="font-semibold text-body truncate">
-                              Adjust Number of People
-                            </p>
-                            <p className="text-small text-weak mt-1 leading-relaxed">
-                              Add or remove people from this booking
-                            </p>
-                          </div>
-                        </Button>
-                      )}
-
-                    {((customSlotTypes && customSlotTypes.length > 0) ||
-                      (customSlotFields && customSlotFields.length > 0)) && (
-                      <Button
-                        variant="outline"
-                        className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                        onClick={() => setIsSlotDetailsModalOpen(true)}
-                        disabled={
-                          isLoading || booking.payment_status !== "pending"
-                        }
-                      >
-                        <div className="bg-purple-50 p-2 rounded-lg flex-shrink-0">
-                          <Edit2 className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div className="text-left min-w-0 flex-1">
-                          <p className="font-semibold text-body truncate">
-                            Edit Guest Details
-                          </p>
-                          <p className="text-small text-weak mt-1 leading-relaxed">
-                            Update names and information for each person
-                          </p>
-                        </div>
-                      </Button>
-                    )}
-
-                    <Button
-                      variant="outline"
-                      className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-strong transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                      onClick={() => {
-                        setEditedProducts(editedProducts);
-                        setIsProductsModalOpen(true);
-                      }}
-                      disabled={
-                        isLoading || booking.payment_status !== "pending"
-                      }
-                    >
-                      <div className="bg-indigo-50 p-2 rounded-lg flex-shrink-0">
-                        <Package className="w-5 h-5 text-indigo-600" />
-                      </div>
-                      <div className="text-left min-w-0 flex-1">
-                        <p className="font-semibold text-body truncate">
-                          Manage Add-ons & Extras
-                        </p>
-                        <p className="text-small text-weak mt-1 leading-relaxed">
-                          Add, remove, or modify additional products
-                        </p>
-                      </div>
-                    </Button>
-                  </>
-                )}
-
-                {!(
-                  booking.payment_status === "pending" &&
-                  booking.booking_status === "pending"
-                ) && (
-                  <Button
-                    variant="outline"
-                    className="h-auto min-h-[60px] sm:min-h-[70px] border-2 border-blue-200 hover:border-blue-300 hover:bg-blue-50 text-blue-700 transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                    onClick={handleAddAdditionalBooking}
-                    disabled={isLoading}
-                  >
-                    <div className="bg-blue-50 p-2 rounded-lg flex-shrink-0">
-                      <Plus className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <p className="font-semibold text-body truncate">
-                        Add More Services
-                      </p>
-                      <p className="text-small text-blue-600 mt-1 leading-relaxed">
-                        Add additional people or products to this booking
-                      </p>
-                    </div>
-                  </Button>
-                )}
               </div>
-
-              {/* Cancellation Action */}
-              {/* {booking.payment_status === "paid" && (
-                <div className="pt-4 border-t border-gray-200">
-                  <Button
-                    variant="outline"
-                    className="w-full h-auto min-h-[60px] sm:min-h-[70px] text-red-600 border-red-200 hover:border-red-300 hover:bg-red-50/50 transition-all duration-200 flex items-start gap-3 px-4 py-3"
-                    onClick={handleCancelBooking}
-                    disabled={
-                      isLoading || booking.booking_status === "cancelled"
-                    }
-                  >
-                    <div className="bg-red-50 p-2 rounded-lg flex-shrink-0">
-                      {isLoading ? (
-                        <RefreshCw className="w-5 h-5 animate-spin text-red-600" />
-                      ) : (
-                        <XCircle className="w-5 h-5 text-red-600" />
-                      )}
-                    </div>
-                    <div className="text-left min-w-0 flex-1">
-                      <p className="font-semibold text-body">
-                        {isLoading ? "Processing..." : "Cancel & Refund"}
-                      </p>
-                      <p className="text-small text-red-500 mt-1 leading-relaxed">
-                        Cancel this booking and process refund
-                      </p>
-                    </div>
-                  </Button>
-                </div>
-              )} */}
             </div>
           </div>
         </div>
+      )}
 
-        {/* Right Column - Primary Booking & Additional Bookings */}
-        <div className="space-y-4 sm:space-y-6">
-          {/* Primary Booking */}
-          <div className="bg-background rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
-            <h2 className="text-lg sm:text-xl font-bold text-strong mb-4 sm:mb-6 flex items-center gap-2">
-              <div className="bg-brand/10 p-1.5 rounded-lg">
-                <Package className="w-4 h-4 sm:w-5 sm:h-5 text-brand" />
-              </div>
-              Primary Booking
-            </h2>
-
-            <div className="space-y-3 sm:space-y-4">
-              {/* Selected Tour Section */}
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-3 sm:p-4 border border-gray-200">
-                <h3 className="font-semibold text-strong text-small sm:text-body mb-3 flex items-center gap-2">
-                  <div className="bg-brand/10 p-1 rounded-lg">
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-brand" />
-                  </div>
-                  Tour Details
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Left Column - Booking Information */}
+        <div className="space-y-4">
+          {/* Booking Details Card */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <CalendarDays className="w-3 h-3 text-blue-600" />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">
+                  Booking Information
                 </h3>
-
-                {/* Tour Base Price */}
-                {!customSlotTypes || customSlotTypes.length === 0 ? (
-                  <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden">
-                          <Image
-                            src={
-                              booking.tour_featured_image ||
-                              "/images/default-tour.png"
-                            }
-                            alt={booking.tour_title}
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-strong text-small sm:text-body">
-                          {booking.tour_title}
-                        </p>
-                        <p className="text-tiny sm:text-small text-weak">
-                          {booking.slots} slot{booking.slots > 1 ? "s" : ""} • $
-                          {booking.tour_rate}/person
-                        </p>
-                      </div>
-                    </div>
-                    <span className="font-bold text-strong text-small sm:text-body">
-                      $
-                      {(
-                        (booking.tour_rate || 0) * (booking.slots || 0)
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    {/* Tour Title for Custom Slots */}
-                    <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100 mb-3">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="bg-gray-100 p-1.5 sm:p-2 rounded-lg">
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden">
-                            <Image
-                              src={
-                                booking.tour_featured_image ||
-                                "/images/default-tour.png"
-                              }
-                              alt={booking.tour_title}
-                              width={40}
-                              height={40}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-strong text-small sm:text-body">
-                            {booking.tour_title}
-                          </p>
-                          <p className="text-tiny sm:text-small text-weak">
-                            {booking.slots} slot{booking.slots > 1 ? "s" : ""}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {(() => {
-                      const groupedSlots = slotDetails.reduce(
-                        (acc, slot) => {
-                          const slotType = customSlotTypes.find(
-                            (type) => type.name === slot.type
-                          );
-                          const typeName = slotType?.name || "Default";
-                          const price = slotType?.price || 0;
-
-                          if (!acc[typeName]) {
-                            acc[typeName] = {
-                              count: 0,
-                              price: price,
-                            };
-                          }
-                          acc[typeName].count++;
-                          return acc;
-                        },
-                        {} as Record<string, { count: number; price: number }>
-                      );
-
-                      return (
-                        Object.entries(groupedSlots) as [
-                          string,
-                          { count: number; price: number },
-                        ][]
-                      ).map(([typeName, details]) => (
-                        <div
-                          key={typeName}
-                          className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100"
-                        >
-                          <div className="flex items-center gap-2 sm:gap-3">
-                            <div className="bg-brand/10 p-1.5 rounded-lg">
-                              <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-brand" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-strong text-small sm:text-body">
-                                {typeName}
-                              </p>
-                              <p className="text-tiny sm:text-small text-weak">
-                                {details.count} slot
-                                {details.count > 1 ? "s" : ""} • $
-                                {details.price}/person
-                              </p>
-                            </div>
-                          </div>
-                          <span className="font-bold text-strong text-small sm:text-body">
-                            ${(details.price * details.count).toFixed(2)}
-                          </span>
-                        </div>
-                      ));
-                    })()}
-                  </>
-                )}
               </div>
 
-              {/* Additional Products */}
-              {editedProducts.length > 0 && (
-                <div className="pt-3 sm:pt-4 border-t border-gray-200">
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 sm:p-4 border border-indigo-200">
-                    <h3 className="font-semibold text-strong text-small sm:text-body mb-3 flex items-center gap-2">
-                      <div className="bg-indigo-100 p-1 rounded-lg">
-                        <Package className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-600" />
-                      </div>
-                      Additional Products
-                    </h3>
-                    {editedProducts.map((product, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-background rounded-lg shadow-sm border border-gray-100 mb-2"
-                      >
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="bg-background rounded-lg overflow-hidden">
-                            <Image
-                              src={
-                                product.image_url ||
-                                "/images/default-product.png"
-                              }
-                              alt={product.name}
-                              width={60}
-                              height={70}
-                              className="rounded-lg"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-strong text-small sm:text-body truncate">
-                              {product.name}
-                            </p>
-                            <p className="text-tiny sm:text-small text-weak">
-                              {product.quantity} item
-                              {product.quantity > 1 ? "s" : ""} in cart
-                            </p>
-                          </div>
-                        </div>
-                        <span className="font-bold text-strong text-small sm:text-body">
-                          ${(product.unit_price * product.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="h-px bg-gray-200 my-4 sm:my-6"></div>
-
-              {/* Subtotal (shown when discount is applied) */}
-              {booking.discount_amount !== 0 && (
-                <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
-                  <span className="text-small sm:text-body font-semibold text-gray-700">
-                    Subtotal
-                  </span>
-                  <span className="text-small sm:text-body font-semibold text-gray-900">
-                    $
-                    {booking?.total_price_before_discount?.toFixed(2) ||
-                      (() => {
-                        // Calculate subtotal from custom slots
-                        const slotsTotal =
-                          customSlotTypes && customSlotTypes.length > 0
-                            ? slotDetails.reduce((sum, slot) => {
-                                const slotType = customSlotTypes.find(
-                                  (t) => t.name === slot.type
-                                );
-                                return sum + (slotType?.price || 0);
-                              }, 0)
-                            : (booking.tour_rate || 0) * (booking.slots || 0);
-
-                        // Calculate subtotal from products
-                        const productsTotal = editedProducts.reduce(
-                          (sum, product) =>
-                            sum + product.unit_price * product.quantity,
-                          0
-                        );
-
-                        return (slotsTotal + productsTotal).toFixed(2);
-                      })()}
-                  </span>
-                </div>
-              )}
-
-              {/* Discount Section */}
-              {booking.discount_amount !== 0 && (
-                <>
-                  <div className="flex items-center justify-between py-2 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div className="bg-green-100 p-1.5 rounded-lg">
-                        <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
-                      </div>
-                      <div>
-                        <span className="text-small sm:text-body text-green-700 font-semibold">
-                          Discount
-                        </span>
-                        {booking?.promo_code && (
-                          <span className="text-tiny sm:text-small text-green-600 bg-green-100 px-2 py-1 rounded-full ml-2">
-                            {booking.promo_code}
-                          </span>
-                        )}
-                        {/* {booking?.total_price_before_discount &&
-                          booking.total_price_before_discount > 0 && (
-                            <span className="text-tiny sm:text-small text-green-600 block mt-1">
-                              (
-                              {(
-                                ((booking.discount_amount || 0) /
-                                  booking.total_price_before_discount) *
-                                100
-                              ).toFixed(0)}
-                              % off)
-                            </span>
-                          )} */}
-                      </div>
-                    </div>
-                    <span className="text-small sm:text-body font-bold text-green-700">
-                      -${(booking.discount_amount || 0).toFixed(2)}
+              <div className="space-y-4">
+                {/* Guest Details */}
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-3 h-3 text-gray-500" />
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Guest Booked
                     </span>
                   </div>
-                </>
-              )}
-
-              {/* Total Amount */}
-              <div className="flex items-center justify-between py-3 sm:py-4 px-3 sm:px-4 bg-gradient-to-r from-brand/5 to-brand/10 rounded-lg border-2 border-brand/20">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="bg-brand p-1.5 sm:p-2 rounded-lg">
-                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-strong text-small sm:text-body">
-                      Total Amount
-                    </p>
-                    <p className="text-tiny sm:text-small text-weak">
-                      Final payment
-                    </p>
-                  </div>
-                </div>
-                <span className="text-small sm:text-body font-bold text-brand">
-                  ${booking?.amount_paid.toFixed(2)}
-                  {/* {(() => {
-                    // Calculate total from custom slots
-                    const slotsTotal =
-                      customSlotTypes && customSlotTypes.length > 0
-                        ? slotDetails.reduce((sum, slot) => {
-                            const slotType = customSlotTypes.find(
-                              (t) => t.name === slot.type
-                            );
-                            return sum + (slotType?.price || 0);
-                          }, 0)
-                        : (booking.tour_rate || 0) * (booking.slots || 0);
-
-                    // Calculate total from products
-                    const productsTotal = editedProducts.reduce(
-                      (sum, product) =>
-                        sum + product.unit_price * product.quantity,
-                      0
-                    );
-
-                    return (slotsTotal + productsTotal).toFixed(2);
-                  })()} */}
-                </span>
-              </div>
-
-              {/* Payment Status Info */}
-              {booking.payment_status.toLowerCase() !== "paid" && (
-                <div className="pt-3 sm:pt-4">
-                  {booking.payment_link ? (
-                    <button
-                      className="w-full h-12 sm:h-14 bg-brand hover:bg-brand/90 text-white font-semibold border-0 shadow-md hover:shadow-lg transition-all duration-200 text-body sm:text-lg rounded-md flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                      onClick={() =>
-                        window.open(booking.payment_link, "_blank")
-                      }
-                      disabled={isLoading}
-                    >
-                      <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6" />
-                      Proceed to Payment
-                    </button>
-                  ) : (
-                    <button
-                      className="w-full h-12 sm:h-14 bg-brand hover:bg-brand/90 text-white font-semibold border-0 shadow-md hover:shadow-lg transition-all duration-200 text-body sm:text-lg rounded-md flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                      onClick={() =>
-                        handlePaymentLinkUpdateWrapper(false, null, null, null)
-                      }
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
-                      ) : (
-                        <Link className="w-5 h-5 sm:w-6 sm:h-6" />
-                      )}
-                      Create Payment Link
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Additional Bookings Section */}
-              {additionalBookings.length > 0 && (
-                <>
-                  <div className="h-px bg-gray-200 my-4 sm:my-6"></div>
-
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg p-3 sm:p-4 border border-blue-200">
-                    <h3 className="font-semibold text-blue-800 text-small sm:text-body mb-3 flex items-center gap-2">
-                      <div className="bg-blue-100 p-1 rounded-lg">
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
-                      </div>
-                      Additional Bookings
-                    </h3>
-                    <div className="space-y-3">
-                      {additionalBookings.map((additional, index) => (
-                        <div
-                          key={additional.additional_id}
-                          className="bg-white rounded-lg p-3 border border-blue-200 shadow-sm"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <div className="bg-blue-100 p-1.5 rounded-lg">
-                                <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-blue-800 text-small">
-                                  Additional #{index + 1}
-                                </p>
-                                <p className="text-tiny text-blue-600">
-                                  Added on{" "}
-                                  {new Date(
-                                    additional.additional_created_at
-                                  ).toLocaleDateString()}
-                                </p>
-                              </div>
-                            </div>
-                            <StatusBadge
-                              status={mapAdditionalStatusToPaymentStatus(
-                                additional.status
-                              )}
-                              type="payment"
-                            />
-                          </div>
-
-                          <div className="space-y-1">
-                            {additional.added_slots > 0 && (
-                              <div className="flex items-center justify-between text-tiny">
-                                <span className="text-blue-600 font-medium">
-                                  Additional Slots:
-                                </span>
-                                <span className="font-semibold text-blue-800">
-                                  {additional.added_slots}
-                                  {additional.added_slots === 1
-                                    ? " person"
-                                    : " people"}
-                                </span>
-                              </div>
-                            )}
-
-                            {additional.amount_paid && (
-                              <div className="flex items-center justify-between text-tiny">
-                                <span className="text-blue-600 font-medium">
-                                  Amount Paid:
-                                </span>
-                                <span className="font-bold text-blue-800 text-small">
-                                  ${additional.amount_paid.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-
-                            {additional.payment_reference && (
-                              <div className="flex items-center justify-between text-tiny">
-                                <span className="text-blue-600 font-medium">
-                                  Payment Ref:
-                                </span>
-                                <span className="font-mono text-blue-800 text-xs">
-                                  {additional.payment_reference}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Additional Products */}
-                            {additional.added_products &&
-                              additional.added_products.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-blue-200">
-                                  <div className="flex items-center gap-1 mb-1">
-                                    <Package className="w-3 h-3 text-blue-600" />
-                                    <span className="text-tiny font-medium text-blue-700">
-                                      Added Products:
-                                    </span>
-                                  </div>
-                                  <div className="space-y-1">
-                                    {additional.added_products.map(
-                                      (product: any, productIndex: number) => {
-                                        // Handle different possible data structures
-                                        const productName =
-                                          product.name ||
-                                          product.product_name ||
-                                          product.title ||
-                                          "Unknown Product";
-                                        const quantity =
-                                          product.quantity || product.qty || 1;
-                                        const unitPrice =
-                                          product.unit_price ||
-                                          product.price ||
-                                          product.unitPrice ||
-                                          0;
-
-                                        return (
-                                          <div
-                                            key={`additional-product-${index}-${productIndex}`}
-                                            className="flex items-center justify-between text-tiny bg-blue-50 rounded px-2 py-1"
-                                          >
-                                            <span className="text-blue-800">
-                                              {productName} (x{quantity})
-                                            </span>
-                                            <span className="font-semibold text-blue-800">
-                                              $
-                                              {(unitPrice * quantity).toFixed(
-                                                2
-                                              )}
-                                            </span>
-                                          </div>
-                                        );
-                                      }
-                                    )}
-                                  </div>
+                  <div className="space-y-2">
+                    {guestInfo.hasSlotDetails ? (
+                      // Show detailed breakdown when slot_details is available
+                      Object.entries(guestInfo.breakdown).map(
+                        ([type, info]) => {
+                          const typedInfo = info as {
+                            count: number;
+                            price: number;
+                          };
+                          return (
+                            <div key={type} className="bg-white rounded-lg p-2">
+                              <div className="flex justify-between items-center">
+                                <div className="text-sm font-medium text-gray-900 capitalize">
+                                  {type}
+                                  {typedInfo.count === 1 ? "" : "s"} ×{" "}
+                                  {typedInfo.count}
                                 </div>
-                              )}
-
-                            {additional.note && (
-                              <div className="mt-2 p-2 bg-blue-100 rounded border border-blue-300">
-                                <p className="text-tiny text-blue-700">
-                                  <strong>Note:</strong> {additional.note}
-                                </p>
+                                <div className="text-sm font-semibold text-gray-900">
+                                  $
+                                  {(typedInfo.price * typedInfo.count).toFixed(
+                                    2
+                                  )}
+                                </div>
                               </div>
-                            )}
+                            </div>
+                          );
+                        }
+                      )
+                    ) : (
+                      // Fallback to original display
+                      <div className="bg-white rounded-lg p-2">
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm font-medium text-gray-900">
+                            {guestInfo.totalGuests === 1 ? "Guest" : "Guests"} ×{" "}
+                            {guestInfo.totalGuests}
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            ${guestInfo.totalPrice.toFixed(2)}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Products */}
+                {editedProducts && editedProducts.length > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="w-3 h-3 text-gray-500" />
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        Additional Products
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {editedProducts.map((product, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center bg-white rounded-lg p-2"
+                        >
+                          <div className="text-sm font-medium text-gray-900">
+                            {product.name} × {product.quantity}
+                          </div>
+                          <div className="text-sm font-semibold text-gray-900">
+                            $
+                            {(product.unit_price * product.quantity).toFixed(2)}
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                </>
-              )}
+                )}
+
+                {/* Pricing Breakdown */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <CreditCard className="w-3 h-3 text-blue-600" />
+                    <span className="text-xs font-medium text-blue-900 uppercase tracking-wide">
+                      Pricing Breakdown
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-xs text-gray-700">
+                        Tour Subtotal
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        ${guestInfo.totalPrice.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {editedProducts && editedProducts.length > 0 && (
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-xs text-gray-700">
+                          Products Subtotal
+                        </span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          $
+                          {editedProducts
+                            .reduce(
+                              (total, product) =>
+                                total + product.unit_price * product.quantity,
+                              0
+                            )
+                            .toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    {booking.promo_code && (
+                      <div className="flex justify-between items-center py-1">
+                        <span className="text-xs text-gray-700">
+                          Promo Code ({booking.promo_code})
+                        </span>
+                        <span className="text-sm text-green-600 font-semibold">
+                          -$
+                          {(
+                            guestInfo.totalPrice +
+                            (editedProducts?.reduce(
+                              (total, product) =>
+                                total + product.unit_price * product.quantity,
+                              0
+                            ) || 0) -
+                            booking.amount_paid
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="border-t border-blue-200 pt-2 mt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-bold text-gray-900">
+                          Total Amount
+                        </span>
+                        <span className="text-base font-bold text-blue-600">
+                          ${booking.amount_paid.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column - Guest Information & Booking Status */}
+        <div className="space-y-4">
+          {/* Guest Information Card */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-6 h-6 bg-emerald-50 rounded-lg flex items-center justify-center">
+                  <UserRound className="w-3 h-3 text-emerald-600" />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">
+                  Guest Information
+                </h3>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      Guest Name
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {booking.full_name}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      Email
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {booking.email}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      Phone
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {booking.phone_number || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-xs font-medium text-gray-500">
+                      Total Guests
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {guestInfo.hasSlotDetails ? (
+                        <span>
+                          {guestInfo.totalGuests} Total{" "}
+                          {guestInfo.adultCount > 0 &&
+                            `(${guestInfo.adultCount} Adult${guestInfo.adultCount === 1 ? "" : "s"})`}
+                          {guestInfo.childCount > 0 &&
+                            ` (${guestInfo.childCount} Child${guestInfo.childCount === 1 ? "" : "ren"})`}
+                        </span>
+                      ) : (
+                        `${guestInfo.totalGuests} ${guestInfo.totalGuests === 1 ? "Adult" : "Adults"}`
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Booking Status Card */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className={`w-6 h-6 ${paymentStatusConfig.bgColor} rounded-lg flex items-center justify-center`}
+                >
+                  <paymentStatusConfig.icon
+                    className={`w-3 h-3 ${paymentStatusConfig.iconColor}`}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-gray-900">
+                    {paymentStatusConfig.title}
+                  </h3>
+                  <p className="text-xs text-gray-600 mt-1">
+                    {paymentStatusConfig.subtitle}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-xs font-medium text-gray-500">
+                        Date
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {formatDate(booking.booking_date)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-xs font-medium text-gray-500">
+                        Payment Method
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900 capitalize">
+                        {booking.payment_method}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-xs font-medium text-gray-500">
+                        Payment Amount
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        ${booking.amount_paid.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <Mail className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-xs text-blue-900 font-medium mb-1">
+                        Confirmation Sent
+                      </p>
+                      <p className="text-xs text-blue-700">
+                        We sent your confirmation email to{" "}
+                        <span className="font-semibold">{booking.email}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {booking.payment_status === "paid" && (
+                  <button
+                    onClick={handleAddAdditionalBooking}
+                    className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 flex items-center justify-center gap-2 transition-all duration-200 shadow-sm hover:shadow-md"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add Additional Booking</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Additional Bookings Section */}
+      {additionalBookings.length > 0 && (
+        <div className="mt-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+              Additional Bookings
+            </h2>
+            <p className="text-sm text-gray-600">
+              Additional slots and products added to your original booking
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {additionalBookings.map((additional, index) => (
+              <div
+                key={additional.additional_id}
+                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+              >
+                <div className="p-4 sm:p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-6 h-6 bg-orange-50 rounded-lg flex items-center justify-center">
+                        <Plus className="w-3 h-3 text-orange-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-gray-900">
+                          Additional Booking #{index + 1}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Added on{" "}
+                          {formatDate(additional.additional_created_at)}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <StatusBadge
+                        status={mapAdditionalStatusToPaymentStatus(
+                          additional.status
+                        )}
+                        type="payment"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Left Column - Additional Details */}
+                    <div className="space-y-4">
+                      {/* Additional Slots */}
+                      {additional.added_slots > 0 && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Users className="w-3 h-3 text-gray-500" />
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                              Additional Guests
+                            </span>
+                          </div>
+                          <div className="bg-white rounded-lg p-2">
+                            <div className="flex justify-between items-center">
+                              <div className="text-sm font-medium text-gray-900">
+                                {additional.added_slots === 1
+                                  ? "Adult"
+                                  : "Adults"}{" "}
+                                × {additional.added_slots}
+                              </div>
+                              <div className="text-sm font-semibold text-gray-900">
+                                $
+                                {(
+                                  (booking?.tour_rate || 0) *
+                                  additional.added_slots
+                                ).toFixed(2)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Additional Products */}
+                      {additional.added_products &&
+                        Array.isArray(additional.added_products) &&
+                        additional.added_products.length > 0 && (
+                          <div className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Package className="w-3 h-3 text-gray-500" />
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                Additional Products
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {additional.added_products.map(
+                                (product: any, productIndex: number) => (
+                                  <div
+                                    key={productIndex}
+                                    className="flex justify-between items-center bg-white rounded-lg p-2"
+                                  >
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {product.name || "Product"} ×{" "}
+                                      {product.quantity || 1}
+                                    </div>
+                                    <div className="text-sm font-semibold text-gray-900">
+                                      $
+                                      {(
+                                        (product.unit_price || 0) *
+                                        (product.quantity || 1)
+                                      ).toFixed(2)}
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Note */}
+                      {additional.note && (
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <div className="flex items-start gap-2">
+                            <Info className="w-3 h-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <p className="text-xs text-blue-900 font-medium mb-1">
+                                Note
+                              </p>
+                              <p className="text-xs text-blue-700">
+                                {additional.note}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Column - Payment Details */}
+                    <div className="space-y-4">
+                      {/* Payment Information */}
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CreditCard className="w-3 h-3 text-green-600" />
+                          <span className="text-xs font-medium text-green-900 uppercase tracking-wide">
+                            Payment Details
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center py-1">
+                            <span className="text-xs text-gray-700">
+                              Payment Method
+                            </span>
+                            <span className="text-sm font-semibold text-gray-900 capitalize">
+                              {additional.payment_method || "N/A"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center py-1">
+                            <span className="text-xs text-gray-700">
+                              Amount Paid
+                            </span>
+                            <span className="text-sm font-semibold text-gray-900">
+                              ${(additional.amount_paid || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          {additional.discount_amount &&
+                            additional.discount_amount > 0 && (
+                              <div className="flex justify-between items-center py-1">
+                                <span className="text-xs text-gray-700">
+                                  Discount Applied
+                                </span>
+                                <span className="text-sm text-green-600 font-semibold">
+                                  -${additional.discount_amount.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                          {additional.refunded_amount &&
+                            additional.refunded_amount > 0 && (
+                              <div className="flex justify-between items-center py-1">
+                                <span className="text-xs text-gray-700">
+                                  Refunded Amount
+                                </span>
+                                <span className="text-sm text-red-600 font-semibold">
+                                  -${additional.refunded_amount.toFixed(2)}
+                                </span>
+                              </div>
+                            )}
+                          {additional.payment_reference && (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="text-xs text-gray-700">
+                                Payment Reference
+                              </span>
+                              <span className="text-xs font-semibold text-gray-900 font-mono">
+                                {additional.payment_reference}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Status and Dates */}
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="space-y-2">
+                          {additional.paid_at && (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="text-xs font-medium text-gray-500">
+                                Paid On
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {formatDate(additional.paid_at)}
+                              </span>
+                            </div>
+                          )}
+                          {additional.refunded_at && (
+                            <div className="flex justify-between items-center py-1">
+                              <span className="text-xs font-medium text-gray-500">
+                                Refunded On
+                              </span>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {formatDate(additional.refunded_at)}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center py-1">
+                            <span className="text-xs font-medium text-gray-500">
+                              Added On
+                            </span>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {formatDate(additional.additional_created_at)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <RescheduleBookingModal

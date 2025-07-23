@@ -27,6 +27,7 @@ interface BookingData {
   sub_total: number;
   discount_amount?: number | null;
   payment_ref_id?: string | null;
+  created_by?: string | null;
 }
 
 export async function createTourBookingv2(data: BookingData): Promise<{
@@ -55,6 +56,7 @@ export async function createTourBookingv2(data: BookingData): Promise<{
     promo_code,
     sub_total,
     discount_amount,
+    created_by,
   } = data;
 
   // ✅ Input Validation
@@ -96,6 +98,7 @@ export async function createTourBookingv2(data: BookingData): Promise<{
         _slot_details: slot_details,
         _promo_code_id: promo_code_id,
         _promo_code: promo_code,
+        _created_by: created_by,
       }
     );
 

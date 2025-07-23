@@ -23,7 +23,7 @@ export function CalendarGrid({
     {
       startDate,
       endDate,
-      weekdayStyle: "short",
+      weekdayStyle: "narrow",
     },
     state
   );
@@ -38,7 +38,7 @@ export function CalendarGrid({
             {weekDays.map((day, index) => (
               <th
                 key={index}
-                className="py-3 text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className="py-2 text-md font-semibold text-slate-700 uppercase tracking-wider bg-slate-100 border-b border-slate-200"
               >
                 {day}
               </th>
@@ -47,22 +47,27 @@ export function CalendarGrid({
         </thead>
         <tbody>
           {Array.from({ length: weeksInMonth }, (_, weekIndex) => (
-            <tr key={weekIndex} className="border-t border-gray-100">
-              {state
-                .getDatesInWeek(weekIndex, startDate)
-                .map((date, i) =>
-                  date ? (
-                    <CalendarCell
-                      key={i}
-                      state={state}
-                      date={date}
-                      currentMonth={startDate}
-                      isUnavailable={isDateUnavailable?.(date)}
-                    />
-                  ) : (
-                    <td key={i} className="p-2" />
-                  )
-                )}
+            <tr key={weekIndex} className="border-t border-slate-200">
+              {state.getDatesInWeek(weekIndex, startDate).map((date, i) =>
+                date ? (
+                  <CalendarCell
+                    key={i}
+                    state={state}
+                    date={date}
+                    currentMonth={startDate}
+                    isUnavailable={isDateUnavailable?.(date)}
+                  />
+                ) : (
+                  <td
+                    key={i}
+                    className="p-2 text-center align-middle border border-slate-200"
+                  >
+                    <div className="w-full aspect-square max-w-[2.5rem] mx-auto outline-none group flex items-center justify-center transition-all duration-200 ease-in-out">
+                      <div className="w-full h-full flex items-center justify-center p-4 rounded-md text-sm font-medium transition-all duration-200 ease-in-out bg-white"></div>
+                    </div>
+                  </td>
+                )
+              )}
             </tr>
           ))}
         </tbody>

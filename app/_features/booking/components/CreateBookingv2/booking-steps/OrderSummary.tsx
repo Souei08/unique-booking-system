@@ -9,7 +9,7 @@ import { DateValue } from "@internationalized/date";
 
 interface OrderSummaryProps {
   selectedTour: Tour;
-  selectedDate: DateValue;
+  selectedDate: DateValue | null;
   selectedTime: string;
   numberOfPeople: number;
   selectedProducts: string[];
@@ -52,20 +52,48 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   }[];
   const featuredImage = tourImages.find((image) => image.isFeature);
   const formattedDate = format(
-    new Date(selectedDate.year, selectedDate.month - 1, selectedDate.day),
+    new Date(
+      selectedDate?.year || new Date().getFullYear(),
+      (selectedDate?.month || new Date().getMonth()) - 1,
+      selectedDate?.day || new Date().getDate()
+    ),
     "MMMM dd, yyyy"
   );
 
+  // Calculate subtotal
+  const calculateSubtotal = () => {
+    let tourPrice = 0;
+
+    if (customSlotTypes && customSlotTypes.length > 0) {
+      // Calculate from slot details
+      tourPrice = slotDetails.reduce((sum, slot) => sum + slot.price, 0);
+    } else {
+      // Calculate from tour rate
+      tourPrice = selectedTour.rate * numberOfPeople;
+    }
+
+    // Add product prices
+    const productPrice = selectedProducts.reduce((sum, productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      const quantity = productQuantities[productId] || 1;
+      return sum + (product?.price || 0) * quantity;
+    }, 0);
+
+    return tourPrice + productPrice;
+  };
+
+  const subtotal = calculateSubtotal();
+  const discountAmount = securePromoData?.discountAmount || 0;
+  const finalTotal = securePromoData?.total || totalAmount;
+
   return (
-    <div className="rounded-2xl sm:rounded-3xl border bg-card shadow-lg p-4 sm:p-8">
-      <h2 className="text-xl sm:text-2xl font-bold text-strong mb-4 sm:mb-8">
-        Order Summary
-      </h2>
-      <div className="space-y-4 sm:space-y-6">
+    <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
+      <h2 className="text-lg font-bold text-strong mb-4">Order Summary</h2>
+      <div className="space-y-4">
         {/* Selected Tour Summary */}
-        <div className="space-y-3 sm:space-y-4">
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <div className="relative h-14 w-14 sm:h-16 sm:w-16 flex-shrink-0 overflow-hidden rounded-lg sm:rounded-xl">
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
               <img
                 src={featuredImage?.url}
                 alt={selectedTour.title}
@@ -73,20 +101,20 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
               />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-semibold text-strong truncate">
+              <h3 className="text-sm font-semibold text-[#1a1a1a] truncate">
                 {selectedTour.title}
               </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground">
+              <p className="text-xs text-[#666666]">
                 {selectedTour.duration} hours
               </p>
             </div>
           </div>
 
           {/* Date and Time Section */}
-          <div className="bg-background rounded-lg sm:rounded-xl p-3 sm:p-4 space-y-2 sm:space-y-3">
-            <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+            <div className="flex items-center space-x-2">
               <svg
-                className="h-4 w-4 sm:h-5 sm:w-5 text-primary"
+                className="h-4 w-4 text-[#0066cc]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -99,17 +127,17 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 />
               </svg>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Date
+                <p className="text-xs font-medium text-[#666666]">
+                  Selected Date
                 </p>
-                <p className="text-sm sm:text-base font-semibold text-strong">
+                <p className="text-sm font-semibold text-[#1a1a1a]">
                   {formattedDate}
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center space-x-2">
               <svg
-                className="h-4 w-4 sm:h-5 sm:w-5 text-primary"
+                className="h-4 w-4 text-[#0066cc]"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -122,36 +150,36 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 />
               </svg>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Time
+                <p className="text-xs font-medium text-[#666666]">
+                  Selected Time
                 </p>
-                <p className="text-sm sm:text-base font-semibold text-strong">
+                <p className="text-sm font-semibold text-[#1a1a1a]">
                   {formatTime(selectedTime)}
                 </p>
               </div>
             </div>
           </div>
 
-          {showGroupSizeControls && (
-            <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
-              <span>Group Size</span>
+          {/* {showGroupSizeControls && (
+            <div className="flex items-center justify-between text-xs text-[#666666]">
+              <span>Selected Slots</span>
               {customSlotTypes && customSlotTypes.length > 0 ? (
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 bg-background rounded-lg px-3 py-1.5 border">
+                  <div className="flex items-center space-x-2 bg-white rounded-lg px-3 py-1.5 border border-gray-300">
                     <button
                       onClick={() => onGroupSizeChange?.(numberOfPeople - 1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-lg font-medium"
+                      className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#0066cc]/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-sm font-medium"
                       disabled={numberOfPeople <= 1}
                       aria-label="Decrease slots"
                     >
                       -
                     </button>
-                    <span className="font-medium w-8 text-center text-base">
+                    <span className="font-medium w-6 text-center text-sm">
                       {numberOfPeople}
                     </span>
                     <button
                       onClick={() => onGroupSizeChange?.(numberOfPeople + 1)}
-                      className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-lg font-medium"
+                      className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#0066cc]/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-sm font-medium"
                       disabled={
                         selectedTour.group_size_limit
                           ? numberOfPeople >= selectedTour.group_size_limit
@@ -163,29 +191,29 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                     </button>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 rounded-full bg-brand"></div>
-                    <span className="text-sm text-weak">
+                    <div className="w-2 h-2 rounded-full bg-[#0066cc]"></div>
+                    <span className="text-xs text-[#666666]">
                       {slotDetails.length}{" "}
                       {slotDetails.length === 1 ? "Slot" : "Slots"}
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center space-x-3 bg-background rounded-lg px-3 py-1.5 border">
+                <div className="flex items-center space-x-3 bg-white rounded-lg px-3 py-1.5 border border-gray-300">
                   <button
                     onClick={() => onGroupSizeChange?.(numberOfPeople - 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-lg font-medium"
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#0066cc]/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-sm font-medium"
                     disabled={numberOfPeople <= 1}
                     aria-label="Decrease group size"
                   >
                     -
                   </button>
-                  <span className="font-medium w-8 text-center text-base">
+                  <span className="font-medium w-6 text-center text-sm">
                     {numberOfPeople}
                   </span>
                   <button
                     onClick={() => onGroupSizeChange?.(numberOfPeople + 1)}
-                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-lg font-medium"
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-[#0066cc]/10 transition-colors disabled:opacity-50 disabled:hover:bg-transparent text-sm font-medium"
                     disabled={
                       selectedTour.group_size_limit
                         ? numberOfPeople >= selectedTour.group_size_limit
@@ -198,247 +226,162 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 </div>
               )}
             </div>
-          )}
+          )} */}
         </div>
 
-        {/* Price Breakdown */}
-        <div className="border-t border-stroke-weak pt-4 sm:pt-6 space-y-3 sm:space-y-4">
-          <div className="space-y-3">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <span className="text-sm sm:text-base font-medium text-strong">
-                  Tour Price
-                </span>
-                {customSlotTypes && customSlotTypes.length > 0 ? (
-                  <div className="space-y-2 mt-2">
-                    {(() => {
-                      // Group slots by type and count occurrences
-                      const groupedSlots = slotDetails.reduce(
-                        (acc, slot) => {
-                          const slotType = customSlotTypes.find(
-                            (type) => type.name === slot.type
-                          );
-                          const typeName = slotType?.name || "Default";
-                          const price = slotType?.price || 0;
+        {/* Payment Breakdown */}
+        <div className="border-t border-gray-200 pt-6">
+          {/* Tour Price Section */}
+          <div className="bg-gray-50 rounded-lg mb-4">
+            <h4 className="text-sm font-semibold text-[#666666]">
+              Tour Booking
+            </h4>
 
-                          if (!acc[typeName]) {
-                            acc[typeName] = {
-                              count: 0,
-                              price: price,
-                            };
-                          }
-                          acc[typeName].count++;
-                          return acc;
-                        },
-                        {} as Record<string, { count: number; price: number }>
-                      );
-
-                      return Object.entries(groupedSlots).map(
-                        ([typeName, { count, price }], index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between w-full bg-fill/50 rounded-lg px-3 py-2"
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full bg-brand"></div>
-                              <span className="text-sm text-weak">
-                                {typeName} × {count}
-                              </span>
-                            </div>
-                            <span className="text-sm font-medium text-strong ml-2">
-                              ${(price * count).toFixed(2)}
-                            </span>
-                          </div>
-                        )
-                      );
-                    })()}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between w-full bg-fill/50 rounded-lg px-3 py-2 mt-2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-brand"></div>
-                      <span className="text-sm text-weak">
-                        ${selectedTour.rate} × {numberOfPeople} people
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium text-strong ml-2">
-                      $
-                      {parseFloat(
-                        (selectedTour.rate * numberOfPeople).toString()
-                      ).toFixed(2)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Additional Products */}
-            {selectedProducts.length > 0 && (
+            {customSlotTypes && customSlotTypes.length > 0 ? (
               <div className="space-y-2">
-                <span className="text-sm sm:text-base font-medium text-strong">
-                  Additional Products
-                </span>
-                <div className="space-y-2">
-                  {selectedProducts.map((productId) => {
-                    const product = availableProducts.find(
-                      (p) => p.id === productId
-                    );
-                    const quantity = productQuantities[productId] || 1;
-                    return product ? (
+                {(() => {
+                  const groupedSlots = slotDetails.reduce(
+                    (acc, slot) => {
+                      const slotType = customSlotTypes.find(
+                        (type) => type.name === slot.type
+                      );
+                      const typeName = slotType?.name || "Default";
+                      const price = slotType?.price || 0;
+
+                      if (!acc[typeName]) {
+                        acc[typeName] = {
+                          count: 0,
+                          price: price,
+                        };
+                      }
+                      acc[typeName].count++;
+                      return acc;
+                    },
+                    {} as Record<string, { count: number; price: number }>
+                  );
+
+                  return Object.entries(groupedSlots).map(
+                    ([typeName, { count, price }], index) => (
                       <div
-                        key={product.id}
-                        className="flex items-center justify-between bg-fill/50 rounded-lg px-3 py-2"
+                        key={index}
+                        className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0"
                       >
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 rounded-full bg-brand"></div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-[#0066cc]"></div>
                           <div>
-                            <span className="text-sm text-weak">
-                              {product.name}
+                            <span className="text-sm font-medium text-[#1a1a1a] capitalize">
+                              {typeName}
                             </span>
-                            <p className="text-xs text-weak/70">
-                              {quantity} × ${product.price}
+                            <p className="text-xs text-[#666666]">
+                              ${price} × {count}
                             </p>
                           </div>
                         </div>
-                        <span className="text-sm font-medium text-strong ml-2">
-                          ${(product.price * quantity).toFixed(2)}
+                        <span className="text-sm font-semibold text-[#1a1a1a]">
+                          ${(price * count).toFixed(2)}
                         </span>
                       </div>
-                    ) : null;
-                  })}
+                    )
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-[#0066cc]"></div>
+                  <div>
+                    <span className="text-sm font-medium text-[#1a1a1a]">
+                      Regular Price
+                    </span>
+                    <p className="text-xs text-[#666666]">
+                      ${selectedTour.rate} × {numberOfPeople}
+                    </p>
+                  </div>
                 </div>
+                <span className="text-sm font-semibold text-[#1a1a1a]">
+                  ${(selectedTour.rate * numberOfPeople).toFixed(2)}
+                </span>
               </div>
             )}
           </div>
 
-          {/* Promo Code Applied */}
-          {appliedPromo && securePromoData && (
-            <div className="border-t border-stroke-weak pt-4">
-              <div className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 rounded-xl p-4 border border-emerald-200/60 shadow-sm">
-                <div className="space-y-3">
-                  {/* Promo Code Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
-                        <svg
-                          className="w-4 h-4 text-white"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
+          {/* Additional Products */}
+          {selectedProducts.length > 0 && (
+            <div className="bg-gray-50 rounded-lg mb-4">
+              <h4 className="text-sm font-semibold text-[#666666]">
+                Additional Services
+              </h4>
+              <div className="space-y-2">
+                {selectedProducts.map((productId) => {
+                  const product = availableProducts.find(
+                    (p) => p.id === productId
+                  );
+                  const quantity = productQuantities[productId] || 1;
+                  return product ? (
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <div>
+                          <span className="text-sm font-medium text-[#1a1a1a]">
+                            {product.name}
+                          </span>
+                          <p className="text-xs text-[#666666]">
+                            ${product.price} × {quantity}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-sm font-semibold text-emerald-800">
-                          Promo Code Applied
-                        </span>
-                        <p className="text-xs text-emerald-600 mt-0.5">
-                          {appliedPromo.discount_type === "percentage"
-                            ? `${appliedPromo.discount_value}% discount`
-                            : `$${appliedPromo.discount_value} discount`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="bg-white border-2 border-emerald-300 rounded-lg px-3 py-1.5 shadow-sm">
-                      <span className="text-sm font-bold text-emerald-700 tracking-wide">
-                        {appliedPromo.code}
+                      <span className="text-sm font-semibold text-[#1a1a1a]">
+                        ${(product.price * quantity).toFixed(2)}
                       </span>
                     </div>
-                  </div>
-
-                  {/* Price Breakdown with Promo */}
-                  <div className="bg-white/80 rounded-lg p-3 border border-emerald-200/50 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Subtotal</span>
-                      <span className="text-sm font-medium text-gray-700">
-                        ${securePromoData.subtotal.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-emerald-600"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <span className="text-sm font-medium text-emerald-700">
-                          Discount
-                        </span>
-                      </div>
-                      <span className="text-sm font-semibold text-emerald-600">
-                        -${securePromoData.discountAmount.toFixed(2)}
-                      </span>
-                    </div>
-
-                    <div className="border-t border-emerald-200/50 pt-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-emerald-800">
-                          Final Total
-                        </span>
-                        <span className="text-base font-bold text-emerald-700">
-                          ${securePromoData.total.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Savings Highlight */}
-                  <div className="bg-emerald-100 rounded-lg p-3 border border-emerald-300/50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <svg
-                          className="w-5 h-5 text-emerald-600"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                          />
-                        </svg>
-                        <span className="text-sm font-semibold text-emerald-800">
-                          You Save
-                        </span>
-                      </div>
-                      <span className="text-lg font-bold text-emerald-700">
-                        ${securePromoData.discountAmount.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                  ) : null;
+                })}
               </div>
             </div>
           )}
 
-          {/* Total Amount */}
-          <div className="border-t border-stroke-weak pt-4">
-            <div className="flex justify-between items-center">
-              <span className="text-base sm:text-lg font-semibold text-strong">
-                Total Amount
+          {/* Price Summary */}
+          <div className="space-y-3">
+            {/* Subtotal */}
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <span className="text-sm text-[#666666]">Subtotal</span>
+              <span className="text-sm font-semibold text-[#1a1a1a]">
+                ${subtotal.toFixed(2)}
               </span>
-              <div className="text-right">
-                <span className="text-xl sm:text-2xl font-bold text-brand">
-                  ${totalAmount.toFixed(2)}
+            </div>
+
+            {/* Promo Code Discount */}
+            {appliedPromo && securePromoData && discountAmount > 0 && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-[#666666]">Discount</span>
+                  <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
+                    {appliedPromo.code}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-emerald-600">
+                  -${discountAmount.toFixed(2)}
                 </span>
-                <p className="text-xs text-weak mt-1">
+              </div>
+            )}
+
+            {/* Total Amount */}
+            <div className="flex justify-between items-center pt-3">
+              <div>
+                <span className="text-base font-bold text-[#1a1a1a]">
+                  Total Amount
+                </span>
+                <p className="text-xs text-[#666666] mt-1">
                   Including all taxes and fees
                 </p>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-[#0066cc]">
+                  ${finalTotal.toFixed(2)}
+                </span>
               </div>
             </div>
           </div>

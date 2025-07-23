@@ -3,7 +3,7 @@ import UpdateCustomerBooking from "@/app/_features/manage-booking/UpdateCustomer
 
 const ManageBookingPage = () => {
   return (
-    <div>
+    <div className="bg-default">
       <Suspense
         fallback={<div className="w-7/12 mx-auto pt-10">Loading...</div>}
       >

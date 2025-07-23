@@ -105,6 +105,18 @@ const navigationGroups: NavigationGroup[] = [
       // },
     ],
   },
+
+  {
+    name: "Settings",
+    items: [
+      {
+        name: "Settings",
+        href: "/dashboard/settings",
+        icon: Cog6ToothIcon,
+        roles: ["admin", "reservation_agent"],
+      },
+    ],
+  },
 ];
 
 function classNames(...classes: string[]) {

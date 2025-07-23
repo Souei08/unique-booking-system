@@ -16,6 +16,7 @@ interface iAppProps {
   setSelectedDate: (date: DateValue) => void;
   onMonthChange: (month: string, year: string) => void;
   disabledDates?: string[];
+  title?: string;
 }
 
 export function RenderCalendar({
@@ -23,6 +24,7 @@ export function RenderCalendar({
   setSelectedDate,
   onMonthChange,
   disabledDates = [],
+  title,
 }: iAppProps) {
   const searchParams = useSearchParams();
 
@@ -66,13 +68,15 @@ export function RenderCalendar({
   };
 
   return (
-    <Calendar
-      minValue={today(getLocalTimeZone())}
-      defaultValue={today(getLocalTimeZone())}
-      value={date}
-      onChange={handleChangeDate}
-      isDateUnavailable={isDateUnavailable}
-      onVisibleDateChange={handleMonthChange}
-    />
+    <div className="space-y-3">
+      <Calendar
+        minValue={today(getLocalTimeZone())}
+        defaultValue={today(getLocalTimeZone())}
+        value={date}
+        onChange={handleChangeDate}
+        isDateUnavailable={isDateUnavailable}
+        onVisibleDateChange={handleMonthChange}
+      />
+    </div>
   );
 }

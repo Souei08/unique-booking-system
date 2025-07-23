@@ -9,10 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { RefreshCw, Edit2 } from "lucide-react";
 import SlotDetails from "../CreateBookingv2/booking-steps/SlotDetails";
-import {
-  CustomSlotType,
-  CustomSlotField,
-} from "../CreateBookingv2/booking-steps/SlotDetails";
+import { CustomSlotField } from "../CreateBookingv2/booking-steps/SlotDetails";
+import { CustomSlotType } from "../CreateBookingv2/booking-steps/SlotDetails";
 import { toast } from "sonner";
 import { updateBookingSlots } from "../../api/update-booking/UpdateBookingSlots";
 import {

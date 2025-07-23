@@ -656,6 +656,7 @@ const ManageAdditionalBooking = ({
             isAdmin={false}
             isLoading={false}
             calculateSubtotal={calculateSubtotal}
+            originalBooking={originalBooking}
           />
         );
       case 3:
@@ -731,33 +732,33 @@ const ManageAdditionalBooking = ({
             </div>
 
             {/* Step Indicator */}
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-8">
               {stepTitles.map((title, index) => (
-                <div key={index} className="flex items-center">
-                  <div
-                    className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                      currentStep > index + 1
-                        ? "bg-green-100 text-green-700"
-                        : currentStep === index + 1
-                          ? "bg-brand text-white"
-                          : "bg-gray-100 text-gray-400"
-                    }`}
-                  >
-                    {currentStep > index + 1 ? (
-                      <span className="text-xs">✓</span>
-                    ) : (
-                      index + 1
-                    )}
+                <div key={index} className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        currentStep > index + 1
+                          ? "bg-green-500 text-white"
+                          : currentStep === index + 1
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-300 text-gray-600"
+                      }`}
+                    >
+                      {currentStep > index + 1 ? "✓" : index + 1}
+                    </div>
+                    <span
+                      className={`text-sm font-medium ${
+                        currentStep >= index + 1
+                          ? "text-gray-900"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {title}
+                    </span>
                   </div>
-                  <span
-                    className={`ml-2 text-sm font-medium ${
-                      currentStep === index + 1 ? "text-brand" : "text-gray-500"
-                    }`}
-                  >
-                    {title}
-                  </span>
                   {index < stepTitles.length - 1 && (
-                    <div className="w-8 h-0.5 bg-gray-200 mx-2" />
+                    <div className="w-8 h-px bg-gray-300" />
                   )}
                 </div>
               ))}
@@ -770,20 +771,43 @@ const ManageAdditionalBooking = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Mobile Step Indicator */}
         <div className="md:hidden mb-6">
-          <div className="flex items-center justify-center space-x-2">
-            {stepTitles.map((title, index) => (
-              <div key={index} className="flex items-center">
-                <Badge
-                  variant={currentStep === index + 1 ? "default" : "secondary"}
-                  className="text-xs"
-                >
-                  {index + 1}. {title}
-                </Badge>
-                {index < stepTitles.length - 1 && (
-                  <div className="w-4 h-0.5 bg-gray-200 mx-1" />
-                )}
-              </div>
-            ))}
+          <div className="bg-white rounded-lg p-4 shadow-sm border">
+            <div className="flex items-center justify-between">
+              {stepTitles.map((title, index) => (
+                <div key={index} className="flex flex-col items-center">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 ${
+                      currentStep > index + 1
+                        ? "bg-green-500 text-white"
+                        : currentStep === index + 1
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-300 text-gray-600"
+                    }`}
+                  >
+                    {currentStep > index + 1 ? "✓" : index + 1}
+                  </div>
+                  <span
+                    className={`text-xs font-medium text-center ${
+                      currentStep >= index + 1
+                        ? "text-gray-900"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {title}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Progress bar */}
+            <div className="mt-4 h-1 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                style={{
+                  width: `${((currentStep - 1) / (stepTitles.length - 1)) * 100}%`,
+                }}
+              />
+            </div>
           </div>
         </div>
 

@@ -324,7 +324,7 @@ const TourPricing: React.FC<TourPricingProps> = ({
       )}
 
       {/* Estimated Rate Section - Shows when custom pricing is selected */}
-      {hasCustomPricing && estimatedRate > 0 && (
+      {/* {hasCustomPricing && estimatedRate > 0 && (
         <div className="space-y-8">
           <Card className="border border-blue-200 bg-blue-50 shadow-lg">
             <CardHeader className="pb-4">
@@ -390,7 +390,7 @@ const TourPricing: React.FC<TourPricingProps> = ({
             </CardContent>
           </Card>
         </div>
-      )}
+      )} */}
 
       {/* Custom Pricing Section */}
       {hasCustomPricing && (

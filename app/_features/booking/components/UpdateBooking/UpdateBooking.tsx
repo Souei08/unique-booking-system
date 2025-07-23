@@ -8,11 +8,12 @@ import {
 } from "../../types/booking-types";
 import { getOneBooking } from "../../api/get-booking/getOneBooking";
 import { rescheduleBooking } from "../../api/update-booking/RescheduleBooking";
-import { updateBookingPayment } from "../../api/updateBookingPayment";
+
 import {
   getAdditionalBookings,
   AdditionalWithPayment,
 } from "../../api/get-booking/getAdditionalBookings";
+
 import {
   CustomSlotType,
   CustomSlotField,
@@ -448,11 +449,11 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
   return (
     <div className="w-full mx-auto">
       {/* Header Card */}
-      <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300 p-8 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl sm:text-2xl font-bold text-strong">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-300 p-6 mb-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg sm:text-xl font-bold text-strong">
                 {booking?.full_name}
               </h1>
 
@@ -463,21 +464,21 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                 type="booking"
               />
             </div>
-            <div className="flex flex-wrap gap-6 text-small text-gray-600">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
                 <span>{booking?.phone_number || "N/A"}</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 <span>{booking?.email}</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <Tag className="w-4 h-4" />
                 <span>ID: {booking?.reference_number}</span>
               </div>
               {booking?.promo_code && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Tag className="w-4 h-4 text-green-600" />
                   <span className="text-green-600 font-medium">
                     Promo: {booking.promo_code}
@@ -498,593 +499,504 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Tour Details */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Selected Tour Card */}
-          <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
-            {/* Header Section */}
-            <div className="p-8 border-b border-gray-200">
-              <h2 className="text-xl sm:text-2xl font-bold text-strong flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Selected Tour
-              </h2>
-              <p className="text-sm text-weak mt-1">
-                View booking slot information and tour details
-              </p>
-            </div>
-
-            {/* Content Section */}
-            <div className="p-8 space-y-6">
-              {/* Tour Summary */}
-              <div className="flex flex-col items-center md:flex-row gap-6">
-                {/* Tour Image */}
-                <div className="relative h-[280px] w-full md:w-64 flex-shrink-0 overflow-hidden rounded-xl shadow-md">
-                  <img
-                    src={booking?.tour_featured_image}
-                    alt={booking?.tour_title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <span className="inline-block px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-gray-900">
-                      {booking?.slots}{" "}
-                      {booking?.slots === 1 ? "Person" : "People"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Tour Info */}
-                <div className="flex-1 min-w-0 space-y-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-strong mb-2">
-                      {booking?.tour_title}
-                    </h3>
-                    <p className="text-sm text-weak line-clamp-2">
-                      {booking?.tour_description}
-                    </p>
-                  </div>
-
-                  {/* Tour Details Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CalendarDays className="w-3 h-3 text-gray-500" />
-                        <p className="text-xs text-weak font-semibold">
-                          Scheduled Date
-                        </p>
-                      </div>
-                      <p className="text-sm font-bold text-strong">
-                        {formatDate(booking?.booking_date)}
-                      </p>
-                    </div>
-                    <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="w-3 h-3 text-gray-500" />
-                        <p className="text-xs text-weak font-semibold">
-                          Scheduled Time
-                        </p>
-                      </div>
-                      <p className="text-sm font-bold text-strong">
-                        {formatTime(booking?.selected_time || "")}
-                      </p>
-                    </div>
-                    <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-3 h-3 text-gray-500" />
-                        <p className="text-xs text-weak font-semibold">
-                          Booked Slots
-                        </p>
-                      </div>
-                      <p className="text-sm font-bold text-strong">
-                        {booking?.slots}{" "}
-                        {booking?.slots === 1 ? "Person" : "People"}
-                      </p>
-                    </div>
-
-                    {customSlotTypes && customSlotTypes.length > 0 ? (
-                      <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Tag className="w-3 h-3 text-gray-500" />
-                          <p className="text-xs text-weak font-semibold">
-                            Price Range
-                          </p>
-                        </div>
-                        <div className="text-sm font-bold text-strong">
-                          {`$${Math.min(
-                            ...customSlotTypes.map((slot) => slot.price)
-                          )} - $${Math.max(
-                            ...customSlotTypes.map((slot) => slot.price)
-                          )}`}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-50/80 p-4 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors duration-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Tag className="w-3 h-3" />
-                          <p className="text-xs text-weak font-semibold">
-                            Base Rate
-                          </p>
-                        </div>
-                        <p className="text-sm font-bold text-strong">
-                          ${booking?.tour_rate}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+        <div className="lg:col-span-2 space-y-6">
           {/* Slot Details Card */}
           {((customSlotTypes && customSlotTypes.length > 0) ||
             (customSlotFields && customSlotFields.length > 0)) && (
-            <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
-              {/* Header Section */}
-              <div className="p-8 border-b border-gray-200">
-                <h2 className="text-xl sm:text-2xl font-bold text-strong flex items-center gap-2">
-                  <List className="w-5 h-5" />
-                  Slot Details
-                </h2>
-                <p className="text-sm text-weak mt-1">
-                  View and manage booking slot information
-                </p>
-              </div>
-
-              {/* Content Section */}
-              <div className="p-8">
-                <SlotDetails
-                  numberOfPeople={booking?.slots || 0}
-                  customSlotTypes={customSlotTypes}
-                  customSlotFields={customSlotFields}
-                  tourRate={booking?.tour_rate || 0}
-                  setSlotDetails={setSlotDetails}
-                  slotDetails={slotDetails}
-                  readOnly={true}
-                  showCard={false}
-                  showHeader={false}
-                />
-              </div>
+            <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-strong mb-4">
+                Slot Details
+              </h2>
+              <SlotDetails
+                numberOfPeople={booking?.slots || 0}
+                customSlotTypes={customSlotTypes}
+                customSlotFields={customSlotFields}
+                tourRate={booking?.tour_rate || 0}
+                setSlotDetails={setSlotDetails}
+                slotDetails={slotDetails}
+                readOnly={true}
+                showCard={false}
+                showHeader={false}
+              />
             </div>
           )}
 
           {/* Additional Products Card */}
-          <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
-            {/* Header Section */}
-            <div className="p-8 border-b border-gray-200">
-              <h2 className="text-xl sm:text-2xl font-bold text-strong flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                Ordered Products
-              </h2>
-              <p className="text-sm text-weak mt-1">
-                View ordered products and their details
-              </p>
-            </div>
-
-            {/* Content Section */}
-            <div className="p-8">
-              <AdditionalProducts
-                isLoadingProducts={isLoadingProducts}
-                availableProducts={availableProducts}
-                selectedProducts={editedProducts.map((product) => product.id)}
-                setSelectedProducts={() => {}}
-                productQuantities={editedProducts.reduce(
-                  (acc, product) => ({
-                    ...acc,
-                    [product.id]: product.quantity,
-                  }),
-                  {}
-                )}
-                setProductQuantities={() => {}}
-                isReadOnly={true}
-                showHeader={false}
-                showCard={false}
-              />
-            </div>
+          <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
+            <h2 className="text-lg font-bold text-strong mb-4">
+              Ordered Products
+            </h2>
+            <AdditionalProducts
+              isLoadingProducts={isLoadingProducts}
+              availableProducts={availableProducts}
+              selectedProducts={editedProducts.map((product) => product.id)}
+              setSelectedProducts={() => {}}
+              productQuantities={editedProducts.reduce(
+                (acc, product) => ({
+                  ...acc,
+                  [product.id]: product.quantity,
+                }),
+                {}
+              )}
+              setProductQuantities={() => {}}
+              isReadOnly={true}
+              showHeader={false}
+              showCard={false}
+            />
           </div>
 
           {/* Additional Bookings Card */}
-          <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
-            {/* Header Section */}
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-strong flex items-center gap-2">
-                    <Plus className="w-5 h-5" />
-                    Additional Bookings
-                  </h2>
-                  <p className="text-sm text-weak mt-1">
-                    {additionalBookings.length > 0
-                      ? `${additionalBookings.length} additional booking${additionalBookings.length > 1 ? "s" : ""}`
-                      : "No additional bookings yet"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefreshAdditionalBookings}
-                    disabled={isLoadingAdditional}
-                    className="h-8 px-3"
-                  >
-                    <RefreshCw
-                      className={`w-4 h-4 ${isLoadingAdditional ? "animate-spin" : ""}`}
-                    />
-                  </Button>
+          <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-strong">
+                Additional Bookings
+              </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshAdditionalBookings}
+                disabled={isLoadingAdditional}
+                className="h-7 px-2"
+              >
+                <RefreshCw
+                  className={`w-3 h-3 ${isLoadingAdditional ? "animate-spin" : ""}`}
+                />
+              </Button>
+            </div>
+            {isLoadingAdditional ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Loading...</p>
                 </div>
               </div>
-            </div>
-
-            {/* Content Section */}
-            <div className="p-6">
-              {isLoadingAdditional ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-2 text-sm text-gray-600">Loading...</p>
-                  </div>
-                </div>
-              ) : additionalBookings.length > 0 ? (
-                <div className="space-y-4">
-                  {additionalBookings.map((additional, index) => (
-                    <div
-                      key={additional.additional_id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200"
-                    >
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Plus className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <div>
-                            <h4 className="font-medium text-gray-900">
-                              Additional #{index + 1}
-                            </h4>
-                            <p className="text-xs text-gray-500">
-                              {new Date(
-                                additional.additional_created_at
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
+            ) : additionalBookings.length > 0 ? (
+              <div className="space-y-4">
+                {additionalBookings.map((additional, index) => (
+                  <div
+                    key={additional.additional_id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow duration-200"
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Plus className="w-4 h-4 text-blue-600" />
                         </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-gray-900">
-                            ${additional.amount_paid?.toFixed(2) || "0.00"}
+                        <div>
+                          <h4 className="font-medium text-gray-900">
+                            Additional #{index + 1}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            {new Date(
+                              additional.additional_created_at
+                            ).toLocaleDateString()}
                           </p>
-                          <StatusBadge
-                            status={
-                              (additional.status?.toLowerCase() as any) ||
-                              "pending"
-                            }
-                            type="payment"
-                          />
                         </div>
                       </div>
-
-                      {/* Quick Info */}
-                      <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          <span>{additional.added_slots} slots</span>
-                        </div>
-                        {additional.added_products &&
-                          additional.added_products.length > 0 && (
-                            <div className="flex items-center gap-1">
-                              <Package className="w-3 h-3" />
-                              <span>
-                                {additional.added_products.length} products
-                              </span>
-                            </div>
-                          )}
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-gray-900">
+                          ${additional.amount_paid?.toFixed(2) || "0.00"}
+                        </p>
+                        <StatusBadge
+                          status={
+                            (additional.status?.toLowerCase() as any) ||
+                            "pending"
+                          }
+                          type="payment"
+                        />
                       </div>
+                    </div>
 
-                      {/* Products with Images */}
+                    {/* Quick Info */}
+                    <div className="flex items-center gap-4 text-xs text-gray-600 mb-3">
+                      <div className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        <span>{additional.added_slots} slots</span>
+                      </div>
                       {additional.added_products &&
                         additional.added_products.length > 0 && (
-                          <div className="space-y-2">
-                            {additional.added_products.map(
-                              (product: any, productIndex: number) => {
-                                const productName =
-                                  product.name ||
-                                  product.product_name ||
-                                  product.title ||
-                                  "Unknown Product";
-                                const quantity =
-                                  product.quantity || product.qty || 1;
-                                const unitPrice =
-                                  product.unit_price ||
-                                  product.price ||
-                                  product.unitPrice ||
-                                  0;
-                                const imageUrl =
-                                  product.image_url || product.image || null;
-
-                                return (
-                                  <div
-                                    key={`product-${productIndex}`}
-                                    className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg"
-                                  >
-                                    {/* Product Image */}
-                                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                                      {imageUrl ? (
-                                        <img
-                                          src={imageUrl}
-                                          alt={productName}
-                                          className="w-full h-full object-cover"
-                                          onError={(e) => {
-                                            const target =
-                                              e.target as HTMLImageElement;
-                                            target.style.display = "none";
-                                            target.nextElementSibling?.classList.remove(
-                                              "hidden"
-                                            );
-                                          }}
-                                        />
-                                      ) : null}
-                                      <div
-                                        className={`w-full h-full flex items-center justify-center ${imageUrl ? "hidden" : ""}`}
-                                      >
-                                        <Package className="w-5 h-5 text-gray-400" />
-                                      </div>
-                                    </div>
-
-                                    {/* Product Details */}
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 truncate">
-                                        {productName}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        ${unitPrice.toFixed(2)} × {quantity}
-                                      </p>
-                                    </div>
-
-                                    {/* Total Price */}
-                                    <div className="text-right">
-                                      <p className="text-sm font-bold text-gray-900">
-                                        ${(unitPrice * quantity).toFixed(2)}
-                                      </p>
-                                    </div>
-                                  </div>
-                                );
-                              }
-                            )}
+                          <div className="flex items-center gap-1">
+                            <Package className="w-3 h-3" />
+                            <span>
+                              {additional.added_products.length} products
+                            </span>
                           </div>
                         )}
+                    </div>
 
-                      {/* Note (if exists) */}
-                      {additional.note && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
-                          <p className="text-xs text-gray-600 italic">
-                            "{additional.note}"
-                          </p>
+                    {/* Products with Images */}
+                    {additional.added_products &&
+                      additional.added_products.length > 0 && (
+                        <div className="space-y-2">
+                          {additional.added_products.map(
+                            (product: any, productIndex: number) => {
+                              const productName =
+                                product.name ||
+                                product.product_name ||
+                                product.title ||
+                                "Unknown Product";
+                              const quantity =
+                                product.quantity || product.qty || 1;
+                              const unitPrice =
+                                product.unit_price ||
+                                product.price ||
+                                product.unitPrice ||
+                                0;
+                              const imageUrl =
+                                product.image_url || product.image || null;
+
+                              return (
+                                <div
+                                  key={`product-${productIndex}`}
+                                  className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg"
+                                >
+                                  {/* Product Image */}
+                                  <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
+                                    {imageUrl ? (
+                                      <img
+                                        src={imageUrl}
+                                        alt={productName}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const target =
+                                            e.target as HTMLImageElement;
+                                          target.style.display = "none";
+                                          target.nextElementSibling?.classList.remove(
+                                            "hidden"
+                                          );
+                                        }}
+                                      />
+                                    ) : null}
+                                    <div
+                                      className={`w-full h-full flex items-center justify-center ${imageUrl ? "hidden" : ""}`}
+                                    >
+                                      <Package className="w-4 h-4 text-gray-400" />
+                                    </div>
+                                  </div>
+
+                                  {/* Product Details */}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {productName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      ${unitPrice.toFixed(2)} × {quantity}
+                                    </p>
+                                  </div>
+
+                                  {/* Total Price */}
+                                  <div className="text-right">
+                                    <p className="text-sm font-bold text-gray-900">
+                                      ${(unitPrice * quantity).toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            }
+                          )}
                         </div>
                       )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Plus className="w-6 h-6 text-gray-400" />
+
+                    {/* Note (if exists) */}
+                    {additional.note && (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <p className="text-xs text-gray-600 italic">
+                          "{additional.note}"
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
-                    No Additional Bookings
-                  </h3>
-                  <p className="text-xs text-gray-500 mb-4">
-                    Add more people or products to this booking
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddAdditionalBooking}
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Booking
-                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Plus className="w-6 h-6 text-gray-400" />
                 </div>
-              )}
-            </div>
+                <h3 className="text-sm font-medium text-gray-900 mb-1">
+                  No Additional Bookings
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">
+                  Add more people or products to this booking
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddAdditionalBooking}
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 h-8 px-3 text-sm"
+                >
+                  <Plus className="w-3 h-3 mr-1" />
+                  Add Booking
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Column - Payment & Actions */}
-        <div className="space-y-8">
-          {/* Payment Information Card */}
-          <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
-            {/* Header Section */}
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-strong flex items-center gap-2">
-                <CreditCard className="w-5 h-5" />
-                Payment Details
-              </h2>
-              <p className="text-sm text-weak mt-1">
-                Payment status and transaction information
-              </p>
-            </div>
-
-            {/* Content Section */}
-            <div className="p-6 space-y-4">
-              {/* Payment Status and Amount */}
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <StatusBadge
-                    status={
-                      (booking?.payment_status?.toLowerCase() as any) ||
-                      "pending"
-                    }
-                    type="payment"
-                  />
-                  <div>
-                    <p className="text-sm text-gray-600">Payment Status</p>
-                    <p className="text-xs text-gray-500">
-                      {booking?.payment_method || "Credit Card"}
+        {/* Right Column - Actions */}
+        <div className="space-y-6">
+          {/* Order Summary Card */}
+          <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
+            <h2 className="text-lg font-bold text-strong mb-4">
+              Order Summary
+            </h2>
+            <div className="space-y-4">
+              {/* Selected Tour Summary */}
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg">
+                    <img
+                      src={booking?.tour_featured_image}
+                      alt={booking?.tour_title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-[#1a1a1a] truncate">
+                      {booking?.tour_title}
+                    </h3>
+                    <p className="text-xs text-[#666666]">
+                      {booking?.tour_description ? "Tour" : "N/A"}
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-strong">
-                    ${booking?.amount_paid.toFixed(2)}
-                  </p>
-                  {booking?.discount_amount && booking.discount_amount > 0 && (
-                    <p className="text-xs text-gray-500 line-through">
-                      ${booking?.total_price_before_discount?.toFixed(2)}
-                    </p>
-                  )}
+
+                {/* Date and Time Section */}
+                <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="h-4 w-4 text-[#0066cc]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="text-xs font-medium text-[#666666]">
+                        Selected Date
+                      </p>
+                      <p className="text-sm font-semibold text-[#1a1a1a]">
+                        {formatDate(booking?.booking_date)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <svg
+                      className="h-4 w-4 text-[#0066cc]"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <p className="text-xs font-medium text-[#666666]">
+                        Selected Time
+                      </p>
+                      <p className="text-sm font-semibold text-[#1a1a1a]">
+                        {formatTime(booking?.selected_time || "")}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Transaction ID */}
-              {booking?.stripe_payment_id && (
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <ExternalLink className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">
-                      Transaction ID
-                    </span>
-                  </div>
-                  <p className="text-xs font-mono text-gray-700 break-all">
-                    {booking.stripe_payment_id}
-                  </p>
-                </div>
-              )}
+              {/* Payment Breakdown */}
+              <div className="border-t border-gray-200 pt-6">
+                {/* Tour Price Section */}
+                <div className="bg-gray-50 rounded-lg mb-4">
+                  <h4 className="text-sm font-semibold text-[#666666]">
+                    Tour Booking
+                  </h4>
 
-              {/* Payment Link */}
-              {booking?.payment_status.toLowerCase() !== "paid" && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Link className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Payment Link
-                      </span>
-                    </div>
-                    {!booking?.payment_link && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handlePaymentLinkUpdateWrapper(
-                            false,
-                            null,
-                            null,
-                            null
-                          )
-                        }
-                        disabled={isLoading}
-                        className="h-8"
-                      >
-                        {isLoading ? (
-                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Link className="w-4 h-4 mr-2" />
-                        )}
-                        Create
-                      </Button>
-                    )}
-                  </div>
+                  {customSlotTypes && customSlotTypes.length > 0 ? (
+                    <div className="space-y-2">
+                      {(() => {
+                        const groupedSlots = slotDetails.reduce(
+                          (acc, slot) => {
+                            const slotType = customSlotTypes.find(
+                              (type) => type.name === slot.type
+                            );
+                            const typeName = slotType?.name || "Default";
+                            const price = slotType?.price || 0;
 
-                  {booking?.payment_link ? (
-                    <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
-                      <p className="text-sm text-gray-900 truncate flex-1">
-                        {booking.payment_link}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => {
-                            navigator.clipboard.writeText(booking.payment_link);
-                            toast.success("Payment link copied");
-                          }}
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() =>
-                            window.open(booking.payment_link, "_blank")
+                            if (!acc[typeName]) {
+                              acc[typeName] = {
+                                count: 0,
+                                price: price,
+                              };
+                            }
+                            acc[typeName].count++;
+                            return acc;
+                          },
+                          {} as Record<string, { count: number; price: number }>
+                        );
+
+                        return Object.entries(groupedSlots).map(
+                          ([typeName, slotData], index) => {
+                            const { count, price } = slotData as {
+                              count: number;
+                              price: number;
+                            };
+                            return (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="w-2 h-2 rounded-full bg-[#0066cc]"></div>
+                                  <div>
+                                    <span className="text-sm font-medium text-[#1a1a1a] capitalize">
+                                      {typeName}
+                                    </span>
+                                    <p className="text-xs text-[#666666]">
+                                      ${price} × {count}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span className="text-sm font-semibold text-[#1a1a1a]">
+                                  ${(price * count).toFixed(2)}
+                                </span>
+                              </div>
+                            );
                           }
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </Button>
-                      </div>
+                        );
+                      })()}
                     </div>
                   ) : (
-                    <p className="text-xs text-gray-500">
-                      No payment link available. Create one to share with the
-                      customer.
-                    </p>
+                    <div className="flex items-center justify-between py-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-[#0066cc]"></div>
+                        <div>
+                          <span className="text-sm font-medium text-[#1a1a1a]">
+                            Regular Price
+                          </span>
+                          <p className="text-xs text-[#666666]">
+                            ${booking?.tour_rate} × {booking?.slots}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-sm font-semibold text-[#1a1a1a]">
+                        $
+                        {(
+                          (booking?.tour_rate || 0) * (booking?.slots || 0)
+                        ).toFixed(2)}
+                      </span>
+                    </div>
                   )}
                 </div>
-              )}
 
-              {/* Pricing Summary */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between py-1">
-                  <span className="text-sm text-gray-600">
-                    {!customSlotTypes || customSlotTypes.length === 0
-                      ? `Base Rate × ${booking?.slots} people`
-                      : "Tour Slots"}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900">
-                    $
-                    {(() => {
-                      if (!customSlotTypes || customSlotTypes.length === 0) {
-                        return (
-                          (booking?.tour_rate || 0) * (booking?.slots || 0)
-                        ).toFixed(2);
-                      }
-                      return slotDetails
-                        .reduce((sum, slot) => {
-                          const slotType = customSlotTypes.find(
-                            (type) => type.name === slot.type
-                          );
-                          return sum + (slotType?.price || 0);
-                        }, 0)
-                        .toFixed(2);
-                    })()}
-                  </span>
-                </div>
+                {/* Additional Products */}
                 {editedProducts.length > 0 && (
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-sm text-gray-600">Products</span>
-                    <span className="text-sm font-medium text-gray-900">
+                  <div className="bg-gray-50 rounded-lg mb-4">
+                    <h4 className="text-sm font-semibold text-[#666666]">
+                      Additional Services
+                    </h4>
+                    <div className="space-y-2">
+                      {editedProducts.map((product) => (
+                        <div
+                          key={product.id}
+                          className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <div>
+                              <span className="text-sm font-medium text-[#1a1a1a]">
+                                {product.name}
+                              </span>
+                              <p className="text-xs text-[#666666]">
+                                ${product.unit_price} × {product.quantity}
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-sm font-semibold text-[#1a1a1a]">
+                            $
+                            {(product.unit_price * product.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Price Summary */}
+                <div className="space-y-3">
+                  {/* Subtotal */}
+                  <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span className="text-sm text-[#666666]">Subtotal</span>
+                    <span className="text-sm font-semibold text-[#1a1a1a]">
                       $
-                      {editedProducts
-                        .reduce(
+                      {(() => {
+                        let tourPrice = 0;
+                        if (customSlotTypes && customSlotTypes.length > 0) {
+                          tourPrice = slotDetails.reduce((sum, slot) => {
+                            const slotType = customSlotTypes.find(
+                              (type) => type.name === slot.type
+                            );
+                            return sum + (slotType?.price || 0);
+                          }, 0);
+                        } else {
+                          tourPrice =
+                            (booking?.tour_rate || 0) * (booking?.slots || 0);
+                        }
+                        const productPrice = editedProducts.reduce(
                           (sum, product) =>
                             sum + product.unit_price * product.quantity,
                           0
-                        )
-                        .toFixed(2)}
+                        );
+                        return (tourPrice + productPrice).toFixed(2);
+                      })()}
                     </span>
                   </div>
-                )}
-                {booking?.discount_amount && booking.discount_amount > 0 && (
-                  <div className="flex items-center justify-between py-1 text-green-600">
-                    <span className="text-sm">
-                      Discount{" "}
-                      {booking?.promo_code && `(${booking.promo_code})`}
-                    </span>
-                    <span className="text-sm font-medium">
-                      -${booking.discount_amount.toFixed(2)}
-                    </span>
-                  </div>
-                )}
-                <div className="border-t border-gray-200 pt-2 mt-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-bold text-strong">
-                      Total
-                    </span>
-                    <span className="text-lg font-bold text-strong">
-                      ${booking?.amount_paid.toFixed(2)}
-                    </span>
+
+                  {/* Promo Code Discount */}
+                  {booking?.promo_code &&
+                    booking?.discount_amount &&
+                    booking.discount_amount > 0 && (
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-[#666666]">
+                            Discount
+                          </span>
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
+                            {booking.promo_code}
+                          </span>
+                        </div>
+                        <span className="text-sm font-semibold text-emerald-600">
+                          -${booking.discount_amount.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+
+                  {/* Total Amount */}
+                  <div className="flex justify-between items-center pt-3">
+                    <div>
+                      <span className="text-base font-bold text-[#1a1a1a]">
+                        Total Amount
+                      </span>
+                      <p className="text-xs text-[#666666] mt-1">
+                        Including all taxes and fees
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-2xl font-bold text-[#0066cc]">
+                        ${booking?.amount_paid.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1092,35 +1004,24 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
           </div>
 
           {/* Actions Card */}
-          <div className="bg-white rounded-xl shadow-[0_8px_16px_-4px_rgba(0,0,0,0.1),0_4px_8px_-4px_rgba(0,0,0,0.1)] border border-gray-300">
-            {/* Header Section */}
-            <div className="p-8 border-b border-gray-200">
-              <h2 className="text-xl sm:text-2xl font-bold text-strong flex items-center gap-2">
-                <List className="w-5 h-5" />
-                Actions
-              </h2>
-              <p className="text-sm text-weak mt-1">
-                Manage booking details and actions
-              </p>
-            </div>
-
-            {/* Content Section */}
-            <div className="p-8 space-y-6">
+          <div className="rounded-xl border bg-white shadow-sm p-4 sm:p-6">
+            <h2 className="text-lg font-bold text-strong mb-4">Actions</h2>
+            <div className="space-y-4">
               {/* Booking Management Actions */}
               <div className="space-y-3">
                 <Button
                   variant="outline"
-                  className="w-full h-12 border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-3 px-4"
+                  className="w-full h-10 border-gray-200 hover:border-blue-200 hover:bg-blue-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-2 px-3 text-sm"
                   onClick={() => setIsPersonalInfoModalOpen(true)}
                   disabled={isLoading}
                 >
-                  <UserCog className="w-5 h-5 text-blue-600" />
+                  <UserCog className="w-4 h-4 text-blue-600" />
                   <span>Edit Customer Information</span>
                 </Button>
 
                 <Button
                   variant="outline"
-                  className="w-full h-12 border-gray-200 hover:border-purple-200 hover:bg-purple-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-3 px-4"
+                  className="w-full h-10 border-gray-200 hover:border-purple-200 hover:bg-purple-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-2 px-3 text-sm"
                   onClick={() => setIsRescheduleModalOpen(true)}
                   disabled={
                     isLoading ||
@@ -1129,19 +1030,15 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                     booking?.payment_status === "partially_refunded"
                   }
                 >
-                  <RefreshCw className="w-5 h-5 text-purple-600" />
+                  <RefreshCw className="w-4 h-4 text-purple-600" />
                   <span>Reschedule Booking</span>
                 </Button>
-
-                {/* {(!customSlotTypes || customSlotTypes.length === 0) && (
-                
-                )} */}
 
                 {(customSlotTypes && customSlotTypes.length > 0) ||
                 (customSlotFields && customSlotFields.length > 0) ? (
                   <Button
                     variant="outline"
-                    className="w-full h-12 border-gray-200 hover:border-green-200 hover:bg-green-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-3 px-4"
+                    className="w-full h-10 border-gray-200 hover:border-green-200 hover:bg-green-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-2 px-3 text-sm"
                     onClick={() => {
                       setIsSlotDetailsModalOpen(true);
                     }}
@@ -1149,67 +1046,52 @@ const UpdateBooking: React.FC<UpdateBookingProps> = ({
                       isLoading || booking?.payment_status !== "pending"
                     }
                   >
-                    <Edit2 className="w-5 h-5 text-green-600" />
+                    <Edit2 className="w-4 h-4 text-green-600" />
                     <span>Edit Slot Details</span>
                   </Button>
                 ) : (
                   <Button
                     variant="outline"
-                    className="w-full h-12 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-3 px-4"
+                    className="w-full h-10 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-2 px-3 text-sm"
                     onClick={() => setIsUpdateSlotsModalOpen(true)}
                     disabled={
                       isLoading || booking?.payment_status !== "pending"
                     }
                   >
-                    <Users className="w-5 h-5 text-indigo-600" />
+                    <Users className="w-4 h-4 text-indigo-600" />
                     <span>Update Number of Slots</span>
                   </Button>
                 )}
 
                 <Button
                   variant="outline"
-                  className="w-full h-12 border-gray-200 hover:border-amber-200 hover:bg-amber-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-3 px-4"
+                  className="w-full h-10 border-gray-200 hover:border-amber-200 hover:bg-amber-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-2 px-3 text-sm"
                   onClick={() => {
                     setEditedProducts(editedProducts);
                     setIsProductsModalOpen(true);
                   }}
                   disabled={isLoading || booking?.payment_status !== "pending"}
                 >
-                  <Package className="w-5 h-5 text-amber-600" />
+                  <Package className="w-4 h-4 text-amber-600" />
                   <span>Edit Booked Products</span>
                 </Button>
               </div>
 
-              {/* Payment Actions */}
-              {/* {booking?.payment_status === "pending" && (
-                <div className="space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full h-12 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 transition-all duration-200 flex items-center justify-start gap-3 px-4"
-                    onClick={() => handlePaymentLinkUpdateWrapper(false, null, null, null)}
-                    disabled={isLoading}
-                  >
-                    <Link className="w-5 h-5 text-indigo-600" />
-                    <span>Generate Payment Link</span>
-                  </Button>
-                </div>
-              )} */}
-
               {/* Cancellation Action */}
               {booking?.payment_status === "paid" && (
-                <div className="pt-4 border-t border-gray-200">
+                <div className="pt-3 border-t border-gray-200">
                   <Button
                     variant="outline"
-                    className="w-full h-12 text-red-600 border-red-200 hover:border-red-300 hover:bg-red-50/50 transition-all duration-200 flex items-center justify-start gap-3 px-4"
+                    className="w-full h-10 text-red-600 border-red-200 hover:border-red-300 hover:bg-red-50/50 transition-all duration-200 flex items-center justify-start gap-2 px-3 text-sm"
                     onClick={handleCancelBooking}
                     disabled={
                       isLoading || booking?.booking_status === "cancelled"
                     }
                   >
                     {isLoading ? (
-                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
-                      <XCircle className="w-5 h-5" />
+                      <XCircle className="w-4 h-4" />
                     )}
                     <span>
                       {isLoading ? "Cancelling..." : "Cancel / Refund Booking"}

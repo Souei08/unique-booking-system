@@ -501,6 +501,7 @@ const UpsertTourV2Stepped = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentImages, setCurrentImages] = useState<TourLocalImage[]>(
     initialData?.images
       ? JSON.parse(initialData.images).map((img: any) => ({
@@ -1013,6 +1014,8 @@ const UpsertTourV2Stepped = ({
       initialData: initialData,
     });
 
+    setIsSubmitting(true);
+
     let uploaded: { url: string; isFeature: boolean }[] = [];
     let tourId: string | undefined = undefined;
 
@@ -1103,7 +1106,7 @@ const UpsertTourV2Stepped = ({
 
       console.log("🎉 Tour saved successfully!");
       toast.success("Tour saved successfully");
-      router.refresh();
+      router.push("/dashboard/tours");
       onSuccess?.();
     } catch (error) {
       console.error("❌ Tour save failed:", {
@@ -1141,6 +1144,8 @@ const UpsertTourV2Stepped = ({
           }
         }
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1358,7 +1363,7 @@ const UpsertTourV2Stepped = ({
                 variant="outline"
                 onClick={prevStep}
                 className="flex items-center gap-2"
-                disabled={isNavigating}
+                disabled={isNavigating || isSubmitting}
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
@@ -1369,13 +1374,18 @@ const UpsertTourV2Stepped = ({
           <div className="flex items-center gap-3">
             <Button
               onClick={currentStep === 6 ? handleFormSubmit : nextStep}
-              disabled={isNavigating || hasCurrentStepErrors()}
+              disabled={isNavigating || isSubmitting || hasCurrentStepErrors()}
               className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
               {isNavigating ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Validating...
+                </>
+              ) : isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating Tour...
                 </>
               ) : currentStep === 6 ? (
                 <>
@@ -1399,12 +1409,12 @@ const UpsertTourV2Stepped = ({
     <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="flex w-full max-w-full h-screen border border-gray-200 bg-white rounded-none shadow-none overflow-hidden relative">
         {/* Loading Overlay */}
-        {isNavigating && (
+        {(isNavigating || isSubmitting) && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <p className="text-lg font-medium text-gray-900">
-                Validating step...
+                {isSubmitting ? "Creating tour..." : "Validating step..."}
               </p>
             </div>
           </div>
@@ -1461,7 +1471,8 @@ const UpsertTourV2Stepped = ({
               variant="ghost"
               size="sm"
               onClick={() => router.push("/dashboard/tours")}
-              className="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors rounded-lg"
+              disabled={isSubmitting}
+              className="w-full flex items-center justify-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="h-4 w-4" />
               Back to Tours

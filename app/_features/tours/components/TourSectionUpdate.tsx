@@ -231,10 +231,14 @@ export function TourSectionUpdate({
         return {
           rate: tour.rate || 0,
           custom_slot_types: tour.custom_slot_types
-            ? JSON.parse(tour.custom_slot_types)
+            ? typeof tour.custom_slot_types === "string"
+              ? JSON.parse(tour.custom_slot_types)
+              : tour.custom_slot_types
             : [],
           custom_slot_fields: tour.custom_slot_fields
-            ? JSON.parse(tour.custom_slot_fields)
+            ? typeof tour.custom_slot_fields === "string"
+              ? JSON.parse(tour.custom_slot_fields)
+              : tour.custom_slot_fields
             : [],
         };
       case "location":
@@ -308,7 +312,23 @@ export function TourSectionUpdate({
     try {
       let updateData = { ...data };
 
+      console.log(updateData);
+
       // Handle special cases for different sections
+      if (section === "pricing") {
+        // Stringify custom_slot_types and custom_slot_fields for database storage
+        if (updateData.custom_slot_types) {
+          updateData.custom_slot_types = JSON.stringify(
+            updateData.custom_slot_types
+          );
+        }
+        if (updateData.custom_slot_fields) {
+          updateData.custom_slot_fields = JSON.stringify(
+            updateData.custom_slot_fields
+          );
+        }
+      }
+
       if (section === "images") {
         // Upload new images and update tour
         const uploaded = await uploadImagesToSupabase(currentImages, tour.id);

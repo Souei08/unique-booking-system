@@ -42,10 +42,9 @@ export function Calendar(
   return (
     <div
       {...calendarProps}
-      // className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-4 border border-gray-100"
-      className="w-full max-w-md mx-auto bg-white "
+      className="w-full max-w-md mx-auto bg-white rounded-lg shadow-sm border border-slate-200"
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <CalendarHeader
           state={state}
           calendarProps={calendarProps}
