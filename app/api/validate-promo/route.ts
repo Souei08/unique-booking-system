@@ -46,8 +46,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if promo has reached max uses
-    if (promo.times_used >= promo.max_uses) {
+    // Check if promo has reached max uses (0 or null means unlimited)
+    if (
+      promo.max_uses !== null &&
+      promo.max_uses !== 0 &&
+      promo.times_used >= promo.max_uses
+    ) {
       return NextResponse.json(
         { error: "Promo code has reached maximum usage limit" },
         { status: 400 }

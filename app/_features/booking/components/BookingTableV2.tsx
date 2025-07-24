@@ -34,10 +34,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
 import { StatusUpdateModal } from "@/app/_features/booking/components/UpdateBooking/StatusUpdateModal";
-import { sendBookingConfirmationEmail } from "../api/email-booking/send-confirmation-email";
+import { sendBookingEmail, sendBookingConfirmationEmail } from "../api/email-booking/send-confirmation-email";
+import { toast } from "sonner";
 import { getAllBookings } from "@/app/_features/booking/api/get-booking/getAllBookings";
 import {
   BookingFilters,
@@ -47,6 +49,7 @@ import { getAllTours } from "@/app/_features/tours/api/getAllTours";
 import { BookingTableSkeleton } from "./BookingTableSkeleton";
 import { BookingCardSkeleton } from "./BookingCardSkeleton";
 import type { PaymentStatus, BookingStatus } from "@/lib/status-badge";
+import { Select } from "@/components/ui/select";
 
 export function BookingTableV2() {
   const [bookings, setBookings] = useState<BookingTable[]>([]);
@@ -62,6 +65,10 @@ export function BookingTableV2() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isFilterLoading, setIsFilterLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailBooking, setEmailBooking] = useState<BookingTable | null>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailType, setEmailType] = useState<"confirmation" | "resend" | "cancellation" | "refund" | "reminder">("confirmation");
 
   // Pagination & filters
   const [page, setPage] = useState(1);
@@ -240,6 +247,52 @@ export function BookingTableV2() {
     // }
   };
 
+  const openEmailModal = (booking: BookingTable) => {
+    setEmailBooking(booking);
+    setIsEmailModalOpen(true);
+    setEmailType("confirmation");
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailBooking) return;
+    setIsSendingEmail(true);
+    try {
+      await sendBookingEmail({
+        full_name: emailBooking.full_name,
+        email: emailBooking.email,
+        booking_date: emailBooking.booking_date,
+        selected_time: emailBooking.selected_time,
+        slots: emailBooking.slots,
+        total_price: emailBooking.amount_paid,
+        booking_reference_id: emailBooking.reference_number,
+        tour_name: emailBooking.tour_title,
+        tour_rate: emailBooking.tour_rate,
+        products:
+          emailBooking.booked_products?.map((product) => ({
+            product_name: product.name,
+            product_id: product.product_id || "",
+            quantity: product.quantity,
+            unit_price: product.unit_price,
+          })) || [],
+        slot_details: emailBooking.slot_details || [],
+        manage_token: emailBooking.manage_token,
+        waiver_link: "https://your-waiver-link.com",
+        sub_total: emailBooking.original_amount || 0,
+        coupon_code: emailBooking.promo_code || "",
+        discount_amount: emailBooking.discount_amount || 0,
+        manage_link: `manage-booking?manage_token=${emailBooking.manage_token}`,
+      }, emailType);
+      toast.success(`Sent ${emailType} email successfully.`);
+      setIsEmailModalOpen(false);
+      setEmailBooking(null);
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error(`Failed to send ${emailType} email.`);
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   const columns: ColumnDef<BookingTable>[] = [
     { accessorKey: "reference_number", header: "Booking ID" },
     {
@@ -366,12 +419,13 @@ export function BookingTableV2() {
                 <Pencil className="mr-2 h-4 w-4" />
                 Update Booking
               </DropdownMenuItem>
+              {/* Unified Send Email Action */}
               <DropdownMenuItem
-                onClick={() => handleEmailConfirmation(booking)}
+                onClick={() => openEmailModal(booking)}
                 className="cursor-pointer"
               >
-                <Mail className="mr-2 h-4 w-4" />
-                Send Confirmation
+                <Mail className="mr-2 h-4 w-4 text-blue-500" />
+                Send Email
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -500,15 +554,16 @@ export function BookingTableV2() {
                         <Pencil className="mr-2 h-4 w-4" />
                         Update Booking
                       </DropdownMenuItem>
+                      {/* Unified Send Email Action */}
                       <DropdownMenuItem
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEmailConfirmation(booking);
+                          openEmailModal(booking);
                         }}
                         className="cursor-pointer"
                       >
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Confirmation
+                        <Mail className="mr-2 h-4 w-4 text-blue-500" />
+                        Send Email
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={(e) => {
@@ -579,6 +634,48 @@ export function BookingTableV2() {
           fetchBookings(page);
         }}
       />
+
+      {/* Unified Email Modal */}
+      <Dialog open={isEmailModalOpen} onOpenChange={setIsEmailModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Booking Email</DialogTitle>
+          </DialogHeader>
+          {emailBooking && (
+            <div className="space-y-2">
+              <div><strong>Booking ID:</strong> {emailBooking.reference_number}</div>
+              <div><strong>Customer:</strong> {emailBooking.full_name} ({emailBooking.email})</div>
+              <div><strong>Tour:</strong> {emailBooking.tour_title}</div>
+              <div><strong>Date:</strong> {emailBooking.booking_date}</div>
+              <div><strong>Time:</strong> {emailBooking.selected_time}</div>
+              <div>
+                <label htmlFor="emailType" className="block font-medium mt-2 mb-1">Email Type</label>
+                <select
+                  id="emailType"
+                  className="w-full border rounded px-2 py-1"
+                  value={emailType}
+                  onChange={e => setEmailType(e.target.value as any)}
+                  disabled={isSendingEmail}
+                >
+                  <option value="confirmation">Confirmation</option>
+                  <option value="resend">Resend Confirmation</option>
+                  <option value="cancellation">Cancellation</option>
+                  <option value="refund">Refund</option>
+                  <option value="reminder">Reminder</option>
+                </select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEmailModalOpen(false)} disabled={isSendingEmail}>
+              Cancel
+            </Button>
+            <Button onClick={handleSendEmail} disabled={isSendingEmail} className="ml-2">
+              {isSendingEmail ? `Sending...` : `Send Email`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

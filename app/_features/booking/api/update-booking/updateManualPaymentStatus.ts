@@ -19,7 +19,6 @@ export async function updateManualPaymentStatus(
       .update({
         status: data.paymentStatus,
         updated_at: new Date().toISOString(),
-        admin_notes: data.adminNotes || null,
       })
       .eq("booking_id", data.bookingId);
 

@@ -528,20 +528,22 @@ const SlotDetails = ({
                 </div>
 
                 {/* Slot Type + Price */}
-                <div className="mb-3">
-                  <div className="flex items-center gap-1 mb-1">
-                    <Hash className="w-3 h-3 text-gray-400" />
-                    <span className="text-xs font-medium text-gray-700">Slot Type</span>
+                {customSlotTypes && customSlotTypes.length > 0 && (
+                  <div className="mb-3">
+                    <div className="flex items-center gap-1 mb-1">
+                      <Hash className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs font-medium text-gray-700">Slot Type</span>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded p-2 flex items-center justify-between">
+                      <span className="font-bold text-blue-900 text-xs uppercase">
+                        {slot.type || "Not selected"}
+                      </span>
+                      <span className="font-semibold text-gray-900 text-xs ml-2 whitespace-nowrap">
+                        ${getSlotPrice(slot)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="bg-blue-50 border border-blue-200 rounded p-2 flex items-center justify-between">
-                    <span className="font-bold text-blue-900 text-xs uppercase">
-                      {slot.type || "Not selected"}
-                    </span>
-                    <span className="font-semibold text-gray-900 text-xs ml-2 whitespace-nowrap">
-                      ${getSlotPrice(slot)}
-                    </span>
-                  </div>
-                </div>
+                )}
 
                 {/* Custom Fields */}
                 {customSlotFields.length > 0 && (
@@ -555,7 +557,26 @@ const SlotDetails = ({
                       {customSlotFields.map((field) => {
                         const value = slot[field.name];
                         const hasValue = value && value.toString().trim() !== '';
-                        
+                        // Render checkbox for checkbox fields
+                        if (field.type === 'checkbox') {
+                          return (
+                            <div
+                              key={field.name}
+                              className={`rounded p-2 border bg-gray-50 border-gray-200 flex items-center gap-2`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={value === 'true' || value === true}
+                                readOnly
+                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              />
+                              <span className="text-xs font-medium text-gray-700">
+                                {field.label}
+                              </span>
+                            </div>
+                          );
+                        }
+                        // Default display for other fields
                         return (
                           <div
                             key={field.name}
@@ -569,9 +590,6 @@ const SlotDetails = ({
                               <span className="text-xs font-medium text-gray-700">
                                 {field.label}
                               </span>
-                              {field.required && (
-                                <span className="text-xs text-red-500 font-medium">Required</span>
-                              )}
                             </div>
                             <div className={`text-xs ${
                               hasValue ? 'text-green-900 font-medium' : 'text-gray-500 italic'
@@ -675,11 +693,6 @@ const SlotDetails = ({
                               <span className="text-sm font-bold text-gray-900 ml-2">
                                 ${type.price}
                               </span>
-                              {/* {slot.type === type.name && (
-                                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center ml-2">
-                                  <Check className="w-4 h-4 text-white" />
-                                </div>
-                              )} */}
                             </div>
                           </label>
                         ))}
