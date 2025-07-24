@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { NumberInput } from "@/components/ui/number-input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 interface TourDetailsProps {
   form: UseFormReturn<any>;
@@ -186,6 +187,56 @@ const TourDetails: React.FC<TourDetailsProps> = ({
               )}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Tour Waiver Link Section */}
+      <Card className="border border-gray-200 shadow-lg">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-yellow-100 rounded-lg">
+              {/* Use Link icon from lucide-react if available, fallback to Settings */}
+              {typeof Settings !== "undefined" ? (
+                <Settings className="h-5 w-5 text-yellow-600" />
+              ) : null}
+            </div>
+            <div>
+              <CardTitle className="text-lg font-semibold text-gray-900">
+                Tour Waiver Link
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
+                Add a link to your tour waiver or liability form
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <FormField
+            control={form.control}
+            name="waiver_link"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-medium text-gray-700">
+                  Waiver Link <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormDescription className="text-xs text-gray-500 mb-3">
+                  Provide a URL to your waiver or liability form (required)
+                </FormDescription>
+                <FormControl>
+                  <Input
+                    type="text"
+                    placeholder="https://your-waiver-link.com"
+                    className="w-full h-12 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                </FormControl>
+                <div className="min-h-[20px]">
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
         </CardContent>
       </Card>
     </div>

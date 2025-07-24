@@ -49,8 +49,9 @@ export const CalendarCellCard: React.FC<CalendarCellCardProps> = ({
 
   // Color logic for background
   const getBgColor = (slot: Slot) => {
-    if (isFullyBooked(slot)) return "bg-red-100";
-    if (isPartiallyBooked(slot)) return "bg-amber-100";
+    // if (isFullyBooked(slot)) return "bg-red-100";
+    if (isFullyBooked(slot)) return "bg-emerald-100"; // Use green instead of red
+    if (isPartiallyBooked(slot)) return "bg-green-100";
     if (isPastDate(dateKey)) return "bg-gray-200";
     return "bg-emerald-100";
   };
@@ -64,8 +65,9 @@ export const CalendarCellCard: React.FC<CalendarCellCardProps> = ({
   // Color logic for stat text in slot
   const getStatTextColor = (slot: Slot) => {
     if (isPastDate(dateKey)) return "text-gray-400";
-    if (isFullyBooked(slot)) return "text-red-700";
-    if (isPartiallyBooked(slot)) return "text-amber-700";
+    // if (isFullyBooked(slot)) return "text-red-700";
+    if (isFullyBooked(slot)) return "text-green-700"; // Use green instead of red
+    if (isPartiallyBooked(slot)) return "text-green-700";
     return "text-green-700";
   };
 
@@ -103,7 +105,7 @@ export const CalendarCellCard: React.FC<CalendarCellCardProps> = ({
         )}
       </div>
       <div className="flex-1 flex flex-col gap-1.5 overflow-y-auto">
-        {slots.length > 0 ? (
+        {slots.length > 0 && (
           <>
             {slots
               .slice(0, expandedDates.has(dateKey) ? undefined : 2)
@@ -174,9 +176,11 @@ export const CalendarCellCard: React.FC<CalendarCellCardProps> = ({
               </button>
             )}
           </>
-        ) : (
-          <div className="text-xs text-weak italic">No bookings</div>
         )}
+
+        {/* // : (
+          //   <div className="text-xs text-weak italic">No Schedule</div>
+          // )} */}
       </div>
     </div>
   );

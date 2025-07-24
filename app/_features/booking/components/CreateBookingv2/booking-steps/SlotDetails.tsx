@@ -11,6 +11,13 @@ import {
   Check,
   Plus,
   X,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  MapPin,
+  FileText,
+  Hash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +33,7 @@ export interface CustomSlotField {
   required: boolean;
   label: string;
   placeholder: string;
+  options?: string[]; // Added for select and checkbox
 }
 
 export interface SlotDetailsProps {
@@ -200,6 +208,152 @@ const SlotDetails = ({
     return slotErrors[`slot-${slotIndex}`] || [];
   };
 
+  // Helper function to get icon for field type
+  const getFieldIcon = (fieldType: string, fieldName: string) => {
+    const name = fieldName.toLowerCase();
+    const type = fieldType.toLowerCase();
+
+    if (name.includes("name") || name.includes("fullname"))
+      return <User className="w-4 h-4" />;
+    if (name.includes("email") || name.includes("mail"))
+      return <Mail className="w-4 h-4" />;
+    if (
+      name.includes("phone") ||
+      name.includes("mobile") ||
+      name.includes("tel")
+    )
+      return <Phone className="w-4 h-4" />;
+    if (name.includes("date") || name.includes("birth"))
+      return <Calendar className="w-4 h-4" />;
+    if (name.includes("address") || name.includes("location"))
+      return <MapPin className="w-4 h-4" />;
+    if (
+      name.includes("notes") ||
+      name.includes("comment") ||
+      name.includes("description")
+    )
+      return <FileText className="w-4 h-4" />;
+    if (type === "number" || name.includes("age") || name.includes("count"))
+      return <Hash className="w-4 h-4" />;
+
+    return <User className="w-4 h-4" />;
+  };
+
+  // Helper function to render input based on field type
+  const renderFieldInput = (
+    field: CustomSlotField,
+    slot: SlotDetail,
+    actualIndex: number
+  ) => {
+    const fieldValue = slot[field.name] || "";
+    const slotErrors = getSlotErrors(actualIndex);
+    const hasError = slotErrors.includes(`${field.label} is required`);
+    const fieldIcon = getFieldIcon(field.type, field.name);
+
+    switch (field.type) {
+      case "select":
+        return (
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              {fieldIcon}
+            </div>
+            <select
+              className={`w-full px-3 py-2 pl-10 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-800 transition-all duration-200 ${
+                hasError
+                  ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+              value={fieldValue}
+              onChange={(e) =>
+                handleSlotFieldChange(actualIndex, field.name, e.target.value)
+              }
+              required={true}
+            >
+              <option value="">Select {field.label}</option>
+              {field.options &&
+                field.options.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+            </select>
+          </div>
+        );
+
+      case "checkbox":
+        return (
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id={`${field.name}-${actualIndex}-${currentPage}`}
+              checked={fieldValue === "true" || fieldValue === true}
+              onChange={(e) =>
+                handleSlotFieldChange(
+                  actualIndex,
+                  field.name,
+                  e.target.checked.toString()
+                )
+              }
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label
+              htmlFor={`${field.name}-${actualIndex}-${currentPage}`}
+              className="text-xs text-gray-700 cursor-pointer"
+            >
+              {field.label}
+            </label>
+          </div>
+        );
+
+      case "number":
+        return (
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              {fieldIcon}
+            </div>
+            <input
+              type="number"
+              className={`w-full px-3 py-2 pl-10 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-800 placeholder:text-gray-400 transition-all duration-200 ${
+                hasError
+                  ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+              value={fieldValue}
+              onChange={(e) =>
+                handleSlotFieldChange(actualIndex, field.name, e.target.value)
+              }
+              required={true}
+              placeholder={field.placeholder}
+              min="0"
+            />
+          </div>
+        );
+
+      default: // text
+        return (
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              {fieldIcon}
+            </div>
+            <input
+              type="text"
+              className={`w-full px-3 py-2 pl-10 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs text-gray-800 placeholder:text-gray-400 transition-all duration-200 ${
+                hasError
+                  ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+              value={fieldValue}
+              onChange={(e) =>
+                handleSlotFieldChange(actualIndex, field.name, e.target.value)
+              }
+              required={true}
+              placeholder={field.placeholder}
+            />
+          </div>
+        );
+    }
+  };
+
   const content = (
     <>
       {showHeader && (
@@ -321,7 +475,7 @@ const SlotDetails = ({
 
               return (
                 <div
-                  key={`slot-${actualIndex}`}
+                  key={`slot-${actualIndex}-${currentPage}`}
                   className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
                 >
                   {/* Slot Header */}
@@ -363,7 +517,7 @@ const SlotDetails = ({
                       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                         {customSlotTypes.map((type) => (
                           <label
-                            key={`slot-type-${type.name}-${actualIndex}`}
+                            key={`slot-type-${type.name}-${actualIndex}-${currentPage}`}
                             className={`relative cursor-pointer transition-all duration-200 `}
                           >
                             <div
@@ -378,7 +532,7 @@ const SlotDetails = ({
                                   <div className="flex items-center gap-3 mb-2">
                                     <input
                                       type="radio"
-                                      name={`slot-type-${actualIndex}`}
+                                      name={`slot-type-${actualIndex}-${currentPage}`}
                                       checked={slot.type === type.name}
                                       onChange={() =>
                                         handleSlotFieldChange(
@@ -431,7 +585,7 @@ const SlotDetails = ({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {customSlotFields.map((field) => (
                           <div
-                            key={`slot-field-${field.name}-${actualIndex}`}
+                            key={`slot-field-${field.name}-${actualIndex}-${currentPage}`}
                             className="space-y-2"
                           >
                             <div className="flex items-center gap-2">
@@ -440,26 +594,7 @@ const SlotDetails = ({
                               </label>
                               <span className="text-red-500 text-xs">*</span>
                             </div>
-                            <input
-                              className={`w-full px-3 py-2 bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 text-xs text-gray-800 placeholder:text-gray-400 transition-all duration-200 ${
-                                slotErrors.includes(
-                                  `${field.label} is required`
-                                )
-                                  ? "border-red-300 focus:ring-red-500 focus:border-red-500 bg-red-50"
-                                  : "border-gray-300 hover:border-gray-400"
-                              }`}
-                              type={field.type}
-                              value={slot[field.name] || ""}
-                              onChange={(e) =>
-                                handleSlotFieldChange(
-                                  actualIndex,
-                                  field.name,
-                                  e.target.value
-                                )
-                              }
-                              required={true}
-                              placeholder={field.placeholder}
-                            />
+                            {renderFieldInput(field, slot, actualIndex)}
                             {slotErrors.includes(
                               `${field.label} is required`
                             ) && (

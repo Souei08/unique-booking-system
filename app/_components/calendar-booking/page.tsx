@@ -44,7 +44,6 @@ import { parseDate } from "@internationalized/date";
 import { toast } from "sonner";
 import { formatTime } from "@/app/_lib/utils/formatTime";
 import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { CalendarSkeleton } from "./CalendarSkeleton";
 import { CalendarCellCard } from "./CalendarCellCard";
 import { CalendarFilters } from "./CalendarFilters";
@@ -54,6 +53,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { fetchCalendarSlotSummaryV2 } from "@/app/_features/calendar/api/fetchCalendarSlotSummaryV2";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface Slot {
   tour_type: string;
@@ -167,6 +167,24 @@ const CalendarBookingPage: React.FC = () => {
     }
   };
 
+  const fetchSlotSummary = async () => {
+    setIsLoading(true);
+
+    try {
+      const data: Slot[] = await fetchCalendarSlotSummaryV2({
+        month,
+        year,
+        tourTitle: selectedTour === "All" ? null : selectedTour,
+        onlyAvailable,
+      });
+      setSlots(data);
+    } catch (error) {
+      console.error("Error loading calendar data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // First useEffect: Load tours and set default tour
   useEffect(() => {
     async function loadTours() {
@@ -196,24 +214,7 @@ const CalendarBookingPage: React.FC = () => {
     // Only fetch calendar data if tours are loaded and selectedTour is set
     if (!toursLoaded || !selectedTour) return;
 
-    async function load() {
-      setIsLoading(true);
-      try {
-        const data: Slot[] = await fetchCalendarSlotSummaryV2({
-          month,
-          year,
-          tourTitle: selectedTour === "All" ? null : selectedTour,
-          onlyAvailable,
-        });
-        setSlots(data);
-      } catch (error) {
-        console.error("Error loading calendar data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    load();
+    fetchSlotSummary();
   }, [month, year, selectedTour, onlyAvailable, toursLoaded]);
 
   useEffect(() => {
@@ -242,18 +243,18 @@ const CalendarBookingPage: React.FC = () => {
     });
   };
 
-  const getDateBookings = (dateKey: string) => {
-    return bookings.filter((booking) => {
-      const bookingDate = new Date(booking.booking_date);
-      const selectedDate = new Date(dateKey);
+  // const getDateBookings = (dateKey: string) => {
+  //   return bookings.filter((booking) => {
+  //     const bookingDate = new Date(booking.booking_date);
+  //     const selectedDate = new Date(dateKey);
 
-      return (
-        bookingDate.getFullYear() === selectedDate.getFullYear() &&
-        bookingDate.getMonth() === selectedDate.getMonth() &&
-        bookingDate.getDate() === selectedDate.getDate()
-      );
-    });
-  };
+  //     return (
+  //       bookingDate.getFullYear() === selectedDate.getFullYear() &&
+  //       bookingDate.getMonth() === selectedDate.getMonth() &&
+  //       bookingDate.getDate() === selectedDate.getDate()
+  //     );
+  //   });
+  // };
 
   const isFullyBooked = (slot: Slot) => {
     return typeof slot.booked === "number" && slot.available === 0;
@@ -311,40 +312,47 @@ const CalendarBookingPage: React.FC = () => {
 
   const handleCloseCreateBooking = async () => {
     setIsCreateBookingOpen(false);
+
+    fetchSlotSummary();
+    fetchSlotBookings(
+      selectedTourForBooking?.title || "",
+      selectedDate || "",
+      selectedTimeForBooking || ""
+    );
     // Only refresh bookings and calendar data after creating a new one
-    await Promise.all([loadBookings(), loadCalendarData()]);
+    // await Promise.all([loadBookings(), loadCalendarData()]);
 
-    // Refresh selected slot bookings if we have the necessary data
-    if (selectedTourForBooking && selectedDate && selectedTimeForBooking) {
-      await fetchSlotBookings(
-        selectedTourForBooking.title,
-        selectedDate,
-        selectedTimeForBooking
-      );
-    }
+    // // Refresh selected slot bookings if we have the necessary data
+    // if (selectedTourForBooking && selectedDate && selectedTimeForBooking) {
+    //   await fetchSlotBookings(
+    //     selectedTourForBooking.title,
+    //     selectedDate,
+    //     selectedTimeForBooking
+    //   );
+    // }
   };
 
-  const loadCalendarData = async () => {
-    setIsLoading(true);
-    try {
-      const data: Slot[] = await fetchCalendarSlotSummary({
-        month,
-        year,
-        tourTitle: selectedTour === "All" ? null : selectedTour,
-        onlyAvailable,
-      });
-      setSlots(data);
-    } catch (error) {
-      console.error("Error loading calendar data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const loadCalendarData = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const data: Slot[] = await fetchCalendarSlotSummary({
+  //       month,
+  //       year,
+  //       tourTitle: selectedTour === "All" ? null : selectedTour,
+  //       onlyAvailable,
+  //     });
+  //     setSlots(data);
+  //   } catch (error) {
+  //     console.error("Error loading calendar data:", error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([loadBookings(), loadCalendarData()]);
+      await Promise.all([loadBookings(), fetchSlotSummary()]);
       toast.success("Calendar refreshed successfully");
     } catch (error) {
       console.error("Error refreshing calendar:", error);
@@ -520,51 +528,7 @@ const CalendarBookingPage: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Compact Slot Summary */}
-                    {(() => {
-                      const currentSlot = slots.find(
-                        (slot) =>
-                          slot.date === selectedDate &&
-                          slot.slot_time === selectedTimeForBooking &&
-                          slot.tour_type === selectedTourForBooking.title
-                      );
-
-                      const totalBooked =
-                        typeof currentSlot?.booked === "number"
-                          ? currentSlot.booked + currentSlot.added
-                          : 0;
-                      const totalAvailable = currentSlot?.available || 0;
-                      const totalCapacity = totalBooked + totalAvailable;
-
-                      return (
-                        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stroke-weak">
-                          <div className="text-center">
-                            <div className="text-sm font-bold text-strong mb-1">
-                              {totalBooked}
-                            </div>
-                            <div className="text-xs text-weak uppercase tracking-wide">
-                              Booked
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm font-bold text-strong mb-1">
-                              {totalAvailable}
-                            </div>
-                            <div className="text-xs text-weak uppercase tracking-wide">
-                              Available
-                            </div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm font-bold text-strong mb-1">
-                              {totalCapacity}
-                            </div>
-                            <div className="text-xs text-weak uppercase tracking-wide">
-                              Total
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
+                    {/* Slot summary moved to bookings section */}
                   </div>
                 </div>
               )}
@@ -572,6 +536,43 @@ const CalendarBookingPage: React.FC = () => {
               {/* Bookings Section */}
               {selectedDate && (
                 <div>
+                  {/* Slot Summary (moved here) */}
+                  {(() => {
+                    const currentSlot = slots.find(
+                      (slot) =>
+                        slot.date === selectedDate &&
+                        slot.slot_time === selectedTimeForBooking &&
+                        slot.tour_type === selectedTourForBooking?.title
+                    );
+
+                    const totalBooked =
+                      typeof currentSlot?.booked === "number"
+                        ? currentSlot.booked + currentSlot.added
+                        : 0;
+                    const totalAvailable = currentSlot?.available || 0;
+                    const totalCapacity = totalBooked + totalAvailable;
+
+                    return (
+                      <div className="grid grid-cols-2 gap-2 pt-2 pb-4 border-b border-stroke-weak mb-4">
+                        <div className="text-center">
+                          <div className="text-sm font-bold text-strong mb-1">
+                            {totalAvailable}
+                          </div>
+                          <div className="text-xs text-weak uppercase tracking-wide">
+                            Remaining Slots
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-bold text-strong mb-1">
+                            {totalBooked}
+                          </div>
+                          <div className="text-xs text-weak uppercase tracking-wide">
+                            Total Booked
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-base font-semibold text-strong mb-1">
@@ -581,16 +582,31 @@ const CalendarBookingPage: React.FC = () => {
                         Manage bookings for this time slot
                       </p>
                     </div>
-                    <div className="text-right">
+                    {/* <div className="text-right">
                       <div className="text-lg font-bold text-strong">
-                        {selectedSlotBookings.length}
+                        {(() => {
+                          const currentSlot = slots.find(
+                            (slot) =>
+                              slot.date === selectedDate &&
+                              slot.slot_time === selectedTimeForBooking &&
+                              slot.tour_type === selectedTourForBooking?.title
+                          );
+                          return currentSlot?.available || 0;
+                        })()}
                       </div>
                       <div className="text-xs text-weak uppercase tracking-wide">
-                        {selectedSlotBookings.length === 1
-                          ? "Booking"
-                          : "Bookings"}
+                        {(() => {
+                          const currentSlot = slots.find(
+                            (slot) =>
+                              slot.date === selectedDate &&
+                              slot.slot_time === selectedTimeForBooking &&
+                              slot.tour_type === selectedTourForBooking?.title
+                          );
+                          const totalAvailable = currentSlot?.available || 0;
+                          return totalAvailable === 1 ? "Booking" : "Bookings";
+                        })()}
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="space-y-3">
@@ -625,18 +641,17 @@ const CalendarBookingPage: React.FC = () => {
                             </div>
                             {/* Amount Due Badge */}
                             <div>
-                              <span
-                                className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${booking.status === "pending" || booking.status === "unpaid" ? "bg-yellow-100 text-yellow-700 border border-yellow-200" : "bg-green-100 text-green-700 border border-green-200"}`}
-                              >
-                                $
-                                {typeof booking.total_price === "string"
-                                  ? parseFloat(booking.total_price).toFixed(2)
-                                  : booking.total_price.toFixed(2)}{" "}
-                                {booking.status === "pending" ||
-                                booking.status === "unpaid"
-                                  ? "Pending"
-                                  : "Paid"}
-                              </span>
+                              <StatusBadge
+                                status={
+                                  booking.status as
+                                    | "pending"
+                                    | "paid"
+                                    | "failed"
+                                    | "refunding"
+                                }
+                                className="text-xs"
+                                type="booking"
+                              />
                             </div>
                           </div>
 
@@ -649,7 +664,7 @@ const CalendarBookingPage: React.FC = () => {
                           {/* Booking Type & Date/Time Row */}
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-sm flex items-center gap-1">
-                              <span className="text-yellow-600">
+                              {/* <span className="text-yellow-600">
                                 <svg
                                   width="16"
                                   height="16"
@@ -658,7 +673,7 @@ const CalendarBookingPage: React.FC = () => {
                                 >
                                   <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 12H9v-2h2v2zm0-4H9V6h2v4z" />
                                 </svg>
-                              </span>
+                              </span> */}
                               {booking.tours.title || "General Admission"}
                             </span>
                           </div>
@@ -666,14 +681,17 @@ const CalendarBookingPage: React.FC = () => {
                           {/* Status Badge + Date/Time */}
                           <div className="flex items-center gap-2 mb-1">
                             {/* Status Badge */}
-                            <span
-                              className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${isPastDate(booking.booking_date) ? "bg-orange-100 text-orange-700 border border-orange-200" : "bg-green-100 text-green-700 border border-green-200"}`}
-                            >
-                              {isPastDate(booking.booking_date)
-                                ? "Past"
-                                : booking.status.charAt(0).toUpperCase() +
-                                  booking.status.slice(1)}
-                            </span>
+                            {/* <StatusBadge
+                              status={
+                                booking.status as
+                                  | "pending"
+                                  | "paid"
+                                  | "failed"
+                                  | "refunding"
+                              }
+                              className="text-xs"
+                              type="booking"
+                            /> */}
                             <span className="text-xs text-strong">
                               {format(
                                 new Date(booking.booking_date),
@@ -756,13 +774,9 @@ const CalendarBookingPage: React.FC = () => {
             open={isCreateBookingOpen}
             onOpenChange={setIsCreateBookingOpen}
           >
-            <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-              <DialogHeader>
-                <DialogTitle></DialogTitle>
-                <DialogClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Close</span>
-                </DialogClose>
+            <DialogContent className="bg-neutral max-w-[98vw] sm:max-w-[95vw] md:max-w-[1200px] lg:max-w-[1200px] xl:max-w-[1200px] max-h-[95vh] overflow-y-auto p-0">
+              <DialogHeader className="sr-only">
+                <DialogTitle>Direct Booking</DialogTitle>
               </DialogHeader>
               <QuickBooking
                 onClose={handleCloseCreateBooking}
@@ -771,7 +785,7 @@ const CalendarBookingPage: React.FC = () => {
                 selectedTime={selectedTimeForBooking}
                 onSuccess={() => {
                   // Refresh calendar data and selected slot bookings
-                  loadCalendarData();
+                  fetchSlotSummary();
                   if (
                     selectedTourForBooking &&
                     selectedDate &&
@@ -793,9 +807,21 @@ const CalendarBookingPage: React.FC = () => {
         open={isUpdateBookingDialogOpen}
         onOpenChange={setIsUpdateBookingDialogOpen}
       >
-        <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[800px] lg:max-w-[1500px] max-h-[95vh] overflow-y-auto p-4 sm:p-6">
-          <DialogHeader>
-            <DialogTitle></DialogTitle>
+        <DialogContent
+          className="bg-neutral max-w-[98vw] sm:max-w-[95vw] md:max-w-[1200px] lg:max-w-[1200px] xl:max-w-[1200px] max-h-[95vh] overflow-y-auto p-6"
+          showCloseButton={false}
+          // disableCloseOnOutside={true}
+          // showCloseConfirmation={true}
+          // // onCloseConfirmCallback={() => {
+          // //   setIsUpdateBookingDialogOpen(false);
+          // //   setSelectedBookingToUpdate(null);
+          // // }}
+          // closeConfirmationTitle="Cancel Booking?"
+          // closeConfirmationDescription="Are you sure you want to cancel this booking? All entered information will be lost."
+          // closeConfirmationType="error"
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>Update Booking</DialogTitle>
           </DialogHeader>
           {selectedBookingToUpdate && (
             <UpdateBooking

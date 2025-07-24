@@ -109,6 +109,7 @@ const step2Schema = z.object({
     .refine((val) => val !== null && val >= 1, {
       message: "Group size must be at least 1",
     }),
+  waiver_link: z.string().min(1, "Waiver link is required"),
 });
 
 const step3Schema = z
@@ -211,6 +212,7 @@ const tourFormSchema = z
       .refine((val) => val !== null && val >= 1, {
         message: "Group size must be at least 1",
       }),
+    waiver_link: z.string().min(1, "Waiver link is required"),
 
     rate: z.number().nullable().optional(),
     slots: z
@@ -530,6 +532,7 @@ const UpsertTourV2Stepped = ({
       category: initialData?.category || "",
       duration: initialData?.duration ?? 1,
       group_size_limit: initialData?.group_size_limit ?? 1,
+      waiver_link: initialData?.waiver_link || "",
 
       rate: initialData?.rate || null,
       slots: initialData?.slots ?? 1,
@@ -1033,6 +1036,7 @@ const UpsertTourV2Stepped = ({
             ? formData.rate
             : 0, // Provide default value if null
         slots: formData.slots !== null ? formData.slots : 1, // Provide default value if null
+        waiver_link: formData.waiver_link || "",
         languages: formData.languages.filter(Boolean),
         trip_highlights: formData.trip_highlights.filter(Boolean),
         includes: formData.includes.filter(Boolean),

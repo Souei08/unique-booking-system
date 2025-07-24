@@ -30,12 +30,14 @@ export interface Tour {
   created_at: string;
   custom_slot_types: string | null; // JSON string containing custom slot types
   custom_slot_fields: string | null; // JSON string containing custom slot fields
+  waiver_link?: string;
 }
 
 export type CreateTourDTO = Omit<Tour, "id" | "created_at" | "images"> & {
   faq?: string[]; // Make faq optional
   custom_slot_types?: string | null; // Make custom_slot_types optional
   custom_slot_fields?: string | null; // Make custom_slot_fields optional
+  waiver_link?: string;
 };
 
 export type UpdateTourDTO = Partial<CreateTourDTO>;
