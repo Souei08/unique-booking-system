@@ -7,6 +7,7 @@ export async function getAllTours(): Promise<Tour[]> {
   const { data, error } = await supabase
     .from("tours")
     .select("*")
+    .eq("status", "active")
     .order("created_at", { ascending: false });
 
   if (error) {

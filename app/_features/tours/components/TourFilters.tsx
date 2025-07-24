@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export interface TourFilters {
   search_query: string;
+  status?: string;
 }
 
 type FilterKey = keyof TourFilters;
@@ -86,6 +87,14 @@ export function TourFilters({
     }
   };
 
+  // Handle status filter change
+  const handleStatusChange = (status: string) => {
+    onFiltersChange({
+      ...filters,
+      status: status === "all" ? undefined : status,
+    });
+  };
+
   return (
     <div className="mb-6">
       <div className="flex flex-wrap items-center gap-3 mb-2 relative">
@@ -102,7 +111,49 @@ export function TourFilters({
             disabled={isLoading}
           />
         </div>
+
+        {/* Status filter */}
+        <Select
+          value={filters.status || "all"}
+          onValueChange={handleStatusChange}
+          disabled={isLoading}
+        >
+          <SelectTrigger className="h-8 w-40 border border-stroke-strong focus:border-brand focus:ring-brand bg-background text-text rounded-md text-sm">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Refresh button */}
+        {onRefresh && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            disabled={isLoading || isRefreshing}
+            className="h-8"
+          >
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${
+                isRefreshing ? "animate-spin" : ""
+              }`}
+            />
+            Refresh
+          </Button>
+        )}
       </div>
+
+      {/* Results count */}
+      {resultCount !== undefined && (
+        <div className="text-sm text-weak">
+          {resultCount} tour{resultCount !== 1 ? "s" : ""} found
+        </div>
+      )}
     </div>
   );
 }

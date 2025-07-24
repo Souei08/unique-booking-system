@@ -11,6 +11,7 @@ export async function getTour(id: string): Promise<Tour | null> {
     .from("tours")
     .select("*")
     .eq("id", id)
+    .eq("status", "active")
     .single();
 
   if (error) {

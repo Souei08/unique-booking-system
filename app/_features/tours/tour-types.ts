@@ -3,6 +3,17 @@ export interface FAQ {
   answer: string;
 }
 
+export interface CustomSlotField {
+  name: string;
+  type: "text" | "number" | "select" | "checkbox";
+  required: boolean;
+  options?: string[];
+  label: string;
+  placeholder?: string;
+  min?: number;
+  max?: number;
+}
+
 export interface TourLocalImage {
   file?: File;
   url: string;
@@ -31,6 +42,7 @@ export interface Tour {
   custom_slot_types: string | null; // JSON string containing custom slot types
   custom_slot_fields: string | null; // JSON string containing custom slot fields
   waiver_link?: string;
+  status?: string; // Tour status: active, inactive, draft, etc.
 }
 
 export type CreateTourDTO = Omit<Tour, "id" | "created_at" | "images"> & {

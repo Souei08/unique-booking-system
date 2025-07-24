@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ViewToggle } from "@/app/_components/common/ViewToggle";
 
@@ -24,6 +24,7 @@ export interface BookingFilters {
   selected_time_filter: string;
   tour_filter: string;
   search_query: string;
+  needs_attention?: boolean;
 }
 
 type FilterKey = keyof BookingFilters;
@@ -92,7 +93,11 @@ export function BookingFilters({
 
   // Handlers for filter changes in the popover (update parent immediately)
   const handleFilterChange = (key: FilterKey, value: string) => {
-    onFiltersChange({ ...filters, [key]: value });
+    if (key === "needs_attention") {
+      onFiltersChange({ ...filters, [key]: value === "true" });
+    } else {
+      onFiltersChange({ ...filters, [key]: value });
+    }
   };
 
   // Search input change - only update local state
@@ -116,6 +121,7 @@ export function BookingFilters({
       selected_time_filter: "all",
       tour_filter: "all",
       search_query: "",
+      needs_attention: false,
     };
     onFiltersChange(clearedFilters);
     setSearchInput("");
@@ -130,6 +136,8 @@ export function BookingFilters({
     } else if (key === "search_query") {
       updatedFilters[key] = "";
       setSearchInput("");
+    } else if (key === "needs_attention") {
+      updatedFilters[key] = false;
     }
     onFiltersChange(updatedFilters);
     if (key === "search_query" && onSearch) onSearch("");
@@ -139,7 +147,8 @@ export function BookingFilters({
   const hasActiveFilters =
     filters.status_filter !== "all" ||
     filters.tour_filter !== "all" ||
-    (filters.search_query && filters.search_query.trim() !== "");
+    (filters.search_query && filters.search_query.trim() !== "") ||
+    filters.needs_attention === true;
 
   // Filter summary for dropdown
   const filterSummary: { label: string; value: string }[] = [];
@@ -154,6 +163,12 @@ export function BookingFilters({
     filterSummary.push({
       label: "Tour",
       value: filters.tour_filter,
+    });
+  }
+  if (filters.needs_attention) {
+    filterSummary.push({
+      label: "Needs Attention",
+      value: "true",
     });
   }
 
@@ -172,6 +187,21 @@ export function BookingFilters({
           className="pl-10 h-8 w-full flex-1 border border-stroke-strong focus:border-brand focus:ring-brand bg-background text-text rounded-md text-sm"
           disabled={isLoading}
         />
+        {/* Attention Filter Button */}
+        <Button
+          variant={filters.needs_attention ? "default" : "outline"}
+          size="sm"
+          className={`h-8 px-3 flex items-center gap-2 ${
+            filters.needs_attention 
+              ? "bg-red-500 hover:bg-red-600 text-white border-red-500" 
+              : "border-stroke-strong bg-background text-text hover:bg-red-50 hover:border-red-200"
+          }`}
+          onClick={() => handleFilterChange("needs_attention", filters.needs_attention ? "false" : "true")}
+          disabled={isLoading}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          <span className="text-xs font-medium">Needs Attention</span>
+        </Button>
         {/* Filter button */}
         <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
           <PopoverTrigger asChild>
@@ -270,7 +300,9 @@ export function BookingFilters({
                     handleRemoveFilter(
                       summary.label === "Status"
                         ? "status_filter"
-                        : "tour_filter"
+                        : summary.label === "Tour"
+                        ? "tour_filter"
+                        : "needs_attention"
                     )
                   }
                   tabIndex={0}

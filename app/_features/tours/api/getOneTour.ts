@@ -16,6 +16,7 @@ export const getTourById = async (tourId: string): Promise<Tour | null> => {
       .from("tours")
       .select("*")
       .eq("id", tourId)
+      .eq("status", "active")
       .single();
 
     if (error) {

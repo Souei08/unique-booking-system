@@ -42,6 +42,8 @@ import { useState, useEffect } from "react";
 import { TourScheduleV2 } from "../forms/tour-schedule-v2/TourScheduleV2";
 import UpsertTourV2Stepped from "../forms/upsert-tour-v2/UpsertTourV2Stepped";
 import { TourSectionUpdate, TourSection } from "./TourSectionUpdate";
+import { TourStatusBadge } from "./TourStatusBadge";
+import { TourStatusUpdateModal } from "./TourStatusUpdateModal";
 
 import { TourFilters, TourFilters as TourFiltersType } from "./TourFilters";
 import { getAllToursV2 } from "../api/getAllToursV2";
@@ -66,6 +68,8 @@ export function TourTableV2({ onView }: TourTableV2Props) {
   const [selectedSection, setSelectedSection] = useState<TourSection | null>(
     null
   );
+  const [isStatusUpdateOpen, setIsStatusUpdateOpen] = useState(false);
+  const [selectedTourForStatus, setSelectedTourForStatus] = useState<Tour | null>(null);
   const router = useRouter();
 
   // Filters state
@@ -80,6 +84,7 @@ export function TourTableV2({ onView }: TourTableV2Props) {
       try {
         const res = await getAllToursV2({
           search_query: filters.search_query || null,
+          status: filters.status || null,
           limit_count: pageSize,
           offset_count: (page - 1) * pageSize,
         });
@@ -121,6 +126,7 @@ export function TourTableV2({ onView }: TourTableV2Props) {
     try {
       const res = await getAllToursV2({
         search_query: filters.search_query || null,
+        status: filters.status || null,
         limit_count: pageSize,
         offset_count: (page - 1) * pageSize,
       });
@@ -238,7 +244,14 @@ export function TourTableV2({ onView }: TourTableV2Props) {
         return slots > 0 ? `${slots} available` : "Fully booked";
       },
     },
-
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return <TourStatusBadge status={status} />;
+      },
+    },
     {
       accessorKey: "created_at",
       header: "Date Created",
@@ -293,6 +306,17 @@ export function TourTableV2({ onView }: TourTableV2Props) {
                 Copy Link to Tour
               </DropdownMenuItem>
 
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedTourForStatus(tour);
+                  setIsStatusUpdateOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Update Status
+              </DropdownMenuItem>
+
               <DropdownMenuSeparator />
               <DropdownMenuLabel>Quick Updates</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -320,6 +344,8 @@ export function TourTableV2({ onView }: TourTableV2Props) {
                 <Settings className="mr-2 h-4 w-4" />
                 Update Tour Details
               </DropdownMenuItem>
+
+              
 
               <DropdownMenuItem
                 onClick={() => {
@@ -392,6 +418,8 @@ export function TourTableV2({ onView }: TourTableV2Props) {
                 <Calendar className="mr-2 h-4 w-4" />
                 Update Schedule
               </DropdownMenuItem>
+
+            
 
               {/* <DropdownMenuSeparator /> */}
               {/* <DropdownMenuItem
@@ -484,6 +512,21 @@ export function TourTableV2({ onView }: TourTableV2Props) {
           onClose={() => {
             setIsSectionUpdateOpen(false);
             setSelectedSection(null);
+          }}
+          onSuccess={() => {
+            handleRefresh(); // Refresh the tours list after successful update
+          }}
+        />
+      )}
+
+      {/* Status Update Dialog */}
+      {selectedTourForStatus && (
+        <TourStatusUpdateModal
+          tour={selectedTourForStatus}
+          isOpen={isStatusUpdateOpen}
+          onClose={() => {
+            setIsStatusUpdateOpen(false);
+            setSelectedTourForStatus(null);
           }}
           onSuccess={() => {
             handleRefresh(); // Refresh the tours list after successful update

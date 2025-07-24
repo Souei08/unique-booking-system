@@ -800,6 +800,46 @@ const TourPricing: React.FC<TourPricingProps> = ({
                               </Select>
                             </div>
 
+                            {/* Min/Max validation fields for text and number types */}
+                            {(field.type === "text" || field.type === "number") && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <FormLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                                    {field.type === "text" ? "Min Length" : "Min Value"}
+                                  </FormLabel>
+                                  <Input
+                                    type="number"
+                                    value={field.min || ""}
+                                    onChange={(e) =>
+                                      updateItem("custom_slot_fields", index, {
+                                        ...field,
+                                        min: e.target.value ? parseInt(e.target.value) : undefined,
+                                      })
+                                    }
+                                    placeholder={field.type === "text" ? "Min characters" : "Min value"}
+                                    className="h-12 border-2 border-gray-300 focus:border-purple-600 focus:ring-purple-600/20 text-base transition-colors bg-white"
+                                  />
+                                </div>
+                                <div>
+                                  <FormLabel className="text-sm font-medium text-gray-700 mb-2 block">
+                                    {field.type === "text" ? "Max Length" : "Max Value"}
+                                  </FormLabel>
+                                  <Input
+                                    type="number"
+                                    value={field.max || ""}
+                                    onChange={(e) =>
+                                      updateItem("custom_slot_fields", index, {
+                                        ...field,
+                                        max: e.target.value ? parseInt(e.target.value) : undefined,
+                                      })
+                                    }
+                                    placeholder={field.type === "text" ? "Max characters" : "Max value"}
+                                    className="h-12 border-2 border-gray-300 focus:border-purple-600 focus:ring-purple-600/20 text-base transition-colors bg-white"
+                                  />
+                                </div>
+                              </div>
+                            )}
+
                             <div className="flex items-center space-x-3 pt-2">
                               <input
                                 type="checkbox"
@@ -830,6 +870,8 @@ const TourPricing: React.FC<TourPricingProps> = ({
                             required: false,
                             label: "",
                             placeholder: "",
+                            min: undefined,
+                            max: undefined,
                           })
                         }
                       >

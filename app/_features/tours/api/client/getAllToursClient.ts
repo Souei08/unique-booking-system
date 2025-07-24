@@ -8,6 +8,7 @@ export async function getAllToursClient(): Promise<Tour[]> {
   const { data, error } = await supabase
     .from("tours")
     .select("*")
+    .eq("status", "active")
     .order("created_at", { ascending: false });
 
   if (error) {

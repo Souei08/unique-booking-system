@@ -163,7 +163,10 @@ const ProductTable: React.FC<ProductTableProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setIsAssignDialogOpen(true)}
+              onClick={() => {
+                setEditingProduct(row.original);
+                setIsAssignDialogOpen(true);
+              }}
               className="h-8 px-3 text-xs font-medium"
             >
               Assign to tour
@@ -197,7 +200,15 @@ const ProductTable: React.FC<ProductTableProps> = ({
       />
 
       {/* Edit Product Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog 
+        open={isEditDialogOpen} 
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            setEditingProduct(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
@@ -213,13 +224,18 @@ const ProductTable: React.FC<ProductTableProps> = ({
       </Dialog>
 
       {/* Assign Product to Tour Dialog */}
-      <AssignProductToTour
-        product={
-          products.find((p) => p.id === editingProduct?.id) || products[0]
-        }
-        open={isAssignDialogOpen}
-        onOpenChange={setIsAssignDialogOpen}
-      />
+      {editingProduct && (
+        <AssignProductToTour
+          product={editingProduct}
+          open={isAssignDialogOpen}
+          onOpenChange={(open) => {
+            setIsAssignDialogOpen(open);
+            if (!open) {
+              setEditingProduct(null);
+            }
+          }}
+        />
+      )}
 
       {/* Image Preview Modal */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>

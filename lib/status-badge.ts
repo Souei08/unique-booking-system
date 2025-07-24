@@ -48,7 +48,7 @@ export const statusBadgeVariants = cva(
         booking_refunded: "bg-orange-500 text-white border-orange-200",
         booking_partially_refunded:
           "bg-orange-500 text-white border-orange-200",
-        booking_completed: "bg-green-500 text-white border-green-200",
+        booking_completed: "bg-blue-500 text-white border-blue-200",
         booking_no_show: "bg-neutral text-weak border-stroke-weak",
 
         // Active today variant — distinctive blue color to highlight current day bookings

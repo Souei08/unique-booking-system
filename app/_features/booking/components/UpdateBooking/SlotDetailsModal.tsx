@@ -125,6 +125,26 @@ const SlotDetailsModal: React.FC<SlotDetailsModalProps> = ({
           const value = slot[field.name];
           if (value === undefined || value === null || value === "") {
             errors.push(`Slot ${index + 1}: ${field.label} is required`);
+          } else {
+            // Validate min/max constraints
+            if (field.type === "text" && typeof value === "string") {
+              if (field.min !== undefined && value.length < field.min) {
+                errors.push(`Slot ${index + 1}: ${field.label} must be at least ${field.min} characters`);
+              }
+              if (field.max !== undefined && value.length > field.max) {
+                errors.push(`Slot ${index + 1}: ${field.label} must be no more than ${field.max} characters`);
+              }
+            } else if (field.type === "number" && typeof value === "string") {
+              const numValue = parseFloat(value);
+              if (!isNaN(numValue)) {
+                if (field.min !== undefined && numValue < field.min) {
+                  errors.push(`Slot ${index + 1}: ${field.label} must be at least ${field.min}`);
+                }
+                if (field.max !== undefined && numValue > field.max) {
+                  errors.push(`Slot ${index + 1}: ${field.label} must be no more than ${field.max}`);
+                }
+              }
+            }
           }
         }
       });

@@ -12,6 +12,7 @@ import {
   ChevronRight,
   User,
   MapPin,
+  Settings,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,6 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import UpdateBooking from "@/app/_features/booking/components/UpdateBooking/UpdateBooking";
+import { StatusUpdateModal } from "@/app/_features/booking/components/UpdateBooking/StatusUpdateModal";
 import { sendBookingConfirmationEmail } from "../api/email-booking/send-confirmation-email";
 import { getAllBookings } from "@/app/_features/booking/api/get-booking/getAllBookings";
 import {
@@ -44,12 +46,14 @@ import {
 import { getAllTours } from "@/app/_features/tours/api/getAllTours";
 import { BookingTableSkeleton } from "./BookingTableSkeleton";
 import { BookingCardSkeleton } from "./BookingCardSkeleton";
+import type { PaymentStatus, BookingStatus } from "@/lib/status-badge";
 
 export function BookingTableV2() {
   const [bookings, setBookings] = useState<BookingTable[]>([]);
   const [tours, setTours] = useState<Array<{ id: string; title: string }>>([]);
   const [isUpdateBookingDialogOpen, setIsUpdateBookingDialogOpen] =
     useState(false);
+  const [isStatusUpdateModalOpen, setIsStatusUpdateModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<BookingTable | null>(
     null
   );
@@ -68,6 +72,7 @@ export function BookingTableV2() {
     selected_time_filter: "all",
     tour_filter: "all",
     search_query: "",
+    needs_attention: false,
   });
 
   // Update page size when view mode changes
@@ -119,14 +124,27 @@ export function BookingTableV2() {
 
       const total = data.length > 0 ? data[0].total_count || 0 : 0;
 
-      const updated = data.map((booking) => ({
+      let updated = data.map((booking) => ({
         ...booking,
         id: booking.booking_id,
         created_at: booking.booking_created_at,
       }));
 
+      // Apply needs_attention filter if enabled
+      if (filters.needs_attention) {
+        updated = updated.filter((booking) => {
+          const paymentStatus = booking.payment_status;
+          const bookingStatus = booking.booking_status;
+          return (
+            (paymentStatus === "paid" && bookingStatus !== "confirmed") ||
+            (paymentStatus === "failed" && bookingStatus !== "cancelled") ||
+            (paymentStatus === "pending" && bookingStatus === "confirmed")
+          );
+        });
+      }
+
       setBookings(updated);
-      setTotalCount(total);
+      setTotalCount(updated.length);
     } catch (err) {
       console.error(err);
     } finally {
@@ -268,6 +286,30 @@ export function BookingTableV2() {
       ),
     },
     {
+      accessorKey: "payment_status",
+      header: "Payment Status",
+      cell: ({ row }) => {
+        const paymentStatus = (row.getValue("payment_status") as string) as PaymentStatus;
+        const bookingStatus = (row.getValue("booking_status") as string) as BookingStatus;
+        const needsAttention = 
+          (paymentStatus === "paid" && bookingStatus !== "confirmed") ||
+          (paymentStatus === "failed" && bookingStatus !== "cancelled") ||
+          (paymentStatus === "pending" && bookingStatus === "confirmed");
+        
+        return (
+          <div className="flex items-center gap-2">
+            <StatusBadge
+              status={paymentStatus || "pending"}
+              type="payment"
+            />
+            {needsAttention && (
+              <div className="w-2 h-2 bg-red-500 rounded-full" title="Status mismatch - may need attention" />
+            )}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "booking_date",
       header: "Booking Date",
       cell: ({ row }) =>
@@ -330,6 +372,17 @@ export function BookingTableV2() {
               >
                 <Mail className="mr-2 h-4 w-4" />
                 Send Confirmation
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => {
+                  setSelectedBooking(booking);
+                  setIsStatusUpdateModalOpen(true);
+                }}
+                className="cursor-pointer"
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Update Status
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -457,6 +510,17 @@ export function BookingTableV2() {
                         <Mail className="mr-2 h-4 w-4" />
                         Send Confirmation
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBooking(booking);
+                          setIsStatusUpdateModalOpen(true);
+                        }}
+                        className="cursor-pointer"
+                      >
+                        <Settings className="mr-2 h-4 w-4" />
+                        Update Status
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -501,6 +565,20 @@ export function BookingTableV2() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Status Update Modal */}
+      <StatusUpdateModal
+        isOpen={isStatusUpdateModalOpen}
+        onClose={() => {
+          setIsStatusUpdateModalOpen(false);
+          setSelectedBooking(null);
+        }}
+        booking={selectedBooking}
+        onSuccess={() => {
+          // Refresh the bookings after status update
+          fetchBookings(page);
+        }}
+      />
     </div>
   );
 }

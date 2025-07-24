@@ -22,7 +22,8 @@ export const getAssignedToursByProductId = async (productId: string) => {
       )
     `
     )
-    .eq("product_id", productId);
+    .eq("product_id", productId)
+    .eq("tours.status", "active");
 
   if (error) {
     console.error("Error fetching assigned tours:", error);

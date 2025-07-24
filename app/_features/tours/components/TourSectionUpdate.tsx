@@ -32,6 +32,8 @@ import AdditionalInformation from "../forms/upsert-tour-v2/upsert-tour-steps/Add
 import TourImages from "../forms/upsert-tour-v2/upsert-tour-steps/TourImages";
 import TourSchedule from "../forms/upsert-tour-v2/upsert-tour-steps/TourSchedule";
 
+
+
 // Schemas for each section
 const basicInfoSchema = z.object({
   title: z
@@ -64,12 +66,17 @@ const pricingSchema = z.object({
     )
     .optional()
     .default([]),
-  custom_slot_fields: z
+    custom_slot_fields: z
     .array(
       z.object({
-        name: z.string().min(1, "Name is required"),
-        type: z.string().min(1, "Type is required"),
-        required: z.boolean().default(false),
+      name: z.string().min(1, "Field name is required"),
+        type: z.enum(["text", "number", "select", "checkbox"]),
+        required: z.boolean(),
+        options: z.array(z.string()).optional(),
+        label: z.string().min(1, "Label is required"),
+        placeholder: z.string().optional(),
+        min: z.number().optional(),
+        max: z.number().optional(),
       })
     )
     .optional()
@@ -109,6 +116,8 @@ const imagesSchema = z.object({
     .optional()
     .default([]),
 });
+
+
 
 export type TourSection =
   | "basic-info"

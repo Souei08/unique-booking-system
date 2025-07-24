@@ -34,6 +34,8 @@ export interface CustomSlotField {
   label: string;
   placeholder: string;
   options?: string[]; // Added for select and checkbox
+  min?: number;
+  max?: number;
 }
 
 export interface SlotDetailsProps {
@@ -69,8 +71,9 @@ const SlotDetails = ({
   const [slotErrors, setSlotErrors] = useState<{
     [key: string]: string[];
   }>({});
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const slotsPerPage = 2; // Show 2 slots per page
+  // Remove pagination state and logic
+  // const [currentPage, setCurrentPage] = useState<number>(1);
+  // const slotsPerPage = 2; // Show 2 slots per page
 
   // Update slot details when numberOfPeople changes
   useEffect(() => {
@@ -177,6 +180,26 @@ const SlotDetails = ({
         const value = slot[field.name];
         if (value === undefined || value === null || value === "") {
           slotErrors.push(`${field.label} is required`);
+        } else {
+          // Validate min/max constraints
+          if (field.type === "text" && typeof value === "string") {
+            if (field.min !== undefined && value.length < field.min) {
+              slotErrors.push(`${field.label} must be at least ${field.min} characters`);
+            }
+            if (field.max !== undefined && value.length > field.max) {
+              slotErrors.push(`${field.label} must be no more than ${field.max} characters`);
+            }
+          } else if (field.type === "number" && typeof value === "string") {
+            const numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              if (field.min !== undefined && numValue < field.min) {
+                slotErrors.push(`${field.label} must be at least ${field.min}`);
+              }
+              if (field.max !== undefined && numValue > field.max) {
+                slotErrors.push(`${field.label} must be no more than ${field.max}`);
+              }
+            }
+          }
         }
       });
 
@@ -197,11 +220,11 @@ const SlotDetails = ({
     return Object.keys(errors).length === 0;
   };
 
-  // Pagination calculations
-  const totalPages = Math.ceil(slotDetails.length / slotsPerPage);
-  const startIndex = (currentPage - 1) * slotsPerPage;
-  const endIndex = startIndex + slotsPerPage;
-  const currentSlots = slotDetails.slice(startIndex, endIndex);
+  // Remove pagination calculations
+  // const totalPages = Math.ceil(slotDetails.length / slotsPerPage);
+  // const startIndex = (currentPage - 1) * slotsPerPage;
+  // const endIndex = startIndex + slotsPerPage;
+  // const currentSlots = slotDetails.slice(startIndex, endIndex);
 
   // Get errors for a specific slot
   const getSlotErrors = (slotIndex: number) => {
@@ -247,7 +270,13 @@ const SlotDetails = ({
   ) => {
     const fieldValue = slot[field.name] || "";
     const slotErrors = getSlotErrors(actualIndex);
-    const hasError = slotErrors.includes(`${field.label} is required`);
+    const hasError = slotErrors.some(error => 
+      error.includes(field.label) && (
+        error.includes("is required") || 
+        error.includes("must be at least") || 
+        error.includes("must be no more than")
+      )
+    );
     const fieldIcon = getFieldIcon(field.type, field.name);
 
     switch (field.type) {
@@ -285,7 +314,7 @@ const SlotDetails = ({
           <div className="flex items-center gap-3">
             <input
               type="checkbox"
-              id={`${field.name}-${actualIndex}-${currentPage}`}
+              id={`${field.name}-${actualIndex}`}
               checked={fieldValue === "true" || fieldValue === true}
               onChange={(e) =>
                 handleSlotFieldChange(
@@ -297,7 +326,7 @@ const SlotDetails = ({
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
             />
             <label
-              htmlFor={`${field.name}-${actualIndex}-${currentPage}`}
+              htmlFor={`${field.name}-${actualIndex}`}
               className="text-xs text-gray-700 cursor-pointer"
             >
               {field.label}
@@ -324,8 +353,23 @@ const SlotDetails = ({
               }
               required={true}
               placeholder={field.placeholder}
-              min="0"
+              min={field.min !== undefined ? field.min : undefined}
+              max={field.max !== undefined ? field.max : undefined}
             />
+            {/* Show min/max constraints if they exist */}
+            {(field.min !== undefined || field.max !== undefined) && (
+              <div className="mt-1 text-xs text-gray-500">
+                {field.min !== undefined && field.max !== undefined && (
+                  <span>Range: {field.min} - {field.max}</span>
+                )}
+                {field.min !== undefined && field.max === undefined && (
+                  <span>Min: {field.min}</span>
+                )}
+                {field.min === undefined && field.max !== undefined && (
+                  <span>Max: {field.max}</span>
+                )}
+              </div>
+            )}
           </div>
         );
 
@@ -348,7 +392,35 @@ const SlotDetails = ({
               }
               required={true}
               placeholder={field.placeholder}
+              minLength={field.min !== undefined ? field.min : undefined}
+              maxLength={field.max !== undefined ? field.max : undefined}
             />
+            {/* Show min/max constraints if they exist */}
+            {(field.min !== undefined || field.max !== undefined) && (
+              <div className="mt-1 text-xs text-gray-500 flex justify-between">
+                <span>
+                  {field.min !== undefined && field.max !== undefined && (
+                    <span>Length: {field.min} - {field.max} characters</span>
+                  )}
+                  {field.min !== undefined && field.max === undefined && (
+                    <span>Min length: {field.min} characters</span>
+                  )}
+                  {field.min === undefined && field.max !== undefined && (
+                    <span>Max length: {field.max} characters</span>
+                  )}
+                </span>
+                {field.max !== undefined && (
+                  <span className={`${fieldValue.length > field.max ? 'text-red-500' : 'text-gray-400'}`}>
+                    {fieldValue.length}/{field.max}
+                  </span>
+                )}
+                {field.min !== undefined && field.max === undefined && (
+                  <span className={`${fieldValue.length < field.min ? 'text-red-500' : 'text-gray-400'}`}>
+                    {fieldValue.length}/{field.min} min
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         );
     }
@@ -410,16 +482,43 @@ const SlotDetails = ({
       )}
 
       {readOnly ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {slotDetails.map((slot, idx) => (
-            <div
-              key={`slot-${idx}`}
-              className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center">
-                    <span className="text-gray-700 font-semibold text-xs">
+        <div className="space-y-4">
+          {/* Summary Header */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center">
+                  <User className="w-3 h-3 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 text-xs">
+                    Booking Summary
+                  </h3>
+                  <p className="text-xs text-gray-600">
+                    {slotDetails.length} slot{slotDetails.length !== 1 ? 's' : ''} • Total: ${slotDetails.reduce((sum, slot) => sum + getSlotPrice(slot), 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-500">Total Amount</div>
+                <div className="text-sm font-bold text-gray-900">
+                  ${slotDetails.reduce((sum, slot) => sum + getSlotPrice(slot), 0).toFixed(2)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Slots Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {slotDetails.map((slot, idx) => (
+              <div
+                key={`slot-${idx}`}
+                className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+              >
+                {/* Slot Header */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                    <span className="text-white font-bold text-xs">
                       {idx + 1}
                     </span>
                   </div>
@@ -427,147 +526,166 @@ const SlotDetails = ({
                     Slot {idx + 1}
                   </h3>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs text-gray-500">Price</div>
-                  <div className="text-xs font-semibold text-gray-900">
-                    ${getSlotPrice(slot)}
+
+                {/* Slot Type + Price */}
+                <div className="mb-3">
+                  <div className="flex items-center gap-1 mb-1">
+                    <Hash className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs font-medium text-gray-700">Slot Type</span>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded p-2 flex items-center justify-between">
+                    <span className="font-bold text-blue-900 text-xs uppercase">
+                      {slot.type || "Not selected"}
+                    </span>
+                    <span className="font-semibold text-gray-900 text-xs ml-2 whitespace-nowrap">
+                      ${getSlotPrice(slot)}
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                  <div className="text-xs text-gray-500 mb-1">
-                    Selected Type
-                  </div>
-                  <div className="font-medium text-gray-900 text-xs">
-                    {slot.type || "Not selected"}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3">
-                  {customSlotFields.map((field) => (
-                    <div
-                      key={field.name}
-                      className="bg-gray-50 rounded-lg p-3 border border-gray-100"
-                    >
-                      <div className="text-xs text-gray-500 mb-1">
-                        {field.label}
-                      </div>
-                      <div className="text-gray-900 text-xs">
-                        {slot[field.name] || "-"}
-                      </div>
+                {/* Custom Fields */}
+                {customSlotFields.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1 mb-2">
+                      <FileText className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs font-medium text-gray-700">Additional Details</span>
                     </div>
-                  ))}
-                </div>
+                    
+                    <div className="grid grid-cols-1 gap-2">
+                      {customSlotFields.map((field) => {
+                        const value = slot[field.name];
+                        const hasValue = value && value.toString().trim() !== '';
+                        
+                        return (
+                          <div
+                            key={field.name}
+                            className={`rounded p-2 border ${
+                              hasValue 
+                                ? 'bg-green-50 border-green-200' 
+                                : 'bg-gray-50 border-gray-200'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium text-gray-700">
+                                {field.label}
+                              </span>
+                              {field.required && (
+                                <span className="text-xs text-red-500 font-medium">Required</span>
+                              )}
+                            </div>
+                            <div className={`text-xs ${
+                              hasValue ? 'text-green-900 font-medium' : 'text-gray-500 italic'
+                            }`}>
+                              {hasValue ? value : "Not provided"}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State for No Custom Fields */}
+                {customSlotFields.length === 0 && (
+                  <div className="text-center py-2 text-gray-500 text-xs">
+                    No additional details required for this slot type
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Current Slots */}
-          <div className="space-y-4">
-            {currentSlots.map((slot, idx) => {
-              const actualIndex = startIndex + idx;
-              const slotErrors = getSlotErrors(actualIndex);
+        // Editable mode: use the same grid/card layout as readonly, but with inputs
+        <div className="space-y-4">
+          {/* Slots Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {slotDetails.map((slot, idx) => {
+              const slotErrors = getSlotErrors(idx);
               const isComplete = isSlotComplete(slot);
-
               return (
                 <div
-                  key={`slot-${actualIndex}-${currentPage}`}
-                  className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm"
+                  key={`slot-${idx}`}
+                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative"
                 >
+                  {/* Remove Button (top right, icon only) */}
+                  {slotDetails.length > 1 && (
+                    <button
+                      onClick={() => handleRemoveSlot?.(idx)}
+                      className="absolute top-2 right-2 p-1 text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                      aria-label="Remove Slot"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                   {/* Slot Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                        <span className="text-gray-700 font-bold text-xs">
-                          {actualIndex + 1}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 text-sm">
-                          Slot {actualIndex + 1}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          {isComplete ? "Complete" : "Incomplete"}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+                      <span className="text-white font-bold text-xs">
+                        {idx + 1}
+                      </span>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs text-gray-500">Price</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        ${getSlotPrice(slot)}
-                      </div>
-                    </div>
+                    <h3 className="font-semibold text-gray-900 text-xs">
+                      Slot {idx + 1}
+                    </h3>
+                    <span className={`ml-2 text-xs font-medium ${isComplete ? 'text-green-600' : 'text-red-500'}`}>{isComplete ? 'Complete' : 'Incomplete'}</span>
                   </div>
 
-                  {/* Slot Type Selection */}
+                  {/* Slot Type + Price (editable) */}
                   {customSlotTypes && customSlotTypes.length > 0 && (
-                    <div className="mb-6">
-                      <div className="flex items-center gap-2 mb-3">
-                        <h4 className="text-xs font-semibold text-gray-900">
-                          Select Type
-                        </h4>
+                    <div className="mb-3">
+                      <div className="flex items-center gap-1 mb-1">
+                        <Hash className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs font-medium text-gray-700">Slot Type</span>
                         {slotErrors.includes("Type is required") && (
-                          <span className="text-red-500 text-xs">*</span>
+                          <span className="text-red-500 text-xs ml-1">*</span>
                         )}
                       </div>
-                      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="flex flex-col gap-2">
                         {customSlotTypes.map((type) => (
                           <label
-                            key={`slot-type-${type.name}-${actualIndex}-${currentPage}`}
-                            className={`relative cursor-pointer transition-all duration-200 `}
+                            key={`slot-type-${type.name}-${idx}`}
+                            className={`relative cursor-pointer transition-all duration-200`}
                           >
                             <div
-                              className={`p-4 rounded-lg border-2 transition-all duration-200 ${
+                              className={`p-2 rounded-lg border-2 transition-all duration-200 flex items-center justify-between ${
                                 slot.type === type.name
                                   ? "bg-blue-50 border-blue-400"
                                   : "bg-white border-blue-200 hover:border-blue-300"
                               }`}
                             >
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <input
-                                      type="radio"
-                                      name={`slot-type-${actualIndex}-${currentPage}`}
-                                      checked={slot.type === type.name}
-                                      onChange={() =>
-                                        handleSlotFieldChange(
-                                          actualIndex,
-                                          "type",
-                                          type.name
-                                        )
-                                      }
-                                      className="w-4 h-4 text-gray-600 border-gray-300 focus:ring-gray-500"
-                                    />
-                                    <h5 className="font-semibold text-gray-900 capitalize text-xs">
-                                      {type.name}
-                                    </h5>
-                                  </div>
-                                  <p className="text-xs text-gray-600 mb-2 line-clamp-2">
-                                    {type.description}
-                                  </p>
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm font-bold text-gray-900">
-                                      ${type.price}
-                                    </span>
-                                    {slot.type === type.name && (
-                                      <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
-                                        <Check className="w-4 h-4 text-white" />
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`slot-type-${idx}`}
+                                  checked={slot.type === type.name}
+                                  onChange={() =>
+                                    handleSlotFieldChange(
+                                      idx,
+                                      "type",
+                                      type.name
+                                    )
+                                  }
+                                  className="w-4 h-4 text-gray-600 border-gray-300 focus:ring-gray-500"
+                                />
+                                <span className="font-semibold text-gray-900 capitalize text-xs">
+                                  {type.name}
+                                </span>
                               </div>
+                              <span className="text-sm font-bold text-gray-900 ml-2">
+                                ${type.price}
+                              </span>
+                              {/* {slot.type === type.name && (
+                                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center ml-2">
+                                  <Check className="w-4 h-4 text-white" />
+                                </div>
+                              )} */}
                             </div>
                           </label>
                         ))}
                       </div>
                       {slotErrors.includes("Type is required") && (
-                        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
                           <p className="text-xs text-red-600">
                             Please select a slot type
                           </p>
@@ -576,31 +694,44 @@ const SlotDetails = ({
                     </div>
                   )}
 
-                  {/* Custom Fields */}
+                  {/* Custom Fields (editable) */}
                   {customSlotFields.length > 0 && (
-                    <div className="mb-6">
-                      <h4 className="text-xs font-semibold text-gray-900 mb-3">
-                        Additional Information
-                      </h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="mb-3">
+                      <div className="flex items-center gap-1 mb-2">
+                        <FileText className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs font-medium text-gray-700">Additional Details</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
                         {customSlotFields.map((field) => (
                           <div
-                            key={`slot-field-${field.name}-${actualIndex}-${currentPage}`}
+                            key={`slot-field-${field.name}-${idx}`}
                             className="space-y-2"
                           >
                             <div className="flex items-center gap-2">
                               <label className="text-xs font-medium text-gray-800">
                                 {field.label}
                               </label>
-                              <span className="text-red-500 text-xs">*</span>
+                              {field.required && (
+                                <span className="text-red-500 text-xs">*</span>
+                              )}
                             </div>
-                            {renderFieldInput(field, slot, actualIndex)}
-                            {slotErrors.includes(
-                              `${field.label} is required`
+                            {renderFieldInput(field, slot, idx)}
+                            {slotErrors.some(error => 
+                              error.includes(field.label) && (
+                                error.includes("is required") || 
+                                error.includes("must be at least") || 
+                                error.includes("must be no more than")
+                              )
                             ) && (
-                              <div className="mt-1 p-1.5 bg-red-50 border border-red-200 rounded-md">
-                                <p className="text-xs text-red-600">
-                                  {field.label} is required
+                              <div className="mt-1 p-1.5">
+                                <p className="text-xs text-right text-red-600">
+                                  {slotErrors.find(error => 
+                                    error.includes(field.label) && (
+                                      error.includes("is required") || 
+                                      error.includes("must be at least") || 
+                                      error.includes("must be no more than")
+                                    )
+                                  )}
                                 </p>
                               </div>
                             )}
@@ -609,101 +740,10 @@ const SlotDetails = ({
                       </div>
                     </div>
                   )}
-
-                  {/* Remove Button */}
-                  {slotDetails.length > 1 && (
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => handleRemoveSlot?.(actualIndex)}
-                        className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                        Remove Slot
-                      </button>
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between bg-blue-50 rounded-lg p-3 ">
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <span>
-                  Showing {startIndex + 1}-
-                  {Math.min(endIndex, slotDetails.length)} of{" "}
-                  {slotDetails.length} slots
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
-                  disabled={currentPage === 1}
-                  className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
-                >
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                  Previous
-                </button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                    (page) => (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-6 h-6 rounded-lg text-xs font-medium transition-colors ${
-                          currentPage === page
-                            ? "bg-blue-600 text-white"
-                            : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-white transition-colors"
-                >
-                  Next
-                  <svg
-                    className="w-3 h-3"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
     </>

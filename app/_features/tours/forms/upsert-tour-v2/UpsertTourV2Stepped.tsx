@@ -140,6 +140,8 @@ const step3Schema = z
           options: z.array(z.string()).optional(),
           label: z.string().min(1, "Label is required"),
           placeholder: z.string().optional(),
+          min: z.number().optional(),
+          max: z.number().optional(),
         })
       )
       .optional()
@@ -260,6 +262,8 @@ const tourFormSchema = z
           options: z.array(z.string()).optional(),
           label: z.string().min(1, "Label is required"),
           placeholder: z.string().optional(),
+          min: z.number().optional(),
+          max: z.number().optional(),
         })
       )
       .optional()
